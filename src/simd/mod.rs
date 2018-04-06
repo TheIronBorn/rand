@@ -11,6 +11,7 @@ mod macros;
 mod float;
 mod sfc_32_simd;
 mod sfc;
+mod simd_shuffle;
 
 pub use self::sfc_32_simd::*;
 pub use self::float::SimdDistribution;
@@ -19,7 +20,7 @@ use self::sfc::*;
 use core::simd::*;
 
 /// A convenience import for implementing PRNGs
-pub mod rng_impl {
+mod rng_impl {
     pub use rand_core::{RngCore, SeedableRng, Error, impls, le};
     pub use core::slice;
     pub use Rng;

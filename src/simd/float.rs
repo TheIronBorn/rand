@@ -1,10 +1,8 @@
 use core::simd::*;
 use core::mem;
 
-use {thread_rng, SeedableRng, Rng};
-
 use distributions::{Standard, IntoFloat};
-use distributions::range::{RangeFloat, RangeImpl};
+use distributions::range::RangeFloat;
 
 use simd::SimdRng;
 
@@ -50,29 +48,6 @@ simd_float_impls! { f32x8, u32x8, f32, u32, 23, 127, next_u32x8 }
 simd_float_impls! { f64x2, u64x2, f64, u64, 52, 1023, next_u64x2 }
 simd_float_impls! { f64x4, u64x4, f64, u64, 52, 1023, next_u64x4 }
 simd_float_impls! { f64x8, u64x8, f64, u64, 52, 1023, next_u64x8 }
-
-#[test]
-fn simd_float_gen() {
-    use simd::sfc_32_simd::*;
-
-    let mut thread_rng = thread_rng();
-
-    for _ in 0..100 {
-        let mut a = NonSimdRng::from_rng(&mut thread_rng).unwrap();
-        let mut b = NonSimdRng::from_rng(&mut thread_rng).unwrap();
-
-        let mut simd_rng = Sfc32X2::from_non_simd(&[a.clone(), b.clone()]);
-
-        for _ in 0..100_000 {
-            // The trait implementation isn't worked out yet so this is just a 
-            // global function returning f32x2.
-            let actual: f32x2 = Standard.sample(&mut simd_rng);
-            let expected = f32x2::new(a.gen::<f32>(), b.gen::<f32>());
-
-            assert_eq!(expected, actual);
-        }
-    }
-}
 
 trait SimdRangeImpl {
     type X;
@@ -122,32 +97,62 @@ simd_range_float_impl! { f64x2, u64x2, 64 - 52, next_u64x2 }
 simd_range_float_impl! { f64x4, u64x4, 64 - 52, next_u64x4 }
 simd_range_float_impl! { f64x8, u64x8, 64 - 52, next_u64x8 }
 
-#[test]
-fn simd_float_range() {
-    use simd::sfc_32_simd::*;
+#[cfg(test)]
+mod tests {
+    use {thread_rng, SeedableRng, Rng};
+    use distributions::range::{RangeFloat, RangeImpl};
+    use distributions::Standard;
+    use core::simd::*;
     use core::f32;
+    use simd::sfc_32_simd::*;
 
-    let mut thread_rng = thread_rng();
+    use super::{SimdDistribution, SimdRangeImpl};
 
-    for i in 0..10_000 {
-        let low: f32 = thread_rng.gen_range(0.0, f32::MAX / 3.0);
-        let high: f32 = thread_rng.gen_range(low, f32::MAX / 2.0);
+    #[test]
+    fn simd_float_gen() {
+        let mut thread_rng = thread_rng();
 
-        let mut a = NonSimdRng::from_rng(&mut thread_rng).unwrap();
-        let mut b = NonSimdRng::from_rng(&mut thread_rng).unwrap();
-        let reg_range = RangeFloat::<f32>::new(low, high);
+        for _ in 0..100 {
+            let mut a = NonSimdRng::from_rng(&mut thread_rng).unwrap();
+            let mut b = NonSimdRng::from_rng(&mut thread_rng).unwrap();
 
-        let mut simd_rng = Sfc32X2::from_non_simd(&[a.clone(), b.clone()]);
-        let simd_range: RangeFloat<f32x2> = SimdRangeImpl::new(f32x2::splat(low), f32x2::splat(high));
+            let mut simd_rng = Sfc32X2::from_non_simd(&[a.clone(), b.clone()]);
 
-        for j in 0..1000 {
-            let actual: f32x2 = simd_range.sample(&mut simd_rng);
-            let expected = f32x2::new(
-                reg_range.sample(&mut a),
-                reg_range.sample(&mut b),
-            );
+            for _ in 0..100_000 {
+                // The trait implementation isn't worked out yet so this is just a 
+                // global function returning f32x2.
+                let actual: f32x2 = Standard.sample(&mut simd_rng);
+                let expected = f32x2::new(a.gen::<f32>(), b.gen::<f32>());
 
-            assert_eq!(expected, actual, "i {} j {}", i, j);
+                assert_eq!(expected, actual);
+            }
+        }
+    }
+
+    #[test]
+    fn simd_float_range() {
+        let mut thread_rng = thread_rng();
+
+        for i in 0..10_000 {
+            let low: f32 = thread_rng.gen_range(0.0, f32::MAX / 3.0);
+            let high: f32 = thread_rng.gen_range(low, f32::MAX / 2.0);
+
+            let mut a = NonSimdRng::from_rng(&mut thread_rng).unwrap();
+            let mut b = NonSimdRng::from_rng(&mut thread_rng).unwrap();
+            let reg_range = RangeFloat::<f32>::new(low, high);
+
+            let mut simd_rng = Sfc32X2::from_non_simd(&[a.clone(), b.clone()]);
+            let simd_range: RangeFloat<f32x2> = SimdRangeImpl::new(f32x2::splat(low), f32x2::splat(high));
+
+            for j in 0..1000 {
+                let actual: f32x2 = simd_range.sample(&mut simd_rng);
+                let expected = f32x2::new(
+                    reg_range.sample(&mut a),
+                    reg_range.sample(&mut b),
+                );
+
+                assert_eq!(expected, actual, "i {} j {}", i, j);
+            }
         }
     }
 }

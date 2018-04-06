@@ -11,6 +11,7 @@ pub type NonSimdRng = Sfc32Rng;
 macro_rules! make_sfc_32_simd {
     ($rng_name:ident, $vector:ident, $next_u:ident, $test_name:ident) => (
         /// A SIMD implementation of Chris Doty-Humphrey's Small Fast Counting RNG (32-bit)
+        #[derive(Clone)]
         pub struct $rng_name {
             a: $vector,
             b: $vector,
