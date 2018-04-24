@@ -44,6 +44,7 @@ pub mod chacha;
 pub mod hc128;
 pub mod isaac;
 pub mod isaac64;
+mod sfc32;
 mod xorshift;
 
 mod isaac_array;
@@ -52,4 +53,6 @@ pub use self::chacha::ChaChaRng;
 pub use self::hc128::Hc128Rng;
 pub use self::isaac::IsaacRng;
 pub use self::isaac64::Isaac64Rng;
+pub use self::sfc32::Sfc32Rng;
+pub use self::sfc32::*;
 pub use self::xorshift::XorShiftRng;
