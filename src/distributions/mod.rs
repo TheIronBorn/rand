@@ -37,6 +37,7 @@ pub use self::exponential::{Exp, Exp1};
 pub use self::poisson::Poisson;
 #[cfg(feature = "std")]
 pub use self::binomial::Binomial;
+#[cfg(feature="simd_support")] // neccessary for doc tests?
 pub use self::box_muller::{BoxMuller, BoxMullerCore, LogBoxMuller};
 
 pub mod range;

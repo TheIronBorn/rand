@@ -12,7 +12,7 @@
 
 use core::{fmt, slice, mem};
 
-
+#[cfg(feature="simd_support")]
 use core::simd::*;
 
 use rand_core::{RngCore, SeedableRng, Error, impls, le};

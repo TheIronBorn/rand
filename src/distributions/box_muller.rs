@@ -39,6 +39,7 @@ use Rng;
 /// [`Normal`]: ../normal/struct.Normal.html
 /// [Box–Muller transform]: https://en.wikipedia.org/wiki/Box-Muller_transform
 #[derive(Clone, Copy, Debug)]
+#[cfg(feature="simd_support")] // neccessary for doc tests?
 pub struct BoxMuller<T> {
     flag: bool,
     z1: T,
@@ -46,6 +47,7 @@ pub struct BoxMuller<T> {
     std_dev: T,
 }
 
+#[cfg(feature="simd_support")] // neccessary for doc tests?
 impl<T: Default + PartialOrd> BoxMuller<T> {
     /// Construct a new `BoxMuller` normal distribution with the given mean
     /// and standard deviation.
@@ -71,14 +73,13 @@ pub trait BoxMullerCore<T> {
     ///
     /// Returns two independent random numbers with a standard normal
     /// distribution.
-    #[inline(always)]
     fn box_muller<R: Rng>(rng: &mut R) -> (T, T);
 
     /// Generate a random value of `T`, using `rng` as the source of randomness.
-    #[inline(always)]
     fn sample<R: Rng>(&mut self, rng: &mut R) -> T;
 }
 
+#[cfg(feature="simd_support")] // neccessary for doc tests?
 impl BoxMullerCore<f64> for BoxMuller<f64> {
     fn box_muller<R: Rng>(rng: &mut R) -> (f64, f64) {
         const TWO_PI: f64 = PI_64 * 2.0;
@@ -106,6 +107,7 @@ impl BoxMullerCore<f64> for BoxMuller<f64> {
     }
 }
 
+#[cfg(feature="simd_support")] // neccessary for doc tests?
 impl BoxMullerCore<f32> for BoxMuller<f32> {
     fn box_muller<R: Rng>(rng: &mut R) -> (f32, f32) {
         const TWO_PI: f32 = PI_32 * 2.0;
@@ -204,6 +206,7 @@ impl_box_muller!(
 /// [`LogNormal`]: ../normal/struct.LogNormal.html
 /// [Box–Muller transform]: https://en.wikipedia.org/wiki/Box-Muller_transform
 #[derive(Clone, Copy, Debug)]
+#[cfg(feature="simd_support")] // neccessary for doc tests?
 pub struct LogBoxMuller<T>
 where
     BoxMuller<T>: BoxMullerCore<T>,
@@ -249,21 +252,17 @@ where
     Self: Sized,
 {
     /// Returns the natural logarithm of each lane of the vector.
-    #[inline(always)]
     fn ln(&self) -> Self;
 
     /// Simultaneously computes the sine and cosine of the vector. Returns
     /// (sin, cos).
-    #[inline(always)]
     fn sin_cos(&self) -> (Self, Self);
 
     /// Returns the square root of each lane of the vector.
     /// It should compile down to a single instruction.
-    #[inline(always)]
     fn sqrt(&self) -> Self;
 
     /// Returns `e^(self)`, (the exponential function).
-    #[inline(always)]
     fn exp(&self) -> Self;
 }
 
