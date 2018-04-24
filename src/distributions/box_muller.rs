@@ -139,7 +139,7 @@ macro_rules! impl_box_muller {
                 const TWO_PI: $vector = $vector::splat(2.0 * $pi);
 
                 let radius = ($vector::splat(-2.0) * rng.gen::<$vector>().ln()).sqrt();
-                let (sin_theta, cos_theta) = (TWO_PI * rng.gen::<$vector>()).sincos();
+                let (sin_theta, cos_theta) = (TWO_PI * rng.gen::<$vector>()).sin_cos();
 
                 (radius * sin_theta, radius * cos_theta)
             }
@@ -253,7 +253,7 @@ where
     /// Simultaneously computes the sine and cosine of the vector. Returns
     /// (sin, cos).
     #[inline(always)]
-    fn sincos(&self) -> (Self, Self);
+    fn sin_cos(&self) -> (Self, Self);
 
     /// Returns the square root of each lane of the vector.
     /// It should compile down to a single instruction.
@@ -269,7 +269,7 @@ where
 macro_rules! impl_simd_math {
     ($fty:ident, $uty:ident, $uscalar:ty, $fscalar:ident) => (
         impl SimdMath for $fty {
-            fn sincos(&self) -> ($fty, $fty) {
+            fn sin_cos(&self) -> ($fty, $fty) {
                 const SIGN_MASK: $uscalar = 1 << size_of::<$uscalar>() * 8 - 1;
 
                 let mut x = *self;
@@ -559,7 +559,7 @@ impl SimdMath for f32x4 {
         }
     }
 
-    fn sincos(&self) -> (f32x4, f32x4) {
+    fn sin_cos(&self) -> (f32x4, f32x4) {
         let mut x = __m128::from_bits(*self);
 
         unsafe {
@@ -676,7 +676,7 @@ impl SimdMath for f32x4 {
 
 #[cfg(feature="simd_support")]
 impl SimdMath for f32x8 {
-    fn sincos(&self) -> (Self, Self) {
+    fn sin_cos(&self) -> (Self, Self) {
         let minus_cephes_dp1 = __m256::from_bits(f32x8::splat(-0.78515625));
         let minus_cephes_dp2 = __m256::from_bits(f32x8::splat(-2.4187564849853515625e-4));
         let minus_cephes_dp3 = __m256::from_bits(f32x8::splat(-3.77489497744594108e-8));
@@ -1009,17 +1009,22 @@ impl SimdMath for f32x8 {
 
             /* build 2^n */
             let mut imm0 = _mm256_cvttps_epi32(fx);
+
             // another two AVX2 instructions
             /*imm0 = _mm256_add_epi32(imm0, __m256i::from_bits(u32x8::splat(0x7f)));
             imm0 = _mm256_slli_epi32(imm0, 23);*/
+                // impl `(x + 0x7f) << 32` without avx2...
+                // ...with intrinsics
                 /*let (mut a, mut b): (__m128i, __m128i) = transmute(imm0);
                 a = _mm_add_epi32(a, __m128i::from_bits(u32x4::splat(0x7f)));
                 b = _mm_add_epi32(b, __m128i::from_bits(u32x4::splat(0x7f)));
                 a = _mm_slli_epi32(a, 23);
                 b = _mm_slli_epi32(b, 23);
                 imm0 = transmute((a, b));*/
+                // ...or with abstraction
                 imm0 = __m256i::from_bits(u32x8::from_bits(imm0) + u32x8::splat(0x7f));
                 imm0 = __m256i::from_bits(u32x8::from_bits(imm0) << 23);
+
             let pow2n: __m256 = _mm256_castsi256_ps(imm0);
             y = _mm256_mul_ps(y, pow2n);
             return f32x8::from_bits(y);
@@ -1070,7 +1075,7 @@ mod tests {
                 let mut rng = Sfc32x4Rng::from_rng(&mut ::thread_rng()).unwrap();
                 for _ in 0..TEST_N {
                     let num = rng.gen::<$ty>();
-                    let (actual_sin, actual_cos) = num.sincos();
+                    let (actual_sin, actual_cos) = num.sin_cos();
 
                     for i in 0..$ty::lanes() {
                         let (expected_sin, expected_cos) = num.extract(i).sin_cos();
