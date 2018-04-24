@@ -1,4 +1,5 @@
 #![feature(test)]
+#![cfg_attr(feature = "simd_support", feature(stdsimd))]
 #![cfg_attr(feature = "i128_support", feature(i128_type, i128))]
 
 extern crate test;
@@ -7,10 +8,17 @@ extern crate rand;
 const RAND_BENCH_N: u64 = 1000;
 
 use std::mem::size_of;
+#[cfg(feature = "simd_support")]
+use std::simd::*;
 use test::{black_box, Bencher};
 
 use rand::{Rng, NewRng, XorShiftRng};
+
+#[cfg(feature = "simd_support")]
+use rand::prng::Sfc32x4Rng;
 use rand::distributions::*;
+#[cfg(feature="simd_support")]
+use rand::distributions::box_muller::*;
 
 macro_rules! distr_int {
     ($fnn:ident, $ty:ty, $distr:expr) => {
@@ -33,14 +41,15 @@ macro_rules! distr_int {
 }
 
 macro_rules! distr_float {
-    ($fnn:ident, $ty:ty, $distr:expr) => {
+    ($fnn:ident, $ty:ident, $rng:ident, $distr:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
-            let mut rng = XorShiftRng::new();
-            let distr = $distr;
+            let mut rng = $rng::new();
+            #[allow(unused_mut)]
+            let mut distr = $distr;
 
             b.iter(|| {
-                let mut accum = 0.0;
+                let mut accum = $ty::default();
                 for _ in 0..::RAND_BENCH_N {
                     let x: $ty = distr.sample(&mut rng);
                     accum += x;
@@ -78,8 +87,8 @@ distr_int!(distr_range_i64, i64, Range::new(3i64, 123_456_789_123));
 #[cfg(feature = "i128_support")]
 distr_int!(distr_range_i128, i128, Range::new(-123_456_789_123i128, 123_456_789_123_456_789));
 
-distr_float!(distr_range_f32, f32, Range::new(2.26f32, 2.319));
-distr_float!(distr_range_f64, f64, Range::new(2.26f64, 2.319));
+distr_float!(distr_range_f32, f32, XorShiftRng, Range::new(2.26f32, 2.319));
+distr_float!(distr_range_f64, f64, XorShiftRng, Range::new(2.26f64, 2.319));
 
 // uniform
 distr_int!(distr_uniform_i8, i8, Standard);
@@ -93,15 +102,19 @@ distr!(distr_uniform_bool, bool, Standard);
 distr!(distr_uniform_alphanumeric, char, Alphanumeric);
 distr!(distr_uniform_codepoint, char, Standard);
 
-distr_float!(distr_uniform_f32, f32, Standard);
-distr_float!(distr_uniform_f64, f64, Standard);
+distr_float!(distr_uniform_f32, f32, XorShiftRng, Standard);
+distr_float!(distr_uniform_f64, f64, XorShiftRng, Standard);
 
 // distributions
-distr_float!(distr_exp, f64, Exp::new(1.23 * 4.56));
-distr_float!(distr_normal, f64, Normal::new(-1.23, 4.56));
-distr_float!(distr_log_normal, f64, LogNormal::new(-1.23, 4.56));
-distr_float!(distr_gamma_large_shape, f64, Gamma::new(10., 1.0));
-distr_float!(distr_gamma_small_shape, f64, Gamma::new(0.1, 1.0));
+distr_float!(distr_exp, f64, XorShiftRng, Exp::new(1.23 * 4.56));
+distr_float!(distr_normal, f64, XorShiftRng, Normal::new(-1.23, 4.56));
+#[cfg(feature="simd_support")]
+distr_float!(distr_normal_Sfc32x4, f32x8, Sfc32x4Rng, BoxMuller::new(f32x8::splat(-1.23), f32x8::splat(4.56)));
+distr_float!(distr_log_normal, f64, XorShiftRng, LogNormal::new(-1.23, 4.56));
+#[cfg(feature="simd_support")]
+distr_float!(distr_log_normal_Sfc32x4, f32x8, Sfc32x4Rng, LogBoxMuller::new(f32x8::splat(-1.23), f32x8::splat(4.56)));
+distr_float!(distr_gamma_large_shape, f64, XorShiftRng, Gamma::new(10., 1.0));
+distr_float!(distr_gamma_small_shape, f64, XorShiftRng, Gamma::new(0.1, 1.0));
 distr_int!(distr_binomial, u64, Binomial::new(20, 0.7));
 distr_int!(distr_poisson, u64, Poisson::new(4.0));
 
