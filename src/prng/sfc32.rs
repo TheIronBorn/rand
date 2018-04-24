@@ -11,10 +11,13 @@
 //! SFC generators (32-bit).
 
 use core::{fmt, slice, mem};
-#[cfg(feature="simd_support")]
+
+
 use core::simd::*;
 
 use rand_core::{RngCore, SeedableRng, Error, impls, le};
+#[cfg(feature="simd_support")]
+use rand_core::simd_impls::{SimdRng, SimdRngImpls};
 
 /// A Small Fast Counting RNG designed by Chris Doty-Humphrey (32-bit version).
 ///
@@ -47,7 +50,7 @@ impl SeedableRng for Sfc32Rng {
     fn from_seed(seed: Self::Seed) -> Self {
         let mut seed_u32 = [0u32; 3];
         le::read_u32_into(&seed, &mut seed_u32);
-        let mut state = Self { a: seed_u32[0],
+        let state = Self { a: seed_u32[0],
                                b: seed_u32[1],
                                c: seed_u32[2],
                                counter: 1};
@@ -126,43 +129,17 @@ macro_rules! make_sfc_32_simd {
         impl RngCore for $rng_name {
             #[inline(always)]
             fn next_u32(&mut self) -> u32 {
-                let results = $vector32::from_bits(self.generate());
-                results.extract(0)
+                $vector::next_u32_via_simd(self)
             }
 
             #[inline(always)]
             fn next_u64(&mut self) -> u64 {
-                let results = $vector32::from_bits(self.generate());
-                let x = u64::from(results.extract(0));
-                let y = u64::from(results.extract(1));
-                (y << 32) | x
+                $vector::next_u64_via_simd(self)
             }
 
             #[inline(always)]
             fn fill_bytes(&mut self, dest: &mut [u8]) {
-                // Forced inlining will keep the result in SIMD registers if
-                // the code using it also uses it in a SIMD context.
-                let chunk_size = ::core::mem::size_of::<$vector>();
-                let remainder = dest.len() % chunk_size;
-                let len = dest.len() - remainder;
-                let mut read_len = 0;
-                let mut results;
-                loop {
-                    // FIXME: on big-endian we should do byte swapping around
-                    // here.
-                    results = $vector8::from_bits(self.generate());
-                    if read_len < len {
-                        results.store_unaligned(&mut dest[read_len..]);
-                        read_len += chunk_size;
-                    }
-                    if read_len == len { break; }
-                }
-                if remainder > 0 {
-                    // TODO: this part can probably be done better
-                    for i in 0..remainder {
-                        dest[read_len+i] = results.extract(i);
-                    }
-                }
+                $vector::fill_bytes_via_simd(self, dest)
             }
 
             fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
@@ -194,7 +171,9 @@ macro_rules! make_sfc_32_simd {
 
                 Self::from_vector(a, b, c)
             }
+        }
 
+        impl SimdRng<$vector> for $rng_name {
             #[inline(always)]
             fn generate(&mut self) -> $vector {
                 #[inline]

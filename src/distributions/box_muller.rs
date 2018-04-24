@@ -2,6 +2,8 @@
 //!
 //! <https://en.wikipedia.org/wiki/Box-Muller_transform>
 
+// TODO: look into more accuruate math
+
 #[cfg(feature="simd_support")]
 use core::simd::*;
 #[cfg(feature="simd_support")]
@@ -1038,8 +1040,7 @@ mod tests {
     use SeedableRng;
     use prng::Sfc32x4Rng;
 
-    const BENCH_N: usize = 1 << 10;
-    const TEST_N: usize = 1 << 15;
+    const TEST_N: usize = 1 << 10;
 
     macro_rules! make_log_test {
         ($test_name:ident, $ty:ident) => (

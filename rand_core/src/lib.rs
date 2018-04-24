@@ -41,6 +41,7 @@
 
 #![cfg_attr(not(feature="std"), no_std)]
 #![cfg_attr(all(feature="alloc", not(feature="std")), feature(alloc))]
+#![cfg_attr(feature="simd_support", feature(stdsimd))]
 
 #[cfg(feature="std")] extern crate core;
 #[cfg(all(feature = "alloc", not(feature="std")))] extern crate alloc;
@@ -59,6 +60,8 @@ pub use error::{ErrorKind, Error};
 mod error;
 pub mod impls;
 pub mod le;
+#[cfg(feature="simd_support")]
+pub mod simd_impls;
 
 
 /// The core of a random number generator.
