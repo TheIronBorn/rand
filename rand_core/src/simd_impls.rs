@@ -103,30 +103,24 @@ macro_rules! impl_simd_rng {
             fn fill_bytes_via_simd<R: SimdRng<$vector>>(rng: &mut R, dest: &mut [u8]) {
                 // Forced inlining will keep the result in SIMD registers if
                 // the code using it also uses it in a SIMD context.
-                let chunk_size = mem::size_of::<$vector>();
-                let remainder = dest.len() % chunk_size;
-                let len = dest.len() - remainder;
+                const CHUNK_SIZE: usize = mem::size_of::<$vector>();
                 let mut read_len = 0;
-                let mut results;
-                loop {
+                for _ in 0..dest.len() / CHUNK_SIZE {
                     // FIXME: on big-endian we should do byte swapping around
                     // here.
-                    results = $v8::from_bits(rng.generate());
-                    if read_len < len {
-                        results.store_aligned(&mut dest[read_len..]);
-                        read_len += chunk_size;
-                    }
-                    if read_len == len { break; }
+                    let results = $v8::from_bits(rng.generate());
+                    results.store_aligned(&mut dest[read_len..]);
+                    read_len += CHUNK_SIZE;
                 }
+                let remainder = dest.len() % CHUNK_SIZE;
                 if remainder > 0 {
-                    // TODO: this part can probably be done better
-                    // - the compiler seems to intelligently store a smaller
-                    //   vector.  i.e. for a u32x8 and `remaining == 7`, it 
-                    //   will store the first u32x4 into `dest` then do some 
-                    //   slower stuff for the remaining 3 lanes
-                    for i in 0..remainder {
-                        dest[read_len+i] = results.extract(i);
-                    }
+                    // This could be `ptr::copy_nonoverlapping` but I'm not
+                    // sure SIMD is happy with it.
+                    let results = $v8::from_bits(rng.generate());
+                    let len = dest.len() - remainder;
+                    let mut buf = [0_u8; $v8::lanes()];
+                    results.store_aligned(&mut buf);
+                    dest[len..].copy_from_slice(&buf[..remainder]);
                 }
             }
         }
@@ -175,14 +169,13 @@ impl SimdRngImpls<u32x2> for u32x2 {
             if read_len == len { break; }
         }
         if remainder > 0 {
-            // TODO: this part can probably be done better
-            // - the compiler seems to intelligently store a smaller
-            //   vector.  i.e. for a u32x8 and `remaining == 7`, it 
-            //   will store the first u32x4 into `dest` then do some 
-            //   slower stuff for the remaining 3 lanes
-            for i in 0..remainder {
-                dest[read_len+i] = results.extract(i);
-            }
+            // This could be `ptr::copy_nonoverlapping` but I'm not
+            // sure SIMD is happy with it.
+            let results = u8x8::from_bits(rng.generate());
+            let len = dest.len() - remainder;
+            let mut buf = [0_u8; u8x8::lanes()];
+            results.store_aligned(&mut buf);
+            dest[len..].copy_from_slice(&buf[..remainder]);
         }
     }
 }

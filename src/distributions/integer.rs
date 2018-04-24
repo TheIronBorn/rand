@@ -14,6 +14,7 @@ use {Rng};
 use distributions::{Distribution, Standard};
 #[cfg(feature="simd_support")]
 use std::simd::*;
+use std::mem;
 
 impl Distribution<isize> for Standard {
     #[inline]
@@ -113,9 +114,9 @@ impl Distribution<u128> for Standard {
 
 #[cfg(feature="simd_support")]
 macro_rules! simd_impl {
-    ($bits:expr,) => {};
-    ($bits:expr, $ty:ty, $($ty_more:ty,)*) => {
-        simd_impl!($bits, $($ty_more,)*);
+    () => {};
+    ($ty:ty, $($ty_more:ty,)*) => {
+        simd_impl!($($ty_more,)*);
 
         impl Distribution<$ty> for Standard {
             #[inline]
@@ -123,7 +124,7 @@ macro_rules! simd_impl {
                 let mut vec = Default::default();
                 unsafe {
                     let ptr = &mut vec;
-                    let b_ptr = &mut *(ptr as *mut $ty as *mut [u8; $bits/8]);
+                    let b_ptr = &mut *(ptr as *mut $ty as *mut [u8; mem::size_of::<$ty>()]);
                     rng.fill_bytes(b_ptr);
                     // FIXME: on big-endian we should do byte swapping here.
                 }
@@ -134,17 +135,17 @@ macro_rules! simd_impl {
 }
 
 #[cfg(feature="simd_support")]
-simd_impl!(16, u8x2, i8x2,);
+simd_impl!(u8x2, i8x2,);
 #[cfg(feature="simd_support")]
-simd_impl!(32, u8x4, i8x4, u16x2, i16x2,);
+simd_impl!(u8x4, i8x4, u16x2, i16x2,);
 #[cfg(feature="simd_support")]
-simd_impl!(64, u8x8, i8x8, u16x4, i16x4, u32x2, i32x2,);
+simd_impl!(u8x8, i8x8, u16x4, i16x4, u32x2, i32x2,);
 #[cfg(feature="simd_support")]
-simd_impl!(128, u8x16, i8x16, u16x8, i16x8, u32x4, i32x4, u64x2, i64x2,);
+simd_impl!(u8x16, i8x16, u16x8, i16x8, u32x4, i32x4, u64x2, i64x2,);
 #[cfg(feature="simd_support")]
-simd_impl!(256, u8x32, i8x32, u16x16, i16x16, u32x8, i32x8, u64x4, i64x4,);
+simd_impl!(u8x32, i8x32, u16x16, i16x16, u32x8, i32x8, u64x4, i64x4,);
 #[cfg(feature="simd_support")]
-simd_impl!(512, u8x64, i8x64, u16x32, i16x32, u32x16, i32x16, u64x8, i64x8,);
+simd_impl!(u8x64, i8x64, u16x32, i16x32, u32x16, i32x16, u64x8, i64x8,);
 
 #[cfg(test)]
 mod tests {
