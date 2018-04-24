@@ -224,6 +224,7 @@ macro_rules! make_sfc_32_simd {
             fn from_seed(_seed: Self::Seed) -> Self {
                 unimplemented!();
             }
+
             #[inline]
             fn from_rng<R: RngCore>(mut rng: R) -> Result<Self, Error> {
                 let mut seed_u32 = [0u32; $vector::lanes() * 3];
@@ -244,17 +245,17 @@ macro_rules! make_sfc_32_simd {
                 ))
             }
         }
-/*
-        #[test]
+
+        /*#[test]
         fn $test_name() {
             use thread_rng;
 
-            fn test(reg_rngs: &mut [NonSimdRng]) {
+            fn test(reg_rngs: &mut [Sfc32Rng]) {
                 let mut simd_rng = $rng_name::from_non_simd(reg_rngs);
 
-                for i in 0..super::SIMD_CORRECTNESS_N {
-                    let expected = reg_rngs.iter_mut().map(|x| x.gen::<u32>());
-                    let next: $vector = simd_rng.gen();
+                for i in 0..20 {
+                    let expected = reg_rngs.iter_mut().map(|x| x.next_u32());
+                    let next: $vector = simd_rng.generate();
 
                     for (j, exp) in expected.enumerate() {
                         let actual = next.extract(j);
@@ -263,20 +264,14 @@ macro_rules! make_sfc_32_simd {
                 }
             }
 
-            let mut zero_rngs: Vec<_> = (0..$vector::lanes())
-                .map(|_| NonSimdRng::from_good_seed(Default::default()))
-                .collect();
-            test(&mut zero_rngs);
-
             let mut rng = thread_rng();
-            for _ in 0..super::SIMD_CORRECTNESS_SEEDS {
+            for _ in 0..20 {
                 let mut reg_rngs: Vec<_> = (0..$vector::lanes())
-                    .map(|_| NonSimdRng::from_rng(&mut rng).unwrap())
+                    .map(|_| Sfc32Rng::from_rng(&mut rng).unwrap())
                     .collect();
                 test(&mut reg_rngs);
             }
-        }
-*/
+        }*/
     )
 }
 
