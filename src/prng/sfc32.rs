@@ -10,7 +10,7 @@
 
 //! SFC generators (32-bit).
 
-use core::{fmt, slice};
+use core::{fmt, slice, mem};
 #[cfg(feature="simd_support")]
 use core::simd::*;
 
@@ -224,14 +224,13 @@ macro_rules! make_sfc_32_simd {
             fn from_seed(_seed: Self::Seed) -> Self {
                 unimplemented!();
             }
-
             #[inline]
             fn from_rng<R: RngCore>(mut rng: R) -> Result<Self, Error> {
                 let mut seed_u32 = [0u32; $vector::lanes() * 3];
                 unsafe {
                     let ptr = seed_u32.as_mut_ptr() as *mut u8;
 
-                    let slice = slice::from_raw_parts_mut(ptr, 32 / 8);
+                    let slice = slice::from_raw_parts_mut(ptr, mem::size_of::<$vector>() * 3);
                     rng.try_fill_bytes(slice)?;
                 }
 
