@@ -15,10 +15,10 @@
 //! source. These objects may have internal parameters set at contruction time
 //! (e.g. [`Range`], which has configurable bounds) or may have no internal
 //! parameters (e.g. [`Standard`]).
-//! 
+//!
 //! All distributions support the [`Distribution`] trait, and support usage
 //! via `distr.sample(&mut rng)` as well as via `rng.sample(distr)`.
-//! 
+//!
 //! [`Distribution`]: trait.Distribution.html
 //! [`Range`]: range/struct.Range.html
 //! [`Standard`]: struct.Standard.html
@@ -37,6 +37,7 @@ pub use self::exponential::{Exp, Exp1};
 pub use self::poisson::Poisson;
 #[cfg(feature = "std")]
 pub use self::binomial::Binomial;
+pub use self::box_muller::{BoxMuller, BoxMullerCore, LogBoxMuller};
 
 pub mod range;
 #[cfg(feature="std")]
@@ -49,6 +50,7 @@ pub mod exponential;
 pub mod poisson;
 #[cfg(feature = "std")]
 pub mod binomial;
+pub mod box_muller;
 
 mod float;
 mod integer;
@@ -58,7 +60,7 @@ mod other;
 #[cfg(feature="std")]
 mod ziggurat_tables;
 #[cfg(feature="std")]
-pub(crate) use distributions::float::IntoFloat;
+use distributions::float::IntoFloat;
 
 /// Types that can be used to create a random instance of `Support`.
 #[deprecated(since="0.5.0", note="use Distribution instead")]
@@ -92,7 +94,7 @@ mod impls {
     #[cfg(feature="std")]
     use distributions::normal::{Normal, LogNormal};
     use distributions::range::{Range, SampleRange};
-    
+
     impl<'a, T: Clone> Sample<T> for WeightedChoice<'a, T> {
         fn sample<R: Rng>(&mut self, rng: &mut R) -> T {
             Distribution::sample(self, rng)
@@ -103,7 +105,7 @@ mod impls {
             Distribution::sample(self, rng)
         }
     }
-    
+
     impl<T: SampleRange> Sample<T> for Range<T> {
         fn sample<R: Rng>(&mut self, rng: &mut R) -> T {
             Distribution::sample(self, rng)
@@ -114,7 +116,7 @@ mod impls {
             Distribution::sample(self, rng)
         }
     }
-    
+
     #[cfg(feature="std")]
     macro_rules! impl_f64 {
         ($($name: ident), *) => {
@@ -137,7 +139,7 @@ mod impls {
 }
 
 /// Types (distributions) that can be used to create a random instance of `T`.
-/// 
+///
 /// All implementations are expected to be immutable; this has the significant
 /// advantage of not needing to consider thread safety, and for most
 /// distributions efficient state-less sampling algorithms are available.
@@ -214,7 +216,7 @@ impl<'a, T, D: Distribution<T>> Distribution<T> for &'a D {
 
 /// A generic random value distribution. Generates values for various types
 /// with numerically uniform distribution.
-/// 
+///
 /// For floating-point numbers, this generates values from the open range
 /// `(0, 1)` (i.e. excluding 0.0 and 1.0).
 ///
@@ -252,7 +254,7 @@ impl<'a, T, D: Distribution<T>> Distribution<T> for &'a D {
 /// ```
 ///
 /// With dynamic dispatch (type erasure of `Rng`):
-/// 
+///
 /// ```rust
 /// use rand::{thread_rng, Rng, RngCore};
 /// use rand::distributions::Standard;
@@ -585,11 +587,11 @@ mod tests {
                                   Weighted { weight: x, item: 2 },
                                   Weighted { weight: 1, item: 3 }]);
     }
-    
+
     #[test] #[allow(deprecated)]
     fn test_backwards_compat_sample() {
         use distributions::{Sample, IndependentSample};
-        
+
         struct Constant<T> { val: T }
         impl<T: Copy> Sample<T> for Constant<T> {
             fn sample<R: Rng>(&mut self, _: &mut R) -> T { self.val }
@@ -597,12 +599,12 @@ mod tests {
         impl<T: Copy> IndependentSample<T> for Constant<T> {
             fn ind_sample<R: Rng>(&self, _: &mut R) -> T { self.val }
         }
-        
+
         let mut sampler = Constant{ val: 293 };
         assert_eq!(sampler.sample(&mut ::test::rng(233)), 293);
         assert_eq!(sampler.ind_sample(&mut ::test::rng(234)), 293);
     }
-    
+
     #[cfg(feature="std")]
     #[test] #[allow(deprecated)]
     fn test_backwards_compat_exp() {
