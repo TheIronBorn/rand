@@ -411,6 +411,118 @@ uniform_int_impl! { usize, isize, usize, isize, usize }
 #[cfg(feature = "i128_support")]
 uniform_int_impl! { u128, u128, u128, i128, u128 }
 
+#[cfg(feature = "simd_support")]
+macro_rules! uniform_simd_int_impl {
+    ($ty:ident, $unsigned:ident, $signed:ident, $u_scalar:ident) => {
+        // There is little point in `u_large/i_large` here because SIMD
+        // PRNGs can natively generate vectors as small as u8x16/etc.
+        // Generating a u64x8 then casting to u8x8 would be very slow
+        // for a PRNG which generates less than 512 bits. Generating
+        // then casting a u64x2 to a u8x2 would be an optimization the
+        // user must make.
+
+        // TODO: look into `Uniform::<u32x4>::new(0u32, 100)` functionality
+        //        perhaps `impl SampleUniform for $u_scalar`?
+        impl SampleUniform for $ty {
+            type Sampler = UniformInt<$ty>;
+        }
+
+        impl UniformSampler for UniformInt<$ty> {
+            type X = $ty;
+
+            #[inline] // if the range is constant, this helps LLVM to do the
+                      // calculations at compile-time.
+                      // TODO: test this ^ for simd
+            fn new(low: Self::X, high: Self::X) -> Self {
+                assert!(low.lt(high).all(), "Uniform::new called with `low >= high`");
+                UniformSampler::new_inclusive(low, high - 1)
+            }
+
+            #[inline] // if the range is constant, this helps LLVM to do the
+                      // calculations at compile-time.
+            fn new_inclusive(low: Self::X, high: Self::X) -> Self {
+                assert!(low.le(high).all(),
+                        "Uniform::new_inclusive called with `low > high`");
+                let unsigned_max = ::core::$u_scalar::MAX;
+
+                let range = $unsigned::from((high - low) + 1);
+                // the `range > 0` case is complicated. Unimplemented for now
+                let ints_to_reject = (unsigned_max - range + 1) % range;
+                let zone = unsigned_max - ints_to_reject;
+
+                UniformInt {
+                    low: low,
+                    // These are really $unsigned values, but store as $ty:
+                    range: $ty::from(range),
+                    zone: $ty::from(zone),
+                }
+            }
+
+            fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Self::X {
+                let range = $unsigned::from(self.range);
+                // TODO: ensure these casts are a no-op
+                let zone = $unsigned::from($signed::from(self.zone));
+
+                let mut v: $unsigned = rng.gen();
+                loop {
+                    let (hi, lo) = v.wmul(range);
+                    let mask = lo.le(zone);
+                    if mask.all() {
+                        return self.low + $ty::from(hi);
+                    }
+                    v = mask.select(v, rng.gen());
+                }
+            }
+        }
+    };
+
+    // bulk implementation
+    ($(($unsigned:ident, $signed:ident),)+ $u_scalar:ident) => {
+        $(
+            uniform_simd_int_impl!($unsigned, $unsigned, $signed, $u_scalar);
+            uniform_simd_int_impl!($signed, $unsigned, $signed, $u_scalar);
+        )+
+    };
+}
+
+#[cfg(feature = "simd_support")]
+uniform_simd_int_impl! {
+    (u64x2, i64x2),
+    (u64x4, i64x4),
+    (u64x8, i64x8),
+    u64
+}
+
+#[cfg(feature = "simd_support")]
+uniform_simd_int_impl! {
+    (u32x2, i32x2),
+    (u32x4, i32x4),
+    (u32x8, i32x8),
+    (u32x16, i32x16),
+    u32
+}
+
+#[cfg(feature = "simd_support")]
+uniform_simd_int_impl! {
+    (u16x2, i16x2),
+    (u16x4, i16x4),
+    (u16x8, i16x8),
+    (u16x16, i16x16),
+    (u16x32, i16x32),
+    u16
+}
+
+#[cfg(feature = "simd_support")]
+uniform_simd_int_impl! {
+    (u8x2, i8x2),
+    (u8x4, i8x4),
+    (u8x8, i8x8),
+    (u8x16, i8x16),
+    (u8x32, i8x32),
+    (u8x64, i8x64),
+    u8
+}
+
 
 trait WideningMultiply<RHS = Self> {
     type Output;
@@ -419,17 +531,34 @@ trait WideningMultiply<RHS = Self> {
 }
 
 macro_rules! wmul_impl {
-    ($ty:ty, $wide:ty, $shift:expr) => {
+    ($ty:ident, $wide:ident, $shift:expr) => {
         impl WideningMultiply for $ty {
             type Output = ($ty, $ty);
 
             #[inline(always)]
             fn wmul(self, x: $ty) -> Self::Output {
+                // TODO: look into SIMD optimizations
                 let tmp = (self as $wide) * (x as $wide);
                 ((tmp >> $shift) as $ty, tmp as $ty)
             }
         }
-    }
+    };
+
+    // simd bulk implementation
+    ($(($ty:ident, $wide:ident),)+, $shift:expr) => {
+        $(
+            impl WideningMultiply for $ty {
+                type Output = ($ty, $ty);
+
+                #[inline(always)]
+                fn wmul(self, x: $ty) -> Self::Output {
+                    // TODO: look into SIMD optimizations
+                    let tmp = $wide::from(self) * $wide::from(x);
+                    ($ty::from(tmp >> $shift), $ty::from(tmp))
+                }
+            }
+        )+
+    };
 }
 wmul_impl! { u8, u16, 8 }
 wmul_impl! { u16, u32, 16 }
@@ -437,12 +566,37 @@ wmul_impl! { u32, u64, 32 }
 #[cfg(feature = "i128_support")]
 wmul_impl! { u64, u128, 64 }
 
+#[cfg(feature = "simd_support")]
+wmul_impl! {
+    (u8x2, u16x2),
+    (u8x4, u16x4),
+    (u8x8, u16x8),
+    (u8x16, u16x16),
+    (u8x32, u16x32),,
+    8
+}
+#[cfg(feature = "simd_support")]
+wmul_impl! {
+    (u16x2, u32x2),
+    (u16x4, u32x4),
+    (u16x8, u32x8),
+    (u16x16, u32x16),,
+    16
+}
+#[cfg(feature = "simd_support")]
+wmul_impl! {
+    (u32x2, u64x2),
+    (u32x4, u64x4),
+    (u32x8, u64x8),,
+    32
+}
+
 // This code is a translation of the __mulddi3 function in LLVM's
 // compiler-rt. It is an optimised variant of the common method
 // `(a + b) * (c + d) = ac + ad + bc + bd`.
 //
 // For some reason LLVM can optimise the C version very well, but
-// keeps shuffeling registers in this Rust translation.
+// keeps shuffling registers in this Rust translation.
 macro_rules! wmul_impl_large {
     ($ty:ty, $half:expr) => {
         impl WideningMultiply for $ty {
@@ -467,12 +621,50 @@ macro_rules! wmul_impl_large {
                 (high, low)
             }
         }
-    }
+    };
+
+    // simd bulk implementation
+    (($($ty:ty,)+) $scalar:ty, $half:expr) => {
+        $(
+            impl WideningMultiply for $ty {
+                type Output = ($ty, $ty);
+
+                #[inline(always)]
+                fn wmul(self, b: $ty) -> Self::Output {
+                    const LOWER_MASK: $scalar = !0 >> $half;
+                    let mut low = (self & LOWER_MASK) * (b & LOWER_MASK);
+                    let mut t = low >> $half;
+                    low &= LOWER_MASK;
+                    t += (self >> $half) * (b & LOWER_MASK);
+                    low += (t & LOWER_MASK) << $half;
+                    let mut high = t >> $half;
+                    t = low >> $half;
+                    low &= LOWER_MASK;
+                    t += (b >> $half) * (self & LOWER_MASK);
+                    low += (t & LOWER_MASK) << $half;
+                    high += t >> $half;
+                    high += (self >> $half) * (b >> $half);
+
+                    (high, low)
+                }
+            }
+        )+
+    };
 }
 #[cfg(not(feature = "i128_support"))]
 wmul_impl_large! { u64, 32 }
 #[cfg(feature = "i128_support")]
 wmul_impl_large! { u128, 64 }
+
+// TODO: optimize
+#[cfg(feature = "simd_support")]
+wmul_impl_large! { (u64x2, u64x4, u64x8,) u64, 32 }
+#[cfg(feature = "simd_support")]
+wmul_impl_large! { (u8x64,) u8, 4 }
+#[cfg(feature = "simd_support")]
+wmul_impl_large! { (u16x32,) u16, 8 }
+#[cfg(feature = "simd_support")]
+wmul_impl_large! { (u32x16,) u32, 16 }
 
 macro_rules! wmul_impl_usize {
     ($ty:ty) => {

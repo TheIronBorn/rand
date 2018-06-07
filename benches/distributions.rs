@@ -5,22 +5,14 @@
 
 extern crate test;
 extern crate rand;
-// #[cfg(features = "simd_support")]
-extern crate stdsimd;
 
 const RAND_BENCH_N: u64 = 1000;
 
 use std::mem::size_of;
 use test::Bencher;
-#[cfg(feature = "simd_support")]
-use stdsimd::simd::*;
 
 use rand::{Rng, FromEntropy, XorShiftRng};
 use rand::distributions::*;
-#[cfg(feature = "simd_support")]
-use rand::prng::Sfc32x4Rng;
-#[cfg(feature="simd_support")]
-use rand::distributions::box_muller::*;
 
 macro_rules! distr_int {
     ($fnn:ident, $ty:ident, $rng:ident, $distr:expr) => {
@@ -163,4 +155,57 @@ fn dist_iter(b: &mut Bencher) {
         accum
     });
     b.bytes = size_of::<f64>() as u64 * ::RAND_BENCH_N;
+}
+
+#[cfg(feature = "simd_support")]
+mod simd {
+    extern crate stdsimd;
+
+    use super::*;
+
+    use self::stdsimd::simd::*;
+
+    use rand::prng::*;
+
+    macro_rules! many_int_distr {
+        ($(($fnn:ident, $rng:ident, $ty:ident),)+, $low:expr, $high:expr) => (
+            $(
+                distr_int!($fnn, $ty, $rng, Uniform::new($ty::splat($low), $ty::splat($high)));
+            )+
+        )
+    }
+
+    many_int_distr! {
+        (distr_uniform_i8x2, Sfc32x2Rng, i8x2),
+        (distr_uniform_i8x4, Sfc32x2Rng, i8x4),
+        (distr_uniform_i8x8, Sfc32x2Rng, i8x8),
+        (distr_uniform_i8x16, Sfc32x4Rng, i8x16),
+        (distr_uniform_i8x32, Sfc32x4Rng, i8x32),
+        (distr_uniform_i8x64, Sfc32x4Rng, i8x64),,
+        20, 100
+    }
+
+    many_int_distr! {
+        (distr_uniform_i16x2, Sfc32x2Rng, i16x2),
+        (distr_uniform_i16x4, Sfc32x2Rng, i16x4),
+        (distr_uniform_i16x8, Sfc32x4Rng, i16x8),
+        (distr_uniform_i16x16, Sfc32x4Rng, i16x16),
+        (distr_uniform_i16x32, Sfc32x4Rng, i16x32),,
+        -500, 2000
+    }
+
+    many_int_distr! {
+        (distr_uniform_i32x2, Sfc32x2Rng, i32x2),
+        (distr_uniform_i32x4, Sfc32x4Rng, i32x4),
+        (distr_uniform_i32x8, Sfc32x4Rng, i32x8),
+        (distr_uniform_i32x16, Sfc32x4Rng, i32x16),,
+        -200_000_000, 800_000_000
+    }
+
+    many_int_distr! {
+        (distr_uniform_i64x2, Sfc32x4Rng, i64x2),
+        (distr_uniform_i64x4, Sfc32x4Rng, i64x4),
+        (distr_uniform_i64x8, Sfc32x4Rng, i64x8),,
+        3, 123_456_789_123
+    }
 }
