@@ -1,0 +1,3208 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"from",
+				"from_bits"
+			],
+			[
+				"vect",
+				"vectors"
+			],
+			[
+				"as",
+				"assert_eq\tassert_eq!(…, …)"
+			],
+			[
+				"extra",
+				"extract"
+			],
+			[
+				"sil",
+				"slice_idx"
+			],
+			[
+				"struc",
+				"struct-tuple\tstruct …(…);"
+			],
+			[
+				"ran",
+				"rand_core"
+			],
+			[
+				"coun",
+				"counter2"
+			],
+			[
+				"coutn",
+				"counter"
+			],
+			[
+				"count",
+				"counter2"
+			],
+			[
+				"Sfc16x",
+				"Sfc16X8"
+			],
+			[
+				"ne",
+				"next_vector"
+			],
+			[
+				"nex",
+				"next_u64"
+			],
+			[
+				"Ver",
+				"VeryFast32X16"
+			],
+			[
+				"iteR",
+				"iter_mut"
+			],
+			[
+				"next_",
+				"next_vector"
+			],
+			[
+				"macr",
+				"macro_rules\tmacro_rules! … { … }"
+			],
+			[
+				"ro",
+				"rotate_left"
+			],
+			[
+				"next_64",
+				"next_u64_via_u32"
+			],
+			[
+				"Fro",
+				"from_vector"
+			],
+			[
+				"mac",
+				"macro_rules\tmacro_rules! … { … }"
+			],
+			[
+				"net",
+				"next_vector"
+			],
+			[
+				"Xo",
+				"XoroX2"
+			],
+			[
+				"Defa",
+				"default"
+			],
+			[
+				"next",
+				"next_vector"
+			],
+			[
+				"Xorshi",
+				"Xorshift128PlusX8"
+			],
+			[
+				"maco",
+				"macro\t[macro_use]"
+			],
+			[
+				"macro",
+				"macro\t[macro_export]"
+			],
+			[
+				"Knu",
+				"KnuthLcg"
+			],
+			[
+				"rand",
+				"random_bound"
+			],
+			[
+				"see",
+				"seed_simd"
+			],
+			[
+				"print",
+				"println\tprintln!(…)"
+			],
+			[
+				"seed",
+				"seed_u64"
+			],
+			[
+				"form",
+				"from_u64_seed"
+			],
+			[
+				"un",
+				"unwrap"
+			],
+			[
+				"new_",
+				"new_from_u64"
+			],
+			[
+				"boun",
+				"random_bound"
+			],
+			[
+				"sp",
+				"SplitMix64"
+			],
+			[
+				"random",
+				"random_vals"
+			],
+			[
+				"vec",
+				"vector_size"
+			],
+			[
+				"rota",
+				"rotate_right"
+			],
+			[
+				"From",
+				"from"
+			],
+			[
+				"HY",
+				"HType"
+			],
+			[
+				"im",
+				"impl-trait\timpl … for … { … }"
+			],
+			[
+				"Xtyp",
+				"XType"
+			],
+			[
+				"BIT",
+				"BitCount"
+			],
+			[
+				"from_s",
+				"from_str_radix"
+			],
+			[
+				"exp",
+				"expected_cards"
+			],
+			[
+				"load",
+				"load_unaligned_unchecked"
+			],
+			[
+				"impl",
+				"impl_simd_shuf"
+			],
+			[
+				"ass",
+				"assert_eq\tassert_eq!(…, …)"
+			],
+			[
+				"nat",
+				"native_shuffle"
+			],
+			[
+				"rn",
+				"random_source"
+			],
+			[
+				"BENC",
+				"BENCH_N"
+			],
+			[
+				"Isaac",
+				"Isaac64Rng"
+			],
+			[
+				"size",
+				"size_of"
+			],
+			[
+				"gen",
+				"generate_seed"
+			],
+			[
+				"prit",
+				"println\tprintln!(…)"
+			],
+			[
+				"sum",
+				"sum_sq"
+			],
+			[
+				"prin",
+				"println\tprintln!(…)"
+			],
+			[
+				"na",
+				"native_shuffle"
+			],
+			[
+				"debu",
+				"debug_is_enabled"
+			],
+			[
+				"wri",
+				"writeln"
+			],
+			[
+				"num",
+				"number_of_sides"
+			],
+			[
+				"di",
+				"dice_args"
+			],
+			[
+				"dice",
+				"dice_arg"
+			],
+			[
+				"nu",
+				"number_of_sides"
+			],
+			[
+				"deub",
+				"debug_is_enabled"
+			],
+			[
+				"Xor",
+				"Xorshift1024"
+			],
+			[
+				"wrap",
+				"wrapping_mul"
+			],
+			[
+				"wr",
+				"wrapping_add"
+			],
+			[
+				"wra",
+				"wrapping_sub"
+			],
+			[
+				"nati",
+				"native_gen_range"
+			],
+			[
+				"trh",
+				"thread_rng"
+			],
+			[
+				"xorshi",
+				"xorshift_1024"
+			],
+			[
+				"ex",
+				"extern-crate\textern crate …;"
+			],
+			[
+				"Struc",
+				"struct_name"
+			],
+			[
+				"M",
+				"MULTIPLIER"
+			],
+			[
+				"uni",
+				"uninitialized"
+			],
+			[
+				"asser",
+				"assert_eq\tassert_eq!(…, …)"
+			],
+			[
+				"wrapp",
+				"wrapping_mul"
+			],
+			[
+				"BEN",
+				"BENCH_N"
+			],
+			[
+				"Is",
+				"IsaacRng"
+			],
+			[
+				"gen_r",
+				"gen_range"
+			],
+			[
+				"unwrap",
+				"unwrap_or"
+			],
+			[
+				"imp",
+				"impl\timpl … { … }"
+			],
+			[
+				"stru",
+				"struct\tstruct … { … }"
+			],
+			[
+				"fn",
+				"fn\tfn …(…) { … }"
+			],
+			[
+				"get_unc",
+				"get_unchecked_mut"
+			],
+			[
+				"Gr",
+				"GRID_SIZE"
+			],
+			[
+				"ms",
+				"msg_rcv"
+			],
+			[
+				"il",
+				"is_less"
+			],
+			[
+				"ASS",
+				"assert_selected"
+			],
+			[
+				"hol",
+				"hole_index"
+			],
+			[
+				"ben",
+				"bench\tbench"
+			],
+			[
+				"pri",
+				"println\tprintln!(…)"
+			],
+			[
+				"re",
+				"reverse"
+			],
+			[
+				"Benc",
+				"bench"
+			],
+			[
+				"get_",
+				"get_unchecked_mut"
+			],
+			[
+				"Leng",
+				"LENGTH"
+			],
+			[
+				"ot",
+				"other_other"
+			],
+			[
+				"dis",
+				"distributions"
+			],
+			[
+				"Ind",
+				"IndependentSample"
+			],
+			[
+				"get",
+				"get_unchecked_mut"
+			],
+			[
+				"distu",
+				"distribution"
+			],
+			[
+				"exter",
+				"extern-crate\textern crate …;"
+			],
+			[
+				"xor",
+				"xor_rng"
+			],
+			[
+				"rna",
+				"random"
+			],
+			[
+				"XorS",
+				"Xoroshiro128"
+			],
+			[
+				"rol",
+				"roll_dice"
+			],
+			[
+				"dic",
+				"dice_pool"
+			],
+			[
+				"pr",
+				"println\tprintln!(…)"
+			],
+			[
+				"roll",
+				"roll_d8"
+			],
+			[
+				"reul",
+				"results"
+			],
+			[
+				"xo",
+				"Xoroshiro128"
+			],
+			[
+				"thread",
+				"thread_rng"
+			],
+			[
+				"Rand",
+				"random"
+			],
+			[
+				"isaa",
+				"IsaacRng"
+			],
+			[
+				"thre",
+				"thread_rng"
+			],
+			[
+				"Wun",
+				"Wunderlist"
+			],
+			[
+				"sta",
+				"start_idx"
+			],
+			[
+				"pla",
+				"player_has_won"
+			],
+			[
+				"shu",
+				"shuffled_array_9"
+			],
+			[
+				"nou",
+				"nought_pattern"
+			],
+			[
+				"boa",
+				"board_mut"
+			],
+			[
+				"sampl",
+				"sample_mut"
+			],
+			[
+				"Ben",
+				"BENCH_SIZE"
+			],
+			[
+				"Bn",
+				"BENCH_SIZE"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "Packages/Rust Enhanced/RustEnhanced.sublime-build",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"Packages/AppleScript Extensions/AppleScript.sublime-build",
+					""
+				],
+				[
+					"Packages/AppleScript Extensions/AppleScript.sublime-build",
+					"Script bundle"
+				],
+				[
+					"Packages/AppleScript Extensions/AppleScript.sublime-build",
+					"Application"
+				],
+				[
+					"Packages/AppleScript Extensions/AppleScript.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/AppleScript Extensions/AppleScript.sublime-build",
+				"Run"
+			]
+		],
+		[
+			[
+				[
+					"Packages/AppleScript Extensions/AppleScript.sublime-build",
+					""
+				],
+				[
+					"Packages/AppleScript Extensions/AppleScript.sublime-build",
+					"Script bundle"
+				],
+				[
+					"Packages/AppleScript Extensions/AppleScript.sublime-build",
+					"Application"
+				],
+				[
+					"Packages/AppleScript Extensions/AppleScript.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/User/applescript.sublime-build",
+					""
+				],
+				[
+					"Packages/User/applescript.sublime-build",
+					"Script bundle"
+				],
+				[
+					"Packages/User/applescript.sublime-build",
+					"Application"
+				],
+				[
+					"Packages/User/applescript.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/User/applescript.sublime-build",
+				"Run"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Better CoffeeScript/CoffeeScript.sublime-build",
+					""
+				],
+				[
+					"Packages/Better CoffeeScript/CoffeeScript.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/Better CoffeeScript/CoffeeScript.sublime-build",
+				"Run"
+			]
+		],
+		[
+			[
+				[
+					"Packages/C# Compile & Run/CSharpSingleFileBuild.sublime-build",
+					""
+				],
+				[
+					"Packages/C# Compile & Run/CSharpSingleFileBuild.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/C# Compile & Run/CSharpSingleFileBuild.sublime-build",
+				"Run"
+			]
+		],
+		[
+			[
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/C++/C++ Single File.sublime-build",
+				"Run"
+			]
+		],
+		[
+			[
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/SublimeREPL/sublimerepl_build_system_hack.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/C++/C++ Single File.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/SublimeREPL/sublimerepl_build_system_hack.sublime-build",
+					""
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/C++/C++ Single File.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					""
+				],
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					"All Syntaxes"
+				],
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					"Performance"
+				],
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					"Regex Compatibility"
+				]
+			],
+			[
+				"Packages/Default/Syntax Tests.sublime-build",
+				"Performance"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					""
+				],
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					"All Syntaxes"
+				],
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					"Performance"
+				],
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					"Regex Compatibility"
+				],
+				[
+					"Packages/PackageDev/Support/Convert to ....sublime-build",
+					""
+				],
+				[
+					"Packages/PackageDev/Support/Convert to ....sublime-build",
+					"JSON"
+				],
+				[
+					"Packages/PackageDev/Support/Convert to ....sublime-build",
+					"Property List"
+				],
+				[
+					"Packages/PackageDev/Support/Convert to ....sublime-build",
+					"YAML (Block Style)"
+				],
+				[
+					"Packages/PackageDev/Support/Convert to ....sublime-build",
+					"YAML (Default Style)"
+				]
+			],
+			[
+				"Packages/Default/Syntax Tests.sublime-build",
+				"Performance"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					""
+				],
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					"All Syntaxes"
+				],
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					"Performance"
+				],
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					"Regex Compatibility"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Automatic"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Run (with args)..."
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Check"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Test (with args)..."
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Document"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Clippy"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Script"
+				]
+			],
+			[
+				"Packages/Default/Syntax Tests.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					""
+				],
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					"All Syntaxes"
+				],
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					"Performance"
+				],
+				[
+					"Packages/Default/Syntax Tests.sublime-build",
+					"Regex Compatibility"
+				],
+				[
+					"Packages/User/Swift/Swift.sublime-build",
+					""
+				],
+				[
+					"Packages/User/Swift/Swift.sublime-build",
+					"compile w/ optimizations"
+				],
+				[
+					"Packages/User/Swift/Swift.sublime-build",
+					"compile w/ optimizations (unsafe)"
+				],
+				[
+					"Packages/User/Swift/Swift.sublime-build",
+					"run binary"
+				]
+			],
+			[
+				"Packages/Default/Syntax Tests.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Makefile/Make.sublime-build",
+					""
+				],
+				[
+					"Packages/Makefile/Make.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Automatic"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Run (with args)..."
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Check"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Test (with args)..."
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Document"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Clippy"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Script"
+				]
+			],
+			[
+				"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+				"Test"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Python/Python.sublime-build",
+					""
+				],
+				[
+					"Packages/Python/Python.sublime-build",
+					"Syntax Check"
+				]
+			],
+			[
+				"Packages/Python/Python.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Automatic"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Run (with args)..."
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Check"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Test (with args)..."
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Document"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Clippy"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Script"
+				]
+			],
+			[
+				"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+				"Clippy"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Automatic"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Run (with args)..."
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Check"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Test (with args)..."
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Document"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Clippy"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Script"
+				],
+				[
+					"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+					"Custom"
+				]
+			],
+			[
+				"Packages/Rust Enhanced/RustEnhanced.sublime-build",
+				"Bench"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Release"
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					"w/ optimizations"
+				]
+			],
+			[
+				"Packages/Rust/Cargo.sublime-build",
+				"Bench"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/Rust/Rust.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					"w/ optimizations"
+				]
+			],
+			[
+				"Packages/Rust/Cargo.sublime-build",
+				"Run"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/SublimeREPL/sublimerepl_build_system_hack.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/Rust/Cargo.sublime-build",
+				"Clean"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/Rust/Cargo.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					""
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					"Release"
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					"Clippy"
+				],
+				[
+					"Packages/User/rust.sublime-build",
+					""
+				],
+				[
+					"Packages/User/rust.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/User/rust.sublime-build",
+				"Run"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					""
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/User/rust.sublime-build",
+					""
+				],
+				[
+					"Packages/User/rust.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/User/cargo.sublime-build",
+				"Run"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/User/cargo.sublime-build",
+					""
+				],
+				[
+					"Packages/User/rust.sublime-build",
+					""
+				],
+				[
+					"Packages/User/rust.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/Rust/Rust.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Test"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Bench"
+				],
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					"Clean"
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/User/rust.sublime-build",
+					""
+				],
+				[
+					"Packages/User/rust.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/Rust/Cargo.sublime-build",
+				"Run"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Rust/Cargo.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					""
+				],
+				[
+					"Packages/Rust/Rust.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/Rust/Cargo.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/SublimeREPL/sublimerepl_build_system_hack.sublime-build",
+					""
+				],
+				[
+					"Packages/User/bash.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/User/bash.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/SublimeREPL/sublimerepl_build_system_hack.sublime-build",
+					""
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/User/swift.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/User/Swift/Swift.sublime-build",
+					""
+				],
+				[
+					"Packages/User/Swift/Swift.sublime-build",
+					"compile w/ optimizations"
+				],
+				[
+					"Packages/User/Swift/Swift.sublime-build",
+					"compile w/ optimizations (unsafe)"
+				],
+				[
+					"Packages/User/Swift/Swift.sublime-build",
+					"run binary"
+				]
+			],
+			[
+				"Packages/User/Swift/Swift.sublime-build",
+				"compile w/ optimizations"
+			]
+		],
+		[
+			[
+				[
+					"Packages/User/Swift/Swift.sublime-build",
+					""
+				],
+				[
+					"Packages/User/Swift/Swift.sublime-build",
+					"compile w/ optimizations"
+				],
+				[
+					"Packages/User/Swift/Swift.sublime-build",
+					"compile w/ optimizations (unsafe)"
+				],
+				[
+					"Packages/User/Swift/Swift.sublime-build",
+					"run binary"
+				],
+				[
+					"Packages/User/Swift/Swift.sublime-build",
+					"compile w/t optimizations"
+				]
+			],
+			[
+				"Packages/User/Swift/Swift.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/User/Swift/swift.sublime-build",
+					""
+				],
+				[
+					"Packages/User/Swift/swift.sublime-build",
+					"compile w/ optimizations"
+				],
+				[
+					"Packages/User/Swift/swift.sublime-build",
+					"compile w/ optimizations (unsafe)"
+				],
+				[
+					"Packages/User/Swift/swift.sublime-build",
+					"run binary"
+				]
+			],
+			[
+				"Packages/User/Swift/swift.sublime-build",
+				"run binary"
+			]
+		],
+		[
+			[
+				[
+					"Packages/User/swift.sublime-build",
+					""
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"compile w/ optimizations"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"compile w/ optimizations (unsafe)"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"run binary"
+				]
+			],
+			[
+				"Packages/User/swift.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/User/swift.sublime-build",
+					""
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"compile with optimizations"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"compile with optimizations and remove runtime safety checks"
+				]
+			],
+			[
+				"Packages/User/swift.sublime-build",
+				"compile with optimizations and remove runtime safety checks"
+			]
+		],
+		[
+			[
+				[
+					"Packages/User/swift.sublime-build",
+					""
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"run w/ optimizations"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"run w/ optimizations (unsafe)"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"compile w/ optimizations"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"compile w/ optimizations (unsafe)"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"run binary"
+				]
+			],
+			[
+				"Packages/User/swift.sublime-build",
+				"run binary"
+			]
+		],
+		[
+			[
+				[
+					"Packages/User/swift.sublime-build",
+					""
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"w/ optimizations"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"w/ optimizations (unsafe)"
+				]
+			],
+			[
+				"Packages/User/swift.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/User/swift.sublime-build",
+					""
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"w/ optimizations"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"w/ optimizations (unsafe)"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"compile w/ optimizations"
+				]
+			],
+			[
+				"Packages/User/swift.sublime-build",
+				"compile w/ optimizations"
+			]
+		],
+		[
+			[
+				[
+					"Packages/User/swift.sublime-build",
+					""
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"w/ optimizations"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"w/ optimizations (unsafe)"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"compile w/ optimizations"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"compile w/ optimizations (unsafe)"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"run"
+				]
+			],
+			[
+				"Packages/User/swift.sublime-build",
+				"compile w/ optimizations (unsafe)"
+			]
+		],
+		[
+			[
+				[
+					"Packages/User/swift.sublime-build",
+					""
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"w/ optimizations"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"w/ optimizations (unsafe)"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"compile w/ optimizations"
+				],
+				[
+					"Packages/User/swift.sublime-build",
+					"run"
+				]
+			],
+			[
+				"Packages/User/swift.sublime-build",
+				"run"
+			]
+		]
+	],
+	"build_varint": "Clippy",
+	"command_palette":
+	{
+		"height": 392.0,
+		"last_filter": "canc",
+		"selected_items":
+		[
+			[
+				"canc",
+				"Rust: Cancel Build"
+			],
+			[
+				"color",
+				"UI: Select Color Scheme"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"sor",
+				"Sort Lines"
+			],
+			[
+				"ssc",
+				"Set Syntax: C"
+			],
+			[
+				"uniq",
+				"Permute Lines: Unique"
+			],
+			[
+				"ssre",
+				"Set Syntax: Rust Enhanced"
+			],
+			[
+				"pvrre",
+				"PackageResourceViewer: Open Resource"
+			],
+			[
+				"can",
+				"Rust: Cancel Build"
+			],
+			[
+				"ssrege",
+				"Set Syntax: Regular Expression"
+			],
+			[
+				"so",
+				"Sort Lines"
+			],
+			[
+				"colo",
+				"Set Syntax: Sublime Text Color Scheme (JSON)"
+			],
+			[
+				"col",
+				"UI: Select Color Scheme"
+			],
+			[
+				"c++",
+				"Set Syntax: C++"
+			],
+			[
+				"pvr",
+				"PackageResourceViewer: Extract Package"
+			],
+			[
+				"ppvr",
+				"PackageResourceViewer: Open Resource"
+			],
+			[
+				"",
+				"AlignTab: Live Preview Mode"
+			],
+			[
+				"ca",
+				"Rust: Cancel Build"
+			],
+			[
+				"ssmd",
+				"Set Syntax: Markdown"
+			],
+			[
+				"ssru\t",
+				"Set Syntax: Rust Enhanced"
+			],
+			[
+				"ssshe",
+				"Set Syntax: Shell Script (Bash)"
+			],
+			[
+				"++",
+				"Set Syntax: C++"
+			],
+			[
+				"ssrue",
+				"Set Syntax: Rust Enhanced"
+			],
+			[
+				"unu",
+				"Permute Lines: Unique"
+			],
+			[
+				"dif",
+				"Git: Diff Current File"
+			],
+			[
+				"uni",
+				"Permute Lines: Unique"
+			],
+			[
+				"cnac",
+				"Rust: Cancel Build"
+			],
+			[
+				"ssru",
+				"Set Syntax: Rust Enhanced"
+			],
+			[
+				"c",
+				"Set Syntax: C++"
+			],
+			[
+				"qui",
+				"Git: Quick Commit (current file)"
+			],
+			[
+				"diff",
+				"Git: Diff Current File"
+			],
+			[
+				"prev",
+				"Git: Show Previous Version of Current File"
+			],
+			[
+				"wrap",
+				"Word Wrap: Toggle"
+			],
+			[
+				"ssswi",
+				"Set Syntax: Swift"
+			],
+			[
+				"sstom",
+				"Set Syntax: TOML"
+			],
+			[
+				"qi",
+				"Git: Quick Commit (current file)"
+			],
+			[
+				"rustf",
+				"RustFormat: Format File"
+			],
+			[
+				"bea",
+				"BeautifyRust"
+			],
+			[
+				"wra",
+				"Word Wrap: Toggle"
+			],
+			[
+				"log",
+				"Git: Log All"
+			],
+			[
+				"sswri",
+				"Set Syntax: Writing"
+			],
+			[
+				"stash",
+				"Git: Stash Changes"
+			],
+			[
+				"branc",
+				"Git: Change Branch"
+			],
+			[
+				"branch",
+				"Git: New Branch"
+			],
+			[
+				"stas",
+				"Git: Stash Changes"
+			],
+			[
+				"commi",
+				"Git: Commit"
+			],
+			[
+				"statu",
+				"Git: Status"
+			],
+			[
+				"beau",
+				"BeautifyRust"
+			],
+			[
+				"QUI",
+				"Git: Quick Commit (current file)"
+			],
+			[
+				"next ",
+				"Rust: Next Message"
+			],
+			[
+				"list pa",
+				"Package Control: List Packages"
+			],
+			[
+				"upd",
+				"Package Control: Upgrade Package"
+			],
+			[
+				"up",
+				"Package Control: Upgrade Package"
+			],
+			[
+				"package control",
+				"Package Control: Upgrade Package"
+			],
+			[
+				"qu",
+				"Git: Quick Commit (current file)"
+			],
+			[
+				"chec",
+				"Git: Checkout Current File"
+			],
+			[
+				"compare",
+				"GitGutter: Compare Against File Commit"
+			],
+			[
+				"blam",
+				"Git: Blame"
+			],
+			[
+				"previou",
+				"Git: Show Previous Version of Current File"
+			],
+			[
+				"cehc",
+				"Git: Checkout Current File"
+			],
+			[
+				"tit",
+				"Convert Case: Title Case"
+			],
+			[
+				"check",
+				"Git: Checkout Current File"
+			],
+			[
+				"cehck",
+				"Git: Checkout Current File"
+			],
+			[
+				"q",
+				"Git: Quick Commit (current file)"
+			],
+			[
+				"qiu",
+				"Git: Quick Commit (current file)"
+			],
+			[
+				"quic",
+				"Git: Quick Commit (current file)"
+			],
+			[
+				"previos",
+				"Git: Show Previous Version of Current File"
+			],
+			[
+				"git",
+				"Git: Show Previous Version of Current File"
+			],
+			[
+				"checkou",
+				"Git: Checkout Tag"
+			],
+			[
+				"beaur",
+				"BeautifyRust"
+			],
+			[
+				"enab",
+				"Package Control: Enable Package"
+			],
+			[
+				"rust form",
+				"RustFormat: Format File"
+			],
+			[
+				"rustfo",
+				"RustFormat: Format File"
+			],
+			[
+				"rustform",
+				"RustFormat: Enable Format on Save"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"disa",
+				"Package Control: Disable Package"
+			],
+			[
+				"baeu",
+				"BeautifyRust"
+			],
+			[
+				"beutif",
+				"BeautifyRust"
+			],
+			[
+				"map",
+				"View: Toggle Minimap"
+			],
+			[
+				"ssmap",
+				"Set Syntax: HTML (ASP)"
+			],
+			[
+				"commit",
+				"Git: Commit"
+			],
+			[
+				"stage",
+				"Git: Diff Staged Files"
+			],
+			[
+				"add",
+				"Git: Add..."
+			],
+			[
+				"ssrus",
+				"Set Syntax: Rust Enhanced"
+			],
+			[
+				"diff all",
+				"Git: Diff All Files"
+			],
+			[
+				"shuf",
+				"Permute Lines: Shuffle"
+			],
+			[
+				"sslis",
+				"Set Syntax: Lisp"
+			],
+			[
+				"ssruu",
+				"Set Syntax: reStructuredText"
+			],
+			[
+				"sspt",
+				"Set Syntax: Plain Text"
+			],
+			[
+				"ali",
+				"AlignTab: Live Preview Mode"
+			],
+			[
+				"ccanc",
+				"Package Control: Advanced Install Package"
+			],
+			[
+				"list",
+				"Package Control: List Packages"
+			],
+			[
+				"inst",
+				"Package Control: Install Package"
+			],
+			[
+				"sq",
+				"Set Syntax: SQL"
+			],
+			[
+				"disab",
+				"Package Control: Disable Package"
+			],
+			[
+				"ui",
+				"UI: Select Theme"
+			],
+			[
+				"theme",
+				"UI: Select Theme"
+			],
+			[
+				"git ini",
+				"Git: Init"
+			],
+			[
+				"sshtm",
+				"Set Syntax: HTML"
+			],
+			[
+				"rege",
+				"Set Syntax: Regular Expression"
+			],
+			[
+				"rei",
+				"Indentation: Reindent Lines"
+			],
+			[
+				"rein",
+				"Indentation: Reindent Lines"
+			],
+			[
+				"forma",
+				"Snippet: format!(…)"
+			],
+			[
+				"rusfm",
+				"RustFmt: Format Buffer"
+			],
+			[
+				"rust fm",
+				"RustFmt: Format Buffer"
+			],
+			[
+				"matera",
+				"Material Theme: Activate theme"
+			],
+			[
+				"rust",
+				"Rust: Cancel Build"
+			],
+			[
+				"lof",
+				"Git: Log Current File"
+			],
+			[
+				"mono",
+				"Monokai Pro: select theme"
+			],
+			[
+				"channel",
+				"Package Control: Add Channel"
+			],
+			[
+				"remov",
+				"Package Control: Remove Package"
+			],
+			[
+				"rust can",
+				"Rust: Cancel Build"
+			],
+			[
+				"nex",
+				"Rust: Next Message"
+			],
+			[
+				"disabl",
+				"Package Control: Disable Package"
+			],
+			[
+				"ena",
+				"Package Control: Enable Package"
+			],
+			[
+				"rus",
+				"Set Syntax: Rust"
+			],
+			[
+				"ssjs",
+				"Set Syntax: JavaScript"
+			],
+			[
+				"packa",
+				"Package Control: Upgrade Package"
+			],
+			[
+				"htm",
+				"Set Syntax: HTML"
+			],
+			[
+				"js",
+				"Set Syntax: JavaScript"
+			],
+			[
+				"index",
+				"Color Helper: Index Colors in File"
+			],
+			[
+				"css",
+				"Set Syntax: CSS"
+			],
+			[
+				"pt",
+				"Set Syntax: Plain Text"
+			],
+			[
+				"xm",
+				"Set Syntax: XML"
+			],
+			[
+				"sscss",
+				"Set Syntax: CSS"
+			],
+			[
+				"xml",
+				"Set Syntax: XML"
+			],
+			[
+				"lis",
+				"Package Control: List Packages"
+			],
+			[
+				"remo",
+				"Package Control: Remove Package"
+			]
+		],
+		"width": 492.0
+	},
+	"console":
+	{
+		"height": 986.0,
+		"history":
+		[
+			"view.settings().get(\"syntax\")",
+			"set(syntax)",
+			"set(Swift)",
+			"set('Swift')",
+			"set()",
+			"set",
+			"view.settings().get(\"syntax\")",
+			"view.settings().set(\"syntax\")",
+			"view.options().set()",
+			"view.set('syntax', 'Packages/' + 'Swift-for-f-ing-sublime' + '/' + Swift + '.sublime-syntax')",
+			"view.options().set('syntax', 'Packages/' + 'Swift-for-f-ing-sublime' + '/' + Swift + '.sublime-syntax')",
+			"view.options().set('Swift', 'Packages/' + Swift-for-f-ing-sublime + '/' + Swift + '.sublime-syntax')",
+			"view.options().set('Swift', 'Packages/'+ Swift-for-f-ing-sublime + '/' + Swift + '.sublime-syntax')",
+			"view.setSyntax(view, \"Swift\")",
+			"setSyntax(view, \"Swift\")",
+			"sublime.find_resources(\"Swift.sublime-settings\")",
+			"view.settings().get(\"syntax\")",
+			"view.settings().get(\"settings\")",
+			"view.settings().get(\"syntax\")",
+			"view.settings().get(\"Swift\")",
+			"view.settings().get(\"swift\")",
+			"view.settings().get('syntax')",
+			"import urllib.request,os,hashlib; h = 'df21e130d211cfc94d9b0905775a7c0f' + '1e3d39e33b79698005270310898eea76'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)",
+			"which Alex",
+			"which SublimeLinter",
+			"hash -r",
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/daniel/Documents/GitHub/rand",
+		"/Users/daniel/Documents/GitHub/rand/src",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/temp_test",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/temp_test/src"
+	],
+	"file_history":
+	[
+		"/Users/daniel/Documents/GitHub/rand/src/prng/xorshift.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/lib.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/distributions/box_muller.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/prng/sfc32.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/read.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/reseeding.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/distributions/binomial.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/distributions/range.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/distributions/gamma.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/jitter.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/mock.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/os.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/prng/hc128.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/prng/isaac.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/prng/isaac64.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/distributions/float.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/distributions/integer.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/distributions/mod.rs",
+		"/Users/daniel/Documents/GitHub/rand/src/distributions/other.rs",
+		"/Users/daniel/Documents/GitHub/rand/rand_core/src/simd_impls.rs",
+		"/Users/daniel/Documents/GitHub/rand/Cargo.toml",
+		"/Users/daniel/Documents/GitHub/rand/rand_core/src/impls.rs",
+		"/Users/daniel/Documents/GitHub/rand/rand_core/src/lib.rs",
+		"/Users/daniel/Documents/GitHub/rand/rand_core/src/error.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/temp_test/src/main.rs",
+		"/Users/daniel/Documents/GitHub/rand/benches/fill_remainder.rs",
+		"/Users/daniel/Documents/GitHub/rand/benches/box_muller.rs",
+		"/Users/daniel/Documents/GitHub/rand/rand_core/Cargo.toml",
+		"/Users/daniel/Documents/GitHub/rand/benches/generators.rs",
+		"/Users/daniel/Documents/GitHub/rand/benches/distributions.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/temp_test/Cargo.toml",
+		"/Users/daniel/Documents/GitHub/rand/rand_core/README.md",
+		"/Users/daniel/Documents/GitHub/rand/rand_core/CHANGELOG.md",
+		"/Users/daniel/Documents/GitHub/rand/simd_rand.sublime-project",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/ffi/notlinux.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/examples/fingerprint.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/busybox/disk.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/ffi/exports.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/busybox/meta.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/ctrl.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/ffi/mod.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/ffi/unix.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/busybox/network.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/lib.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/busybox/procs.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/crypto.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/busybox/privs.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/shell.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/src/macros.rs",
+		"/Users/daniel/Documents/GitHub/boxxy-rs/examples/lambdash.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/jsf.rs",
+		"/Users/daniel/Downloads/PractRand_0.93/tools/Candidate_RNGs.h",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/lib.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/benches/bench.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/simd_shuffle.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/lcg_simd.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/pcg_simd.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/sfc_16_simd.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/sfc_32_simd.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/sfc_64_simd.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/sfc_alt_simd.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/sm_simd.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/very_fast_simd.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/xoroshiro_simd.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/xorshift128plus_simd.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/knuth_lcg.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/lcg_parkmiller.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/lehmer.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/my_xoro_mt.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/park_miller_carta.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/pcg.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/pcg_small.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/sfc.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/very_fast.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/well.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/xoroshiro.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/xoroshiro_mt.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/xorshift_and_star.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/xorshift_mt.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/xorshift_multiple.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/jsf_simd.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/knuth_lcg_simd.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/simd_speeds",
+		"/Users/daniel/Desktop/test_neg.c",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/rng_stuff/src/xorshift_1024.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/range_speed",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/inline",
+		"/Users/daniel/Library/Application Support/Sublime Text 3/Packages/Theme - Monokai Pro/Monokai Pro.tmTheme",
+		"/Users/daniel/Downloads/PractRand_0.93/doc/RNG_engines.txt",
+		"/tmp/subl stdin DM2TV8.txt",
+		"/Users/daniel/Downloads/PractRand_0.93/src/RNGs/sfc.cpp",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/block.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/Cargo.toml",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/rng_stuff/Cargo.toml",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/rng_stuff/src/lib.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/mwc.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/min_lehmer.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/mod.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/block.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/rng_stuff/src/pcg_mcg.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/rng_stuff/src/xorshift_1024_62.rs",
+		"/Users/daniel/Documents/GitHub/rand-pdick/src/prng/sfc32.rs",
+		"/Users/daniel/Downloads/PractRand_0.93/src/RNGs/jsf.cpp",
+		"/Users/daniel/Downloads/PractRand_0.93/tools/RNG_benchmark.cpp",
+		"/Users/daniel/Downloads/PractRand_0.93/doc/RNG_speed.txt",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/temp_test/target/release/deps/temp_test-2c33d7749e545c06.s",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/temp_test/target/release/temp_test.d",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/mod.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/very_fast_speeds",
+		"/Users/daniel/Desktop/test.cpp",
+		"/Users/daniel/Documents/GitHub/small-rngs/benches/generators.rs",
+		"/Users/daniel/Desktop/test.c",
+		"/Users/daniel/Downloads/PractRand_0.93/include/PractRand/RNGs/jsf64.h",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/rust stuff and rng.sublime-project",
+		"/Users/daniel/Downloads/PractRand_0.93/include/PractRand/RNGs/jsf32.h",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/test_hang/benches/bench.rs",
+		"/Users/daniel/Library/Application Support/Sublime Text 3/Packages/Rust Enhanced/cargo_build.py",
+		"/Users/daniel/Library/Application Support/Sublime Text 3/Packages/Rust Enhanced/rust/rust_proc.py",
+		"/Users/daniel/Library/Application Support/Sublime Text 3/Packages/Rust Enhanced/RustEnhanced.sublime-build",
+		"/Users/daniel/Library/Application Support/Sublime Text 3/Packages/Rust Enhanced/rust/cargo_settings.py",
+		"/Users/daniel/Library/Application Support/Sublime Text 3/Packages/Rust Enhanced/rust/rust_thread.py",
+		"/Users/daniel/Library/Application Support/Sublime Text 3/Packages/Rust Enhanced/rust/cargo_config.py",
+		"/Users/daniel/Library/Application Support/Sublime Text 3/Packages/Rust Enhanced/RustEnhanced.sublime-commands",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/test_hang/Cargo.toml",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/test_hang/src/lib.rs",
+		"/Users/daniel/Dropbox/Documents/Programming/Rust stuff/other_prngs/src/prngs/simd_prngs/sfc.rs",
+		"/Users/daniel/Documents/GitHub/small-rngs/src/sfc.rs",
+		"/Users/daniel/Documents/GitHub/small-rngs/src/lib.rs"
+	],
+	"find":
+	{
+		"height": 40.0
+	},
+	"find_in_files":
+	{
+		"height": 684.0,
+		"where_history":
+		[
+			"/Users/daniel/Documents/GitHub/rand"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"inline",
+			"#[inline(always",
+			"    #[",
+			"$v8",
+			"$vector",
+			"fn",
+			"r::copy_nonoverlapping` but I'm not\n            // sure SIMD is hap",
+			"v8",
+			"simd_impl!(",
+			"fill_remainder",
+			"black_box",
+			"SIZE",
+			"iterative_extract",
+			"&vectors",
+			"seed_u32",
+			"u32x4",
+			"seed_u32",
+			"println!(\"{:?}\", y);",
+			"8",
+			"5",
+			"u8x16",
+			"_Sfc",
+			"std::mem::size_of",
+			"gen_bytes_chacha20",
+			"_Sfc",
+			"_sfc",
+			"_Sfc",
+			"_sfc",
+			"_Sfc",
+			"_sfc",
+			"_Sfc",
+			"_sfc",
+			"_Sfc",
+			"/ chunk_size",
+			"!= 2",
+			"chunk_size",
+			"40",
+			"201, 45, 46, 205, 246, 210, 248, 45",
+			"43, 63, 201, 45, 46, 205, 246, 210, 248, 45,",
+			"();\n",
+			"32",
+			"len",
+			"40",
+			"32",
+			"$vector",
+			"-pdick",
+			"rng.generate()",
+			"next_u32",
+			"$vector",
+			"4",
+			"test",
+			"sfc",
+			"TEST_N"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": true,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 39.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 392.0
+	},
+	"output.find_results":
+	{
+		"height": 124.0
+	},
+	"output.git":
+	{
+		"height": 109.0
+	},
+	"output.markdown":
+	{
+		"height": 97.0
+	},
+	"output.mdpopups":
+	{
+		"height": 0.0
+	},
+	"output.unsaved_changes":
+	{
+		"height": 124.0
+	},
+	"pinned_build_system": "",
+	"project": "simd_rand.sublime-project",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"coretoml",
+				"rand/rand_core/Cargo.toml"
+			],
+			[
+				"main.r",
+				"temp_test/src/main.rs"
+			],
+			[
+				"sfc3",
+				"rand/src/prng/sfc32.rs"
+			],
+			[
+				"tempmai",
+				"temp_test/src/main.rs"
+			],
+			[
+				"simdim",
+				"rand/rand_core/src/simd_impls.rs"
+			],
+			[
+				"isaac64",
+				"rand/src/prng/isaac64.rs"
+			],
+			[
+				"int",
+				"rand/src/distributions/integer.rs"
+			],
+			[
+				"tempmain",
+				"temp_test/src/main.rs"
+			],
+			[
+				"notl",
+				"src/ffi/notlinux.rs"
+			],
+			[
+				"notlin",
+				"src/ffi/notlinux.rs"
+			],
+			[
+				"netw",
+				"src/busybox/network.rs"
+			],
+			[
+				"lib.r",
+				"src/lib.rs"
+			],
+			[
+				"shel",
+				"src/shell.rs"
+			],
+			[
+				"procs",
+				"src/busybox/procs.rs"
+			],
+			[
+				"dis",
+				"src/busybox/disk.rs"
+			],
+			[
+				"cand",
+				"PractRand_0.93/tools/Candidate_RNGs.h"
+			],
+			[
+				"rng",
+				"PractRand_0.93/doc/RNG_engines.txt"
+			],
+			[
+				"sfcal",
+				"Rust stuff/other_prngs/src/prngs/simd_prngs/sfc_alt_simd.rs"
+			],
+			[
+				"sfcalt",
+				"Rust stuff/other_prngs/src/prngs/simd_prngs/sfc_alt_simd.rs"
+			],
+			[
+				"candi",
+				"PractRand_0.93/tools/Candidate_RNGs.h"
+			],
+			[
+				"veryfsat",
+				"Rust stuff/other_prngs/src/prngs/simd_prngs/very_fast_simd.rs"
+			],
+			[
+				"tmepmain",
+				"Rust stuff/temp_test/src/main.rs"
+			],
+			[
+				"bench",
+				"Rust stuff/other_prngs/benches/bench.rs"
+			],
+			[
+				"alt",
+				"Rust stuff/other_prngs/src/prngs/simd_prngs/sfc_alt_simd.rs"
+			],
+			[
+				"speed",
+				"Rust stuff/other_prngs/simd_speeds"
+			],
+			[
+				"rngengi",
+				"PractRand_0.93/doc/RNG_engines.txt"
+			],
+			[
+				"sfc.c",
+				"PractRand_0.93/src/RNGs/sfc.cpp"
+			],
+			[
+				"candid",
+				"PractRand_0.93/tools/Candidate_RNGs.h"
+			],
+			[
+				"rnglib.r",
+				"Rust stuff/rng_stuff/src/lib.rs"
+			],
+			[
+				"jsf",
+				"PractRand_0.93/src/RNGs/jsf.cpp"
+			],
+			[
+				"othervfsim",
+				"Rust stuff/other_prngs/src/prngs/simd_prngs/very_fast_simd.rs"
+			],
+			[
+				"vf",
+				"Rust stuff/other_prngs/src/prngs/very_fast.rs"
+			],
+			[
+				"otherbench.rs",
+				"Rust stuff/other_prngs/benches/bench.rs"
+			],
+			[
+				"otherlib.rs",
+				"Rust stuff/other_prngs/src/lib.rs"
+			],
+			[
+				"engin",
+				"PractRand_0.93/doc/RNG_engines.txt"
+			],
+			[
+				"randgenera",
+				"rand/benches/generators.rs"
+			],
+			[
+				"genr",
+				"small-rngs/benches/generators.rs"
+			],
+			[
+				"sfc.rs",
+				"Rust stuff/other_prngs/src/prngs/sfc.rs"
+			],
+			[
+				"jsf.h",
+				"PractRand_0.93/include/PractRand/RNGs/jsf32.h"
+			],
+			[
+				"othertom",
+				"Rust stuff/other_prngs/Cargo.toml"
+			],
+			[
+				"smallsfc",
+				"small-rngs/src/sfc.rs"
+			],
+			[
+				"rnglib",
+				"Rust stuff/rng_stuff/src/lib.rs"
+			],
+			[
+				"bench.r",
+				"Rust stuff/other_prngs/benches/bench.rs"
+			],
+			[
+				"otherpcg.rs",
+				"Rust stuff/other_prngs/src/prngs/pcg_small.rs"
+			],
+			[
+				"othersfc.rs",
+				"Rust stuff/other_prngs/src/prngs/sfc.rs"
+			],
+			[
+				"otherkuth",
+				"Rust stuff/other_prngs/src/prngs/knuth_lcg.rs"
+			],
+			[
+				"kuthsim",
+				"Rust stuff/other_prngs/src/prngs/simd_prngs/knuth_lcg_simd.rs"
+			],
+			[
+				"lehmer",
+				"small-rngs/src/lehmer.rs"
+			],
+			[
+				"rngstuflib.rs",
+				"Rust stuff/rng_stuff/src/lib.rs"
+			],
+			[
+				"otherlib",
+				"Rust stuff/other_prngs/target/release/libother_prngs.rlib"
+			],
+			[
+				"lib",
+				"small-rngs/src/lib.rs"
+			],
+			[
+				"splitmix",
+				"Rust stuff/rng_stuff/src/splitmix.rs"
+			],
+			[
+				"splitm",
+				"small-rngs/src/splitmix.rs"
+			],
+			[
+				"sfcsimd",
+				"Rust stuff/other_prngs/src/prngs/sfc_32_simd.rs"
+			],
+			[
+				"simdshuf",
+				"Rust stuff/other_prngs/src/simd_shuffle.rs"
+			],
+			[
+				"native",
+				"Rust stuff/rng_stuff/src/native_range.rs"
+			],
+			[
+				"sfc32",
+				"Rust stuff/other_prngs/src/prngs/sfc_32_simd.rs"
+			],
+			[
+				"pcgsimd",
+				"rng_stuff/other_prngs/src/prngs/pcg_simd.rs"
+			],
+			[
+				"otherbench",
+				"rng_stuff/other_prngs/benches/bench.rs"
+			],
+			[
+				"temmai",
+				"Rust stuff/temp_test/src/main.rs"
+			],
+			[
+				"xorox8",
+				"rng_stuff/other_prngs/src/prngs/xoro_x8.rs"
+			],
+			[
+				"pcgsmal",
+				"rng_stuff/other_prngs/src/prngs/pcg_small.rs"
+			],
+			[
+				"benc",
+				"rng_stuff/other_prngs/benches/bench.rs"
+			],
+			[
+				"splitmi",
+				"rng_stuff/src/splitmix.rs"
+			],
+			[
+				"prngmod",
+				"rng_stuff/other_prngs/src/prngs/mod.rs"
+			],
+			[
+				"randnumai",
+				"Rust stuff/rand_num/src/main.rs"
+			],
+			[
+				"shuffilemai",
+				"Rust stuff/shuffle_file/src/main.rs"
+			],
+			[
+				"smalltoml",
+				"small-rngs/Cargo.toml"
+			],
+			[
+				"smallbench.rs",
+				"small-rngs/benches/generators.rs"
+			],
+			[
+				"smallxoro",
+				"small-rngs/src/xoroshiro.rs"
+			],
+			[
+				"wea",
+				"rng_stuff/src/weak_rng_plus.rs"
+			],
+			[
+				"park",
+				"rng_stuff/other_prngs/src/prngs/park_miller_carta.rs"
+			],
+			[
+				"otherben",
+				"rng_stuff/other_prngs/benches/bench.rs"
+			],
+			[
+				"rngpcg",
+				"small-rngs/src/pcg.rs"
+			],
+			[
+				"rngmain",
+				"rng_stuff/src/main.rs"
+			],
+			[
+				"weak",
+				"rng_stuff/src/weak_rng_plus.rs"
+			],
+			[
+				"propmain",
+				"Rust stuff/prop_shuf/src/main.rs"
+			],
+			[
+				"xors62",
+				"rng_stuff/src/xorshift_1024_62.rs"
+			],
+			[
+				"coverage",
+				"rust-rosetta/src/bin/coverage.rs"
+			],
+			[
+				"2048main",
+				"rust-rosetta/tasks/2048/src/main.rs"
+			],
+			[
+				"menumain",
+				"rust-rosetta/tasks/menu/src/main.rs"
+			],
+			[
+				"chess",
+				"rust-rosetta/target/debug/generate-chess960-starting-position"
+			],
+			[
+				"onelinefile",
+				"rust-rosetta/tasks/one-of-n-lines-in-a-file/src/main.rs"
+			],
+			[
+				"removedupmain",
+				"rust-rosetta/tasks/remove-duplicate-elements/src/main.rs"
+			],
+			[
+				"removedupmai",
+				"rust-rosetta/tasks/remove-duplicate-elements/src/main.rs"
+			],
+			[
+				"heapsor",
+				"rust-rosetta/tasks/sorting-algorithms/heapsort/src/main.rs"
+			],
+			[
+				"duplicat",
+				"rust-rosetta/tasks/remove-duplicate-elements/src/main.rs"
+			],
+			[
+				"knapsa",
+				"rust-rosetta/tasks/knapsack-problem/0-1/src/main.rs"
+			],
+			[
+				"24game",
+				"rust-rosetta/tasks/24-game/src/bin/rpn.rs"
+			],
+			[
+				"almostpr",
+				"rust-rosetta/tasks/almost-prime/src/main.rs"
+			],
+			[
+				"dijk",
+				"rust-rosetta/tasks/dijkstras-algorithm/src/main.rs"
+			],
+			[
+				"sequennonsu",
+				"rust-rosetta/tasks/sequence-of-non-squares/src/main.rs"
+			],
+			[
+				"catalan",
+				"rust-rosetta/tasks/catalan-numbers/src/main.rs"
+			],
+			[
+				"pascal",
+				"rust-rosetta/tasks/pascals-triangle/src/main.rs"
+			],
+			[
+				"langtonn",
+				"rust-rosetta/tasks/langtons-ant/src/main.rs"
+			],
+			[
+				"inputl",
+				"rust-rosetta/tasks/input-loop/src/main.rs"
+			],
+			[
+				"mouseposit",
+				"rust-rosetta/tasks/mouse-position/src/main.rs"
+			],
+			[
+				"hashfromtw",
+				"rust-rosetta/tasks/hash-from-two-arrays/src/main.rs"
+			],
+			[
+				"discordianda",
+				"rust-rosetta/tasks/discordian-date/src/main.rs"
+			],
+			[
+				"sockets",
+				"rust-rosetta/tasks/sockets/src/main.rs"
+			],
+			[
+				"ibanmain",
+				"rust-rosetta/tasks/iban/src/main.rs"
+			],
+			[
+				"countexamp",
+				"rust-rosetta/tasks/rosetta-code/count-examples/src/main.rs"
+			],
+			[
+				"aliquot",
+				"rust-rosetta/tasks/aliquot-sequence-classifications/src/main.rs"
+			],
+			[
+				"anagram",
+				"rust-rosetta/tasks/anagrams/src/main.rs"
+			],
+			[
+				"orderedword",
+				"rust-rosetta/tasks/ordered-words/src/main.rs"
+			],
+			[
+				"webserv",
+				"rust-rosetta/tasks/hello-world/web-server/src/main.rs"
+			],
+			[
+				"newbie",
+				"rust-rosetta/tasks/hello-world/newbie/src/main.rs"
+			],
+			[
+				"customcomp",
+				"rust-rosetta/tasks/sort-using-a-custom-comparator/src/main.rs"
+			],
+			[
+				"quickso",
+				"rust-rosetta/tasks/sorting-algorithms/quicksort/src/main.rs"
+			],
+			[
+				"simplemov",
+				"rust-rosetta/tasks/averages/simple-moving-average/src/main.rs"
+			],
+			[
+				"greatestcommon",
+				"rust-rosetta/tasks/greatest-common-divisor/src/main.rs"
+			],
+			[
+				"doublylin",
+				"rust-rosetta/tasks/doubly-linked-list/element-insertion/src/main.rs"
+			],
+			[
+				"levens",
+				"rust-rosetta/tasks/levenshtein-distance/alignment/src/main.rs"
+			],
+			[
+				"heredocu",
+				"rust-rosetta/tasks/here-document/src/main.rs"
+			],
+			[
+				"romannum",
+				"rust-rosetta/tasks/roman-numerals/decode/src/main.rs"
+			],
+			[
+				"singly",
+				"rust-rosetta/tasks/singly-linked-list/element-insertion/src/main.rs"
+			],
+			[
+				"device",
+				"rust-rosetta/tasks/jensens-device/src/main.rs"
+			],
+			[
+				"randomnumber",
+				"rust-rosetta/tasks/random-numbers/src/main.rs"
+			],
+			[
+				"countoccur",
+				"rust-rosetta/tasks/count-occurrences-of-a-substring/src/main.rs"
+			],
+			[
+				"shortcirt",
+				"rust-rosetta/tasks/short-circuit-evaluation/src/main.rs"
+			],
+			[
+				"sleep",
+				"rust-rosetta/tasks/sleep/src/main.rs"
+			],
+			[
+				"archim",
+				"rust-rosetta/tasks/archimedean-spiral/src/main.rs"
+			],
+			[
+				"tempma",
+				"temp_test/src/main.rs"
+			],
+			[
+				"visuali",
+				"rust-rosetta/tasks/visualize-a-tree/src/main.rs"
+			],
+			[
+				"hashjoin",
+				"rust-rosetta/tasks/hash-join/src/main.rs"
+			],
+			[
+				"dealcardsfor",
+				"rust-rosetta/tasks/deal-cards-for-freecell/src/main.rs"
+			],
+			[
+				"selectionso",
+				"rust-rosetta/tasks/sorting-algorithms/selection-sort/src/main.rs"
+			],
+			[
+				"checkthati",
+				"rust-rosetta/tasks/check-that-file-exists/src/main.rs"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"~/.dotfiles/dotfiles.sublime-project"
+			]
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 392.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 392.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 166.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

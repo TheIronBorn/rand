@@ -18,9 +18,9 @@ use rand_core::{RngCore, Error, impls};
 /// over a `u64` number, using wrapping arithmetic. If the increment is 0
 /// the generator yields a constant.
 /// 
-/// ```rust
+/// ```
 /// use rand::Rng;
-/// use rand::mock::StepRng;
+/// use rand::rngs::mock::StepRng;
 /// 
 /// let mut my_rng = StepRng::new(2, 1);
 /// let sample: [u64; 3] = my_rng.gen();
@@ -52,7 +52,7 @@ impl RngCore for StepRng {
     }
 
     fn fill_bytes(&mut self, dest: &mut [u8]) {
-        impls::fill_bytes_via_u64(self, dest);
+        impls::fill_bytes_via_next(self, dest);
     }
 
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {

@@ -13,11 +13,13 @@
 
 use core::mem::size_of;
 
-use rand_core::{RngCore, BlockRngCore, CryptoRng, SeedableRng, Error, ErrorKind};
-use rand_core::impls::BlockRng;
+use rand_core::{RngCore, CryptoRng, SeedableRng, Error, ErrorKind};
+use rand_core::block::{BlockRngCore, BlockRng};
 
 /// A wrapper around any PRNG which reseeds the underlying PRNG after it has
 /// generated a certain number of random bytes.
+///
+/// When the RNG gets cloned, the clone is reseeded on first use.
 ///
 /// Reseeding is never strictly *necessary*. Cryptographic PRNGs don't have a
 /// limited number of bytes they can output, or at least not a limit reachable
@@ -74,7 +76,7 @@ where R: BlockRngCore + SeedableRng,
 
     /// Reseed the internal PRNG.
     pub fn reseed(&mut self) -> Result<(), Error> {
-        self.0.inner_mut().reseed()
+        self.0.core.reseed()
     }
 }
 
@@ -82,7 +84,7 @@ where R: BlockRngCore + SeedableRng,
 // implements RngCore, but we can't specify that because ReseedingCore is private
 impl<R, Rsdr: RngCore> RngCore for ReseedingRng<R, Rsdr>
 where R: BlockRngCore<Item = u32> + SeedableRng,
-    <R as BlockRngCore>::Results: AsRef<[u32]>
+    <R as BlockRngCore>::Results: AsRef<[u32]> + AsMut<[u32]>
 {
     #[inline(always)]
     fn next_u32(&mut self) -> u32 {
@@ -100,6 +102,17 @@ where R: BlockRngCore<Item = u32> + SeedableRng,
 
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
         self.0.try_fill_bytes(dest)
+    }
+}
+
+impl<R, Rsdr> Clone for ReseedingRng<R, Rsdr>
+where R: BlockRngCore + SeedableRng + Clone,
+      Rsdr: RngCore + Clone
+{
+    fn clone(&self) -> ReseedingRng<R, Rsdr> {
+        // Recreating `BlockRng` seems easier than cloning it and resetting
+        // the index.
+        ReseedingRng(BlockRng::new(self.0.core.clone()))
     }
 }
 
@@ -189,6 +202,20 @@ where R: BlockRngCore + SeedableRng,
     }
 }
 
+impl<R, Rsdr> Clone for ReseedingCore<R, Rsdr>
+where R: BlockRngCore + SeedableRng + Clone,
+      Rsdr: RngCore + Clone
+{
+    fn clone(&self) -> ReseedingCore<R, Rsdr> {
+        ReseedingCore {
+            inner: self.inner.clone(),
+            reseeder: self.reseeder.clone(),
+            threshold: self.threshold,
+            bytes_until_reseed: 0, // reseed clone on first use
+        }
+    }
+}
+
 impl<R, Rsdr> CryptoRng for ReseedingCore<R, Rsdr>
 where R: BlockRngCore + SeedableRng + CryptoRng,
       Rsdr: RngCore + CryptoRng {}
@@ -197,7 +224,7 @@ where R: BlockRngCore + SeedableRng + CryptoRng,
 mod test {
     use {Rng, SeedableRng};
     use prng::chacha::ChaChaCore;
-    use mock::StepRng;
+    use rngs::mock::StepRng;
     use super::ReseedingRng;
 
     #[test]
@@ -216,5 +243,18 @@ mod test {
             reseeding.fill(&mut buf);
             assert_eq!(buf, seq);
         }
+    }
+
+    #[test]
+    fn test_clone_reseeding() {
+        let mut zero = StepRng::new(0, 0);
+        let rng = ChaChaCore::from_rng(&mut zero).unwrap();
+        let mut rng1 = ReseedingRng::new(rng, 32*4, zero);
+
+        let first: u32 = rng1.gen();
+        for _ in 0..10 { let _ = rng1.gen::<u32>(); }
+
+        let mut rng2 = rng1.clone();
+        assert_eq!(first, rng2.gen::<u32>());
     }
 }

@@ -13,10 +13,10 @@
 use std::cell::UnsafeCell;
 use std::rc::Rc;
 
-use {RngCore, CryptoRng, SeedableRng, EntropyRng};
+use {RngCore, CryptoRng, SeedableRng, Error};
+use rngs::adapter::ReseedingRng;
+use rngs::EntropyRng;
 use prng::hc128::Hc128Core;
-use {Distribution, Standard, Rng, Error};
-use reseeding::ReseedingRng;
 
 // Rationale for using `UnsafeCell` in `ThreadRng`:
 //
@@ -47,10 +47,31 @@ const THREAD_RNG_RESEED_THRESHOLD: u64 = 32*1024*1024; // 32 MiB
 /// The type returned by [`thread_rng`], essentially just a reference to the
 /// PRNG in thread-local memory.
 ///
+/// `ThreadRng` uses [`ReseedingRng`] wrapping the same PRNG as [`StdRng`],
+/// which is reseeded after generating 32 MiB of random data. A single instance
+/// is cached per thread and the returned `ThreadRng` is a reference to this
+/// instance — hence `ThreadRng` is neither `Send` nor `Sync` but is safe to use
+/// within a single thread. This RNG is seeded and reseeded via [`EntropyRng`]
+/// as required.
+///
+/// Note that the reseeding is done as an extra precaution against entropy
+/// leaks and is in theory unnecessary — to predict `ThreadRng`'s output, an
+/// attacker would have to either determine most of the RNG's seed or internal
+/// state, or crack the algorithm used.
+///
+/// Like [`StdRng`], `ThreadRng` is a cryptographically secure PRNG. The current
+/// algorithm used is [HC-128], which is an array-based PRNG that trades memory
+/// usage for better performance. This makes it similar to ISAAC, the algorithm
+/// used in `ThreadRng` before rand 0.5.
+///
 /// Cloning this handle just produces a new reference to the same thread-local
 /// generator.
 /// 
-/// [`thread_rng`]: fn.thread_rng.html
+/// [`thread_rng`]: ../fn.thread_rng.html
+/// [`ReseedingRng`]: adapter/struct.ReseedingRng.html
+/// [`StdRng`]: struct.StdRng.html
+/// [`EntropyRng`]: struct.EntropyRng.html
+/// [HC-128]: ../prng/hc128/struct.Hc128Rng.html
 #[derive(Clone, Debug)]
 pub struct ThreadRng {
     rng: Rc<UnsafeCell<ReseedingRng<Hc128Core, EntropyRng>>>,
@@ -73,27 +94,9 @@ thread_local!(
 /// chaining style, e.g. `thread_rng().gen::<i32>()`, or cached locally, e.g.
 /// `let mut rng = thread_rng();`.
 ///
-/// `ThreadRng` uses [`ReseedingRng`] wrapping the same PRNG as [`StdRng`],
-/// which is reseeded after generating 32 MiB of random data. A single instance
-/// is cached per thread and the returned `ThreadRng` is a reference to this
-/// instance — hence `ThreadRng` is neither `Send` nor `Sync` but is safe to use
-/// within a single thread. This RNG is seeded and reseeded via [`EntropyRng`]
-/// as required.
-/// 
-/// Note that the reseeding is done as an extra precaution against entropy
-/// leaks and is in theory unnecessary — to predict `thread_rng`'s output, an
-/// attacker would have to either determine most of the RNG's seed or internal
-/// state, or crack the algorithm used.
-/// 
-/// Like [`StdRng`], `ThreadRng` is a cryptographically secure PRNG. The current
-/// algorithm used is [HC-128], which is an array-based PRNG that trades memory
-/// usage for better performance. This makes it similar to ISAAC, the algorithm
-/// used in `ThreadRng` before rand 0.5.
+/// For more information see [`ThreadRng`].
 ///
-/// [`ReseedingRng`]: reseeding/struct.ReseedingRng.html
-/// [`StdRng`]: struct.StdRng.html
-/// [`EntropyRng`]: struct.EntropyRng.html
-/// [HC-128]: prng/hc128/struct.Hc128Rng.html
+/// [`ThreadRng`]: rngs/struct.ThreadRng.html
 pub fn thread_rng() -> ThreadRng {
     ThreadRng { rng: THREAD_RNG_KEY.with(|t| t.clone()) }
 }
@@ -109,8 +112,8 @@ impl RngCore for ThreadRng {
         unsafe { (*self.rng.get()).next_u64() }
     }
 
-    fn fill_bytes(&mut self, bytes: &mut [u8]) {
-        unsafe { (*self.rng.get()).fill_bytes(bytes) }
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        unsafe { (*self.rng.get()).fill_bytes(dest) }
     }
 
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
@@ -120,58 +123,6 @@ impl RngCore for ThreadRng {
 
 impl CryptoRng for ThreadRng {}
 
-/// DEPRECATED: use `thread_rng().gen()` instead.
-///
-/// Generates a random value using the thread-local random number generator.
-///
-/// This is simply a shortcut for `thread_rng().gen()`. See [`thread_rng`] for
-/// documentation of the entropy source and [`Rand`] for documentation of
-/// distributions and type-specific generation.
-///
-/// # Examples
-///
-/// ```
-/// # #![allow(deprecated)]
-/// let x = rand::random::<u8>();
-/// println!("{}", x);
-///
-/// let y = rand::random::<f64>();
-/// println!("{}", y);
-///
-/// if rand::random() { // generates a boolean
-///     println!("Better lucky than good!");
-/// }
-/// ```
-///
-/// If you're calling `random()` in a loop, caching the generator as in the
-/// following example can increase performance.
-///
-/// ```
-/// # #![allow(deprecated)]
-/// use rand::Rng;
-///
-/// let mut v = vec![1, 2, 3];
-///
-/// for x in v.iter_mut() {
-///     *x = rand::random()
-/// }
-///
-/// // can be made faster by caching thread_rng
-///
-/// let mut rng = rand::thread_rng();
-///
-/// for x in v.iter_mut() {
-///     *x = rng.gen();
-/// }
-/// ```
-///
-/// [`thread_rng`]: fn.thread_rng.html
-/// [`Rand`]: trait.Rand.html
-#[deprecated(since="0.5.0", note="removed in favor of thread_rng().gen()")]
-#[inline]
-pub fn random<T>() -> T where Standard: Distribution<T> {
-    thread_rng().gen()
-}
 
 #[cfg(test)]
 mod test {
@@ -186,21 +137,5 @@ mod test {
         let b: &[_] = &[1, 1, 1];
         assert_eq!(v, b);
         assert_eq!(r.gen_range(0, 1), 0);
-    }
-
-    #[test]
-    #[allow(deprecated)]
-    fn test_random() {
-        use super::random;
-        // not sure how to test this aside from just getting some values
-        let _n : usize = random();
-        let _f : f32 = random();
-        let _o : Option<Option<i8>> = random();
-        let _many : ((),
-                     (usize,
-                      isize,
-                      Option<(u32, (bool,))>),
-                     (u8, i8, u16, i16, u32, i32, u64, i64),
-                     (f32, (f64, (f64,)))) = random();
     }
 }

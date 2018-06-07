@@ -77,14 +77,14 @@ A few methods from the old `Rng` have been removed or deprecated:
 
 ##### New randomly-initialised PRNGs
 
-A new trait has been added: `NewRng`. This is automatically implemented for any
-type supporting `SeedableRng`, and provides construction from fresh, strong
+A new trait has been added: `FromEntropy`. This is automatically implemented for
+any type supporting `SeedableRng`, and provides construction from fresh, strong
 entropy:
 
 ```rust
-use rand::{ChaChaRng, NewRng};
+use rand::{ChaChaRng, FromEntropy};
 
-let mut rng = ChaChaRng::new();
+let mut rng = ChaChaRng::from_entropy();
 ```
 
 ##### Seeding PRNGs
@@ -142,7 +142,7 @@ The following use the new error type:
 -   `RngCore::try_fill_bytes`
 -   `Rng::try_fill`
 -   `OsRng::new`
--   `jitter::new`
+-   `JitterRng::new`
 
 ### External generators
 
@@ -150,7 +150,7 @@ We have a new generator, `EntropyRng`, which wraps `OsRng` and `JitterRng`
 (preferring to use the former, but falling back to the latter if necessary).
 This allows easy construction with fallback via `SeedableRng::from_rng`,
 e.g. `IsaacRng::from_rng(EntropyRng::new())?`. This is equivalent to using
-`NewRng` except for error handling.
+`FromEntropy` except for error handling.
 
 It is recommended to use `EntropyRng` over `OsRng` to avoid errors on platforms
 with broken system generator, but it should be noted that the `JitterRng`
@@ -199,13 +199,11 @@ cryptographic generator, used by `StdRng` and `thread_rng()`.
 
 The `Rand` trait has been deprecated. Instead, users are encouraged to use
 `Standard` which is a real distribution and supports the same sampling as
- `Rand`.`Rng::gen()` now uses `Standard` and should work exactly as before.
+`Rand`. `Rng::gen()` now uses `Standard` and should work exactly as before.
+See the documentation of the `distributions` module on how to implement
+`Distribution<T>` for `Standard` for user types `T`
 
-The `random()` function has been removed; users may simply use
-`thread_rng().gen()` instead or may choose to cache
-`let mut rng = thread_rng();` locally, or even use a different generator.
-
-`weak_rng()` has been deprecated; use `SmallRng::new()` instead.
+`weak_rng()` has been deprecated; use `SmallRng::from_entropy()` instead.
 
 ### Distributions
 
@@ -224,9 +222,7 @@ directly on type-erased (unsized) RNGs.
 `RandSample` has been removed (see `Rand` deprecation and new `Standard`
 distribution).
 
-The `Open01` and `Closed01` wrappers have been removed. `Rng::gen()` (via
-`Standard`) now yields samples from `(0, 1)` for floats; i.e. the same as the
-old `Open01`. This is considered sufficient for most uses.
+The `Closed01` wrapper has been removed, but `OpenClosed01` has been added.
 
 #### Uniform distributions
 
@@ -238,15 +234,13 @@ Two new distributions are available:
 
 ##### Ranges
 
-The `Range` distribution has been heavily adapted, while remaining largely
-backwards compatible:
+The `Range` distribution has been heavily adapted, and renamed to `Uniform`:
 
--   `Range::new(low, high)` remains (half open `[low, high)`)
--   `Range::new_inclusive(low, high)` has been added, including `high` in the sample range
--   `Range::sample_single(low, high, rng)` is a faster variant for single usage sampling from `[low, high)`
+-   `Uniform::new(low, high)` remains (half open `[low, high)`)
+-   `Uniform::new_inclusive(low, high)` has been added, including `high` in the sample range
+-   `Uniform::sample_single(low, high, rng)` is a faster variant for single usage sampling from `[low, high)`
 
-`Range` can now be implemented for user-defined types; see the `RangeImpl` type.
-`SampleRange` has been adapted to suit the new `Range` model.
+`Uniform` can now be implemented for user-defined types; see the `uniform` module.
 
 #### Non-uniform distributions
 
