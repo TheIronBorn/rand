@@ -2,18 +2,26 @@
 //!
 //! <https://en.wikipedia.org/wiki/Box-Muller_transform>
 
-// TODO: look into more accuruate math
+// TODO: look into more accurate math
 
 #[cfg(feature="simd_support")]
-use core::simd::*;
+use stdsimd::arch::x86_64::*;
 #[cfg(feature="simd_support")]
-use core::arch::x86_64::*;
+use stdsimd::simd::*;
+#[cfg(feature="simd_support")]
+use core::f32::consts::PI as PI_32;
+#[cfg(feature="simd_support")]
+use core::f64::consts::PI as PI_64;
+#[cfg(target_feature = "fma")]
+use core::intrinsics::fmaf64;
 #[cfg(feature="simd_support")]
 use core::mem::*;
-use core::f64::consts::PI as PI_64;
-use core::f32::consts::PI as PI_32;
+#[cfg(feature="simd_support")]
+use core::{f32, f64};
 
 use Rng;
+#[cfg(feature="simd_support")]
+use distributions::Range;
 
 /// The normal distribution `N(mean, std_dev**2)`.
 ///
@@ -39,7 +47,7 @@ use Rng;
 /// [`Normal`]: ../normal/struct.Normal.html
 /// [Box–Muller transform]: https://en.wikipedia.org/wiki/Box-Muller_transform
 #[derive(Clone, Copy, Debug)]
-#[cfg(feature="simd_support")] // neccessary for doc tests?
+#[cfg(feature="simd_support")] // necessary for doc tests?
 pub struct BoxMuller<T> {
     flag: bool,
     z1: T,
@@ -47,7 +55,7 @@ pub struct BoxMuller<T> {
     std_dev: T,
 }
 
-#[cfg(feature="simd_support")] // neccessary for doc tests?
+#[cfg(feature="simd_support")] // necessary for doc tests?
 impl<T: Default + PartialOrd> BoxMuller<T> {
     /// Construct a new `BoxMuller` normal distribution with the given mean
     /// and standard deviation.
@@ -56,7 +64,10 @@ impl<T: Default + PartialOrd> BoxMuller<T> {
     ///
     /// Panics if `std_dev < 0.0`.
     pub fn new(mean: T, std_dev: T) -> Self {
-        assert!(std_dev >= T::default(), "BoxMuller::new called with `std_dev` < 0");
+        assert!(
+            std_dev >= T::default(),
+            "BoxMuller::new called with `std_dev` < 0"
+        );
         Self {
             flag: false,
             z1: T::default(),
@@ -73,15 +84,21 @@ pub trait BoxMullerCore<T> {
     ///
     /// Returns two independent random numbers with a standard normal
     /// distribution.
-    fn box_muller<R: Rng>(rng: &mut R) -> (T, T);
+    fn box_muller<R: Rng + ?Sized>(rng: &mut R) -> (T, T);
 
     /// Generate a random value of `T`, using `rng` as the source of randomness.
-    fn sample<R: Rng>(&mut self, rng: &mut R) -> T;
+    fn sample<R: Rng + ?Sized>(&mut self, rng: &mut R) -> T;
+
+    /// The polar variant
+    fn polar<R: Rng + ?Sized>(rng: &mut R) -> (T, T);
+
+    /// For testing only
+    fn polar_no_rejection<R: Rng + ?Sized>(rng: &mut R) -> (T, T);
 }
 
-#[cfg(feature="simd_support")] // neccessary for doc tests?
+#[cfg(feature="simd_support")] // necessary for doc tests?
 impl BoxMullerCore<f64> for BoxMuller<f64> {
-    fn box_muller<R: Rng>(rng: &mut R) -> (f64, f64) {
+    fn box_muller<R: Rng + ?Sized>(rng: &mut R) -> (f64, f64) {
         const TWO_PI: f64 = PI_64 * 2.0;
 
         let (u0, u1): (f64, f64) = rng.gen();
@@ -94,7 +111,7 @@ impl BoxMullerCore<f64> for BoxMuller<f64> {
         (z0, z1)
     }
 
-    fn sample<R: Rng>(&mut self, rng: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&mut self, rng: &mut R) -> f64 {
         self.flag = !self.flag;
 
         if !self.flag {
@@ -105,11 +122,19 @@ impl BoxMullerCore<f64> for BoxMuller<f64> {
         self.z1 = z1;
         z0 * self.std_dev + self.mean
     }
+
+    fn polar<R: Rng + ?Sized>(rng: &mut R) -> (f64, f64) {
+        unimplemented!();
+    }
+
+    fn polar_no_rejection<R: Rng + ?Sized>(rng: &mut R) -> (f64, f64) {
+        unimplemented!();
+    }
 }
 
-#[cfg(feature="simd_support")] // neccessary for doc tests?
+#[cfg(feature="simd_support")] // necessary for doc tests?
 impl BoxMullerCore<f32> for BoxMuller<f32> {
-    fn box_muller<R: Rng>(rng: &mut R) -> (f32, f32) {
+    fn box_muller<R: Rng + ?Sized>(rng: &mut R) -> (f32, f32) {
         const TWO_PI: f32 = PI_32 * 2.0;
 
         let (u0, u1): (f32, f32) = rng.gen();
@@ -122,7 +147,7 @@ impl BoxMullerCore<f32> for BoxMuller<f32> {
         (z0, z1)
     }
 
-    fn sample<R: Rng>(&mut self, rng: &mut R) -> f32 {
+    fn sample<R: Rng + ?Sized>(&mut self, rng: &mut R) -> f32 {
         self.flag = !self.flag;
 
         if !self.flag {
@@ -133,22 +158,33 @@ impl BoxMullerCore<f32> for BoxMuller<f32> {
         self.z1 = z1;
         z0 * self.std_dev + self.mean
     }
+
+    fn polar<R: Rng + ?Sized>(rng: &mut R) -> (f32, f32) {
+        unimplemented!();
+    }
+
+    fn polar_no_rejection<R: Rng + ?Sized>(rng: &mut R) ->  (f32, f32) {
+        unimplemented!();
+    }
 }
 
 #[cfg(feature="simd_support")]
 macro_rules! impl_box_muller {
     ($pi:expr, $(($vector:ident, $uty:ident)),+) => (
         $(impl BoxMullerCore<$vector> for BoxMuller<$vector> {
-            fn box_muller<R: Rng>(rng: &mut R) -> ($vector, $vector) {
+            fn box_muller<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
                 const TWO_PI: $vector = $vector::splat(2.0 * $pi);
 
-                let radius = ($vector::splat(-2.0) * rng.gen::<$vector>().ln()).sqrt();
-                let (sin_theta, cos_theta) = (TWO_PI * rng.gen::<$vector>()).sin_cos();
+                let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrt();
+                // let (sin_theta, cos_theta) = (TWO_PI * rng.gen::<$vector>()).sin_cos();
+                let intermediate = TWO_PI * rng.gen::<$vector>();
+                let sin_theta = intermediate.sin();
+                let cos_theta = intermediate.cos();
 
                 (radius * sin_theta, radius * cos_theta)
             }
 
-            fn sample<R: Rng>(&mut self, rng: &mut R) -> $vector {
+            fn sample<R: Rng + ?Sized>(&mut self, rng: &mut R) -> $vector {
                 self.flag = !self.flag;
 
                 if !self.flag {
@@ -158,6 +194,37 @@ macro_rules! impl_box_muller {
                 let (z0, z1) = Self::box_muller(rng);
                 self.z1 = z1;
                 z0 * self.std_dev + self.mean
+            }
+
+            fn polar<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
+                let range = Range::new($vector::splat(-1.0), $vector::splat(1.0));
+
+                let mut u = rng.sample(range);
+                let mut v = rng.sample(range);
+                let mut s = u*u + v*v;
+                loop {
+                    let mask = s.eq($vector::splat(0.0)) | s.ge($vector::splat(1.0));
+                    if mask.none() {
+                        break;
+                    }
+                    u = mask.select(rng.sample(range), u);
+                    v = mask.select(rng.sample(range), v);
+                    s = u*u + v*v;
+                }
+
+                let intermed = (-2.0 * s.ln() / s).sqrt();
+                (u * intermed, v * intermed,)
+            }
+
+            fn polar_no_rejection<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
+                let range = Range::new($vector::splat(-1.0), $vector::splat(1.0));
+
+                let u = rng.sample(range);
+                let v = rng.sample(range);
+                let s = u*u + v*v;
+
+                let intermed = (-2.0 * s.ln() / s).sqrt();
+                (u * intermed, v * intermed,)
             }
         })+
     )
@@ -172,12 +239,67 @@ impl_box_muller!(
     (f32x16, u32x16)
 );
 // TODO: 64-bit versions?
-/*impl_box_muller!(
-    PI_64,
-    (f64x2, u64x2),
-    (f64x4, u64x4),
-    (f64x8, u64x8)
-);*/
+#[cfg(feature="simd_support")]
+macro_rules! impl_box_muller {
+    ($pi:expr, $(($vector:ident, $uty:ident)),+) => (
+        $(impl BoxMullerCore<$vector> for BoxMuller<$vector> {
+            #[allow(unused_variables)]
+            fn box_muller<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
+                const TWO_PI: $vector = $vector::splat(2.0 * $pi);
+
+                let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrt();
+                let (sin_theta, cos_theta) = (TWO_PI * rng.gen::<$vector>()).sin_cos();
+
+                (radius * sin_theta, radius * cos_theta)
+            }
+
+            fn sample<R: Rng + ?Sized>(&mut self, rng: &mut R) -> $vector {
+                self.flag = !self.flag;
+
+                if !self.flag {
+                    return self.z1 * self.std_dev + self.mean;
+                }
+
+                let (z0, z1) = Self::box_muller(rng);
+                self.z1 = z1;
+                z0 * self.std_dev + self.mean
+            }
+
+            fn polar<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
+                let range = Range::new($vector::splat(-1.0), $vector::splat(1.0));
+
+                let mut u = rng.sample(range);
+                let mut v = rng.sample(range);
+                let mut s = u*u + v*v;
+                loop {
+                    let mask = s.eq($vector::splat(0.0)) | s.ge($vector::splat(1.0));
+                    if mask.none() {
+                        break;
+                    }
+                    u = mask.select(rng.sample(range), u);
+                    v = mask.select(rng.sample(range), v);
+                    s = u*u + v*v;
+                }
+
+                let intermed = (-2.0 * s.ln() / s).sqrt();
+                (u * intermed, v * intermed,)
+            }
+
+            fn polar_no_rejection<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
+                let range = Range::new($vector::splat(-1.0), $vector::splat(1.0));
+
+                let u = rng.sample(range);
+                let v = rng.sample(range);
+                let s = u*u + v*v;
+
+                let intermed = (-2.0 * s.ln() / s).sqrt();
+                (u * intermed, v * intermed,)
+            }
+        })+
+    )
+}
+#[cfg(feature="simd_support")]
+impl_box_muller!(PI_64, (f64x2, u64x2), (f64x4, u64x4), (f64x8, u64x8));
 
 /// The log-normal distribution `ln N(mean, std_dev**2)`.
 ///
@@ -206,7 +328,7 @@ impl_box_muller!(
 /// [`LogNormal`]: ../normal/struct.LogNormal.html
 /// [Box–Muller transform]: https://en.wikipedia.org/wiki/Box-Muller_transform
 #[derive(Clone, Copy, Debug)]
-#[cfg(feature="simd_support")] // neccessary for doc tests?
+#[cfg(feature="simd_support")] // necessary for doc tests?
 pub struct LogBoxMuller<T>
 where
     BoxMuller<T>: BoxMullerCore<T>,
@@ -238,7 +360,7 @@ where
 
     /// Generate a random value of `T`, using `rng` as the source of randomness.
     #[inline(always)]
-    pub fn sample<R: Rng>(&mut self, rng: &mut R) -> T {
+    pub fn sample<R: Rng + ?Sized>(&mut self, rng: &mut R) -> T {
         self.box_muller.sample(rng).exp()
     }
 }
@@ -252,61 +374,248 @@ where
     Self: Sized,
 {
     /// Returns the natural logarithm of each lane of the vector.
-    fn ln(&self) -> Self;
+    fn ln(self) -> Self;
 
     /// Simultaneously computes the sine and cosine of the vector. Returns
     /// (sin, cos).
-    fn sin_cos(&self) -> (Self, Self);
+    fn sin_cos(self) -> (Self, Self);
+
+    /// Computes the tangent of a vector (in radians).
+    fn tan(self) -> Self;
+
+    /// Returns the largest integer less than or equal to each lane.
+    fn floor(self) -> Self;
 
     /// Returns the square root of each lane of the vector.
     /// It should compile down to a single instruction.
-    fn sqrt(&self) -> Self;
+    fn sqrt(self) -> Self;
 
     /// Returns `e^(self)`, (the exponential function).
-    fn exp(&self) -> Self;
+    fn exp(self) -> Self;
+
+    /// Raises the vector to a floating point power.
+    fn powf(self, n: Self) -> Self;
+
+    ///
+    fn log_gamma(self) -> Self;
 }
+
+/// SIMD integer functions not included in `feature(stdsimd)`.
+#[cfg(feature="simd_support")]
+pub trait SimdIntegerMath<T> {
+    /// Shifts the bits to the left by a specified amount, `n`,
+    /// wrapping the truncated bits to the end of the resulting integer.
+    ///
+    /// Please note this isn't the same operation as `<<`!
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// Please note that this example is shared between integer types.
+    /// Which explains why `u64` is used here.
+    ///
+    /// ```
+    /// let n = u64x2::splat(0x0123456789ABCDEF);
+    /// let m = 0x3456789ABCDEF012u64;
+    ///
+    /// assert_eq!(n.rotate_left(12), m);
+    /// ```
+    fn rotate_left(self, n: T) -> Self;
+
+    /// Shifts the bits to the left by a specified amount, `n`,
+    /// wrapping the truncated bits to the end of the resulting integer.
+    ///
+    /// Please note this isn't the same operation as `>>`!
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// Please note that this example is shared between integer types.
+    /// Which explains why `u64` is used here.
+    ///
+    /// ```
+    /// let n = u64x2::splat(0x0123456789ABCDEF);
+    /// let m = 0x3456789ABCDEF012u64;
+    ///
+    /// assert_eq!(n.rotate_right(12), m);
+    /// ```
+    fn rotate_right(self, n: T) -> Self;
+}
+
+#[cfg(feature="simd_support")]
+macro_rules! impl_simd_int_math {
+    ($ty:ty, ($($rot_ty:ty,)+), $BITS:expr) => (
+        $(impl SimdIntegerMath<$rot_ty> for $ty {
+            #[inline(always)]
+            fn rotate_left(self, n: $rot_ty) -> Self {
+                // Protect against undefined behaviour for over-long bit shifts
+                let n = n % $BITS;
+                (self << n) | (self >> (($BITS - n) % $BITS))
+            }
+
+            #[inline(always)]
+            fn rotate_right(self, n: $rot_ty) -> Self {
+                // Protect against undefined behaviour for over-long bit shifts
+                let n = n % $BITS;
+                (self >> n) | (self << (($BITS - n) % $BITS))
+            }
+        })+
+    );
+
+    (vectors: ($($ty:ty,)+), $BITS:expr) => (
+        $(impl_simd_int_math!($ty, (u32, $ty,), $BITS);)+
+    )
+}
+
+#[cfg(feature="simd_support")]
+impl_simd_int_math!(vectors: (u8x2, u8x4, u8x8, u8x16, u8x32, u8x64,), 8);
+#[cfg(feature="simd_support")]
+impl_simd_int_math!(vectors: (u16x2, u16x4, u16x8, u16x16, u16x32,), 16);
+#[cfg(feature="simd_support")]
+impl_simd_int_math!(vectors: (u32x2, u32x4, u32x8, u32x16,), 32);
+#[cfg(feature="simd_support")]
+impl_simd_int_math!(vectors: (u64x2, u64x4, u64x8,), 64);
+
+/// Implements SIMD base 2 logarithm for use with the `zone` approximation of
+/// SIMD implementations of `sample_single`.
+#[cfg(feature="simd_support")]
+pub trait Log {
+    /// Returns the base 2 logarithm of the vector.
+    fn log2(self) -> Self;
+}
+
+// adapted from https://graphics.stanford.edu/%7Eseander/bithacks.html#IntegerLogIEEE64Float
+// Only works natively for `u32x` types.
+//
+// Casting `u16x`|`u8x` to `u32x` works but only for `2|4|8` number of lanes.
+// It could work natively for smaller types if we knew how the `20` shift and
+// `0x3FF` "bias" were chosen.
+#[cfg(feature="simd_support")]
+macro_rules! impl_log {
+    ($ty:ty, $large:ident, $fty:ident, $scalar:ty, $l_scalar:ty, $f_scalar:ident, $bits:expr) => {
+        impl Log for $ty {
+            fn log2(self) -> Self {
+                let power =
+                    ((1 as $l_scalar) << (::core::$f_scalar::MANTISSA_DIGITS - 1)) as $f_scalar;
+                let exponent: $l_scalar = unsafe { transmute(power) };
+
+                let mut t = $fty::from_bits($large::from(self) | exponent);
+                t -= power;
+                let x = Self::from($large::from_bits(t) >> $bits);
+                $bits as $scalar - 1 - ((x >> 20) - 0x3FF as $scalar)
+            }
+        }
+    };
+}
+
+#[cfg(feature="simd_support")]
+impl_log!(u32x2, u64x2, f64x2, u32, u64, f64, 32);
+#[cfg(feature="simd_support")]
+impl_log!(u32x4, u64x4, f64x4, u32, u64, f64, 32);
+#[cfg(feature="simd_support")]
+impl_log!(u32x8, u64x8, f64x8, u32, u64, f64, 32);
+
+#[cfg(feature="simd_support")]
+macro_rules! impl_log_w_u32 {
+    ($( ( $ty:ident, $large:ident ), )+, $bits:expr) => (
+        $(impl Log for $ty {
+            #[inline(always)]
+            fn log2(self) -> Self {
+                $ty::from($large::from(self).log2()) - $bits
+            }
+        })+
+    )
+}
+
+#[cfg(feature="simd_support")]
+impl_log_w_u32! {
+    (u16x2, u32x2),
+    (u16x4, u32x4),
+    (u16x8, u32x8),,
+    16
+}
+
+#[cfg(feature="simd_support")]
+impl_log_w_u32! {
+    (u8x2, u32x2),
+    (u8x4, u32x4),
+    (u8x8, u32x8),,
+    8
+}
+
+#[cfg(feature="simd_support")]
+macro_rules! impl_log_unim {
+    ($ty:ty) => {
+        impl Log for $ty {
+            fn log2(self) -> Self {
+                unimplemented!()
+            }
+        }
+    };
+}
+
+#[cfg(feature="simd_support")]
+impl_log_unim!(u8x16);
+#[cfg(feature="simd_support")]
+impl_log_unim!(u8x32);
+#[cfg(feature="simd_support")]
+impl_log_unim!(u8x64);
+#[cfg(feature="simd_support")]
+impl_log_unim!(u16x16);
+#[cfg(feature="simd_support")]
+impl_log_unim!(u16x32);
+#[cfg(feature="simd_support")]
+impl_log_unim!(u32x16);
+#[cfg(feature="simd_support")]
+impl_log_unim!(u64x2);
+#[cfg(feature="simd_support")]
+impl_log_unim!(u64x4);
+#[cfg(feature="simd_support")]
+impl_log_unim!(u64x8);
 
 #[cfg(feature="simd_support")]
 macro_rules! impl_simd_math {
     ($fty:ident, $uty:ident, $uscalar:ty, $fscalar:ident) => (
         impl SimdMath for $fty {
-            fn sin_cos(&self) -> ($fty, $fty) {
-                const SIGN_MASK: $uscalar = 1 << size_of::<$uscalar>() * 8 - 1;
+            fn sin_cos(self) -> ($fty, $fty) {
+                /*const SIGN_MASK: $uscalar = 1 << size_of::<$uscalar>() * 8 - 1;
 
-                let mut x = *self;
+                let mut x = self;
                 /* extract the sign bit (upper one) */
-                let mut sign_bit_sin = $uty::from_bits(x) & $uty::splat(SIGN_MASK);
+                let mut sign_bit_sin = $uty::from_bits(x) & SIGN_MASK;
                 /* take the absolute value */
-                x = $fty::from_bits($uty::from_bits(x) & $uty::splat(!SIGN_MASK));
+                x = $fty::from_bits($uty::from_bits(x) & !SIGN_MASK);
 
                 /* scale by 4/Pi */ // y= x * 4 / pi = x * (pi / 4)^-1
-                let mut y = x * $fty::splat(::core::$fscalar::consts::FRAC_PI_4.recip());
+                let mut y = x * ::core::$fscalar::consts::FRAC_PI_4.recip();
 
                 /* store the integer part of y in emm2 */
                 let mut emm2 = $uty::from(y);
 
                 /* j=(j+1) & (~1) (see the cephes sources) */
-                emm2 += $uty::splat(1);
-                emm2 &= $uty::splat(!1);
+                emm2 += 1;
+                emm2 &= !1;
                 y = $fty::from(emm2);
 
                 let mut emm4 = emm2;
 
                 /* get the swap sign flag for the sine */
-                let mut emm0 = emm2 & $uty::splat(4);
+                let mut emm0 = emm2 & 4;
                 emm0 <<= 29;
                 let swap_sign_bit_sin = $fty::from_bits(emm0);
 
                 /* get the polynom selection mask for the sine*/
-                emm2 &= $uty::splat(2);
+                emm2 &= 2;
                 emm2 = $uty::from_bits(emm2.eq($uty::default()));
                 let poly_mask = $fty::from_bits(emm2);
 
                 /* The magic pass: "Extended precision modular arithmetic"
                    x = ((x - y * DP1) - y * DP2) - y * DP3; */
-                let mut xmm1 = $fty::splat(-0.78515625);
-                let mut xmm2 = $fty::splat(-2.4187564849853515625e-4);
-                let mut xmm3 = $fty::splat(-3.77489497744594108e-8);
+                let mut xmm1 = $fty::splat(-0.785_156_25);
+                let mut xmm2 = $fty::splat(-2.418_756_484_985_351_562_5e-4);
+                let mut xmm3 = $fty::splat(-3.774_894_977_445_941_08e-8);
                 xmm1 *= y;
                 xmm2 *= y;
                 xmm3 *= y;
@@ -314,8 +623,8 @@ macro_rules! impl_simd_math {
                 x += xmm2;
                 x += xmm3;
 
-                emm4 -= $uty::splat(2);
-                emm4 = !emm4 & $uty::splat(4);
+                emm4 -= 2;
+                emm4 = !emm4 & 4;
                 emm4 <<= 29;
                 let sign_bit_cos = $fty::from_bits(emm4);
 
@@ -324,25 +633,25 @@ macro_rules! impl_simd_math {
 
                 /* Evaluate the first polynom  (0 <= x <= Pi/4) */
                 let z = x * x;
-                y = $fty::splat(2.443315711809948e-5);
+                y = $fty::splat(2.443_315_711_809_948e-5);
 
                 y *= z;
-                y += $fty::splat(-1.388731625493765e-3);
+                y += -1.388_731_625_493_765e-3;
                 y *= z;
-                y += $fty::splat(4.166664568298827e-2);
+                y += 4.166_664_568_298_827e-2;
                 y *= z;
                 y *= z;
-                let tmp = z * $fty::splat(1.6668057665e-1);
+                let tmp = z * 1.666_805_766_5e-1;
                 y -= tmp;
-                y += $fty::splat(1.0);
+                y += 1.0;
 
                 /* Evaluate the second polynom  (Pi/4 <= x <= 0) */
 
-                let mut y2 = $fty::splat(-1.9515295891e-4);
+                let mut y2 = $fty::splat(-1.951_529_589_1e-4);
                 y2 *= z;
-                y2 += $fty::splat(8.3321608736e-3);
+                y2 += 8.332_160_873_6e-3;
                 y2 *= z;
-                y2 += $fty::splat(-1.6666654611e-1);
+                y2 += -1.666_665_461_1e-1;
                 y2 *= z;
                 y2 *= x;
                 y2 += x;
@@ -361,32 +670,41 @@ macro_rules! impl_simd_math {
                 (
                     $fty::from_bits($uty::from_bits(xmm1) ^ $uty::from_bits(sign_bit_sin)),
                     $fty::from_bits($uty::from_bits(xmm2) ^ $uty::from_bits(sign_bit_cos))
-                )
+                )*/
+                (self.sin(), self.cos())
             }
 
-            fn ln(&self) -> $fty {
-                let mut x = *self;
+            fn tan(self) -> Self {
+               let mut x = self;
+               for i in 0..Self::lanes() {
+                   x = x.replace(i, x.extract(i).tan());
+               }
+               x
+            }
+
+            fn floor(self) -> Self {
+               $fty::from($uty::from(self))
+            }
+
+            fn ln(self) -> $fty {
+                let mut x = self;
 
                 let one = $fty::splat(1.0);
 
-                // must use intrinsic (available with the `stdsimd` crate tho)
-                // let invalid_mask = _mm_cmple_ps(__m128::from_bits(x), __m128::from_bits($fty::default()));
                 let invalid_mask = x.le($fty::default());
 
-                // must use intrinsic (available with the `stdsimd` crate tho https://github.com/rust-lang-nursery/stdsimd/pull/418)
-                // x = $fty::from_bits(_mm_max_ps(__m128::from_bits(x), __m128::from_bits($uty::splat(0x00800000))));
-                x = x.max($fty::from_bits($uty::splat(0x00800000)));
+                x = x.max($fty::from_bits($uty::splat(0x0080_0000)));
 
-                let emm0 = ($uty::from_bits(x) >> 23) - $uty::splat(0x7f);
+                let emm0 = ($uty::from_bits(x) >> 23) - 0x7f_u32;
 
-                x = $fty::from_bits($uty::from_bits(x) & $uty::splat(!0x7f800000));
+                x = $fty::from_bits($uty::from_bits(x) & !0x7f80_0000);
                 x = $fty::from_bits($uty::from_bits(x) | $uty::from_bits($fty::splat(0.5)));
 
                 let mut e = $fty::from(emm0) + one;
 
                 // must use intrinsic (available with the `stdsimd` crate tho)
                 // let mask = $fty::from_bits(_mm_cmplt_ps(__m128::from_bits(x), __m128::from_bits($fty::splat(0.707106781186547524))));
-                let mask = x.lt($fty::splat(0.707106781186547524));
+                let mask = x.lt($fty::splat(0.707_106_781_186_547_524));
                 let tmp = $uty::from_bits(x) & $uty::from(mask); //_mm_and_ps(x, mask);
                 x -= one; // _mm_sub_ps(x, one);
                 e -= $fty::from_bits($uty::from_bits(one) & $uty::from_bits(mask)); //_mm_sub_ps(e, _mm_and_ps(one, mask));
@@ -394,46 +712,47 @@ macro_rules! impl_simd_math {
 
                 let z = x * x; //_mm_mul_ps(x, x);
 
-                let mut y = $fty::splat(7.0376836292e-2);
-                y = y * x + $fty::splat(-1.1514610310e-1);
-                y = y * x + $fty::splat(1.1676998740e-1);
-                y = y * x + $fty::splat(-1.2420140846e-1);
-                y = y * x + $fty::splat(1.4249322787e-1);
-                y = y * x + $fty::splat(-1.6668057665e-1);
-                y = y * x + $fty::splat(2.0000714765e-1);
-                y = y * x + $fty::splat(-2.4999993993e-1);
-                y = y * x + $fty::splat(3.3333331174e-1);
+                let mut y = $fty::splat(7.037_683_629_2e-2);
+                y = y * x - 1.151_461_031_0e-1;
+                y = y * x + 1.167_699_874_0e-1;
+                y = y * x - 1.242_014_084_6e-1;
+                y = y * x + 1.424_932_278_7e-1;
+                y = y * x - 1.666_805_766_5e-1;
+                y = y * x + 2.000_071_476_5e-1;
+                y = y * x - 2.499_999_399_3e-1;
+                y = y * x + 3.333_333_117_4e-1;
                 y *= x * z;
 
-                y += e * $fty::splat(-2.12194440e-4);
+                y += e * -2.121_944_40e-4;
 
-                y -= z * $fty::splat(0.5);
+                y -= z * 0.5;
 
                 x += y;
-                x += e * $fty::splat(0.693359375);
+                x += e * 0.693_359_375;
                 $fty::from_bits($uty::from_bits(x) | $uty::from_bits(invalid_mask)) // negative arg will be NAN
             }
 
             // should compile down to a single instruction
-            fn sqrt(&self) -> Self {
-               let mut x = *self;
+            fn sqrt(self) -> Self {
+               /*let mut x = self;
                for i in 0..Self::lanes() {
                    x = x.replace(i, x.extract(i).sqrt());
                }
-               x
+               x*/
+               self.sqrt()
             }
 
-            fn exp(&self) -> Self {
-                let mut x = *self;
+            fn exp(self) -> Self {
+                let mut x = self;
 
                 let one = $fty::splat(1.0);
 
-                x = x.min($fty::splat(88.3762626647949));
-                x = x.max($fty::splat(-88.3762626647949));
+                x = x.min($fty::splat(88.376_262_664_794_9));
+                x = x.max($fty::splat(-88.376_262_664_794_9));
 
                 /* express exp(x) as exp(g + n*log(2)) */
-                let mut fx = x * $fty::splat(1.44269504088896341);
-                fx += $fty::splat(0.5);
+                let mut fx = x * 1.442_695_040_888_963_41;
+                fx += 0.5;
 
                 /* how to perform a floorf with SSE: just below */
                 //imm0 = _mm256_cvttps_epi32(fx);
@@ -447,24 +766,24 @@ macro_rules! impl_simd_math {
                 mask &= $uty::from_bits(one);
                 fx = tmp - $fty::from_bits(mask);
 
-                let tmp = fx * $fty::splat(0.693359375);
-                let mut z = fx * $fty::splat(-2.12194440e-4);
+                let tmp = fx * 0.693_359_375;
+                let mut z = fx * -2.121_944_40e-4;
                 x -= tmp;
                 x -= z;
 
                 z = x * x;
 
-                let mut y = $fty::splat(1.9875691500e-4);
+                let mut y = $fty::splat(1.987_569_150_0e-4);
                 y *= x;
-                y += $fty::splat(1.3981999507e-3);
+                y += 1.398_199_950_7e-3;
                 y *= x;
-                y += $fty::splat(8.3334519073e-3);
+                y += 8.333_451_907_3e-3;
                 y *= x;
-                y += $fty::splat(4.1665795894e-2);
+                y += 4.166_579_589_4e-2;
                 y *= x;
-                y += $fty::splat(1.6666665459e-1);
+                y += 1.666_666_545_9e-1;
                 y *= x;
-                y += $fty::splat(5.0000001201e-1);
+                y += 5.000_000_120_1e-1;
                 y *= z;
                 y += x;
                 y += one;
@@ -472,10 +791,48 @@ macro_rules! impl_simd_math {
                 /* build 2^n */
                 let mut imm0 = $uty::from(fx);
                 // another two AVX2 instructions
-                imm0 += $uty::splat(0x7f);
+                imm0 += 0x7f;
                 imm0 <<= 23;
                 let pow2n = $fty::from(imm0);
                 y * pow2n
+            }
+
+            fn powf(self, n: Self) -> Self {
+                let mut powf = $fty::default();
+                for i in 0..$fty::lanes() {
+                    let n = n.extract(i);
+                    powf = powf.replace(i, self.extract(i).powf(n));
+                }
+                powf
+            }
+
+            fn log_gamma(self) -> Self {
+                // precalculated 6 coefficients for the first 6 terms of the series
+                let coefficients = [
+                    76.18009172947146,
+                    -86.50532032941677,
+                    24.01409824083091,
+                    -1.231739572450155,
+                    0.1208650973866179e-2,
+                    -0.5395239384953e-5,
+                ];
+
+                // (x+0.5)*ln(x+g+0.5)-(x+g+0.5)
+                let tmp = self + 5.5;
+                let log = (self + 0.5) * tmp.ln() - tmp;
+
+                // the first few terms of the series for Ag(x)
+                let mut a = $fty::splat(1.000000000190015);
+                let mut denom = self;
+                for &coeff in &coefficients {
+                    denom += 1.0;
+                    a += coeff / denom;
+                }
+
+                // get everything together
+                // a is Ag(x)
+                // 2.5066... is sqrt(2pi)
+                log + (2.5066282746310005 * a / self).ln()
             }
         }
     )
@@ -494,10 +851,10 @@ impl_simd_math!(f32x16, u32x16, u32, f32);
 // TODO: implement AVX2 & SVML versions with conditional compilation
 #[cfg(feature="simd_support")]
 impl SimdMath for f32x4 {
-    fn ln(&self) -> f32x4 {
+    fn ln(self) -> f32x4 {
         let one = __m128::from_bits(f32x4::splat(1.0));
 
-        let mut x = __m128::from_bits(*self);
+        let mut x = __m128::from_bits(self);
 
         unsafe {
             let invalid_mask = _mm_cmple_ps(x, __m128::from_bits(u32x4::default()));
@@ -560,8 +917,8 @@ impl SimdMath for f32x4 {
         }
     }
 
-    fn sin_cos(&self) -> (f32x4, f32x4) {
-        let mut x = __m128::from_bits(*self);
+    fn sin_cos(self) -> (f32x4, f32x4) {
+        /*let mut x = __m128::from_bits(self);
 
         unsafe {
             /* extract the sign bit (upper one) */
@@ -655,30 +1012,82 @@ impl SimdMath for f32x4 {
                 f32x4::from_bits(_mm_xor_ps(xmm1, sign_bit_sin)),
                 f32x4::from_bits(_mm_xor_ps(xmm2, sign_bit_cos)),
             )
-        }
+        }*/
+        (self.sin(), self.cos())
     }
 
-    fn sqrt(&self) -> Self {
-        let mut x = *self;
+    fn tan(self) -> Self {
+        let mut x = self;
         for i in 0..Self::lanes() {
-            x = x.replace(i, x.extract(i).sqrt());
+            x = x.replace(i, x.extract(i).tan());
         }
         x
     }
 
-    fn exp(&self) -> Self {
-        let mut x = *self;
+    fn floor(self) -> Self {
+        Self::from(u32x4::from(self))
+    }
+
+    fn sqrt(self) -> Self {
+        /*let mut x = self;
+        for i in 0..Self::lanes() {
+            x = x.replace(i, x.extract(i).sqrt());
+        }
+        x*/
+        self.sqrt()
+    }
+
+    fn exp(self) -> Self {
+        let mut x = self;
         for i in 0..Self::lanes() {
             x = x.replace(i, x.extract(i).exp());
         }
         x
     }
+
+    fn powf(self, n: Self) -> Self {
+        let mut powf = f32x4::default();
+        for i in 0..f32x4::lanes() {
+            let n = n.extract(i);
+            powf = powf.replace(i, self.extract(i).powf(n));
+        }
+        powf
+    }
+
+    fn log_gamma(self) -> Self {
+        // precalculated 6 coefficients for the first 6 terms of the series
+        let coefficients = [
+            76.18009172947146,
+            -86.50532032941677,
+            24.01409824083091,
+            -1.231739572450155,
+            0.1208650973866179e-2,
+            -0.5395239384953e-5,
+        ];
+
+        // (x+0.5)*ln(x+g+0.5)-(x+g+0.5)
+        let tmp = self + 5.5;
+        let log = (self + 0.5) * tmp.ln() - tmp;
+
+        // the first few terms of the series for Ag(x)
+        let mut a = Self::splat(1.000000000190015);
+        let mut denom = self;
+        for &coeff in &coefficients {
+            denom += 1.0;
+            a += coeff / denom;
+        }
+
+        // get everything together
+        // a is Ag(x)
+        // 2.5066... is sqrt(2pi)
+        log + (2.5066282746310005 * a / self).ln()
+    }
 }
 
 #[cfg(feature="simd_support")]
 impl SimdMath for f32x8 {
-    fn sin_cos(&self) -> (Self, Self) {
-        let minus_cephes_dp1 = __m256::from_bits(f32x8::splat(-0.78515625));
+    fn sin_cos(self) -> (Self, Self) {
+        /*let minus_cephes_dp1 = __m256::from_bits(f32x8::splat(-0.78515625));
         let minus_cephes_dp2 = __m256::from_bits(f32x8::splat(-2.4187564849853515625e-4));
         let minus_cephes_dp3 = __m256::from_bits(f32x8::splat(-3.77489497744594108e-8));
 
@@ -708,7 +1117,7 @@ impl SimdMath for f32x8 {
         let mut imm4_2: __m128i;
         // #endif
 
-        let mut x = __m256::from_bits(*self);
+        let mut x = __m256::from_bits(self);
 
         sign_bit_sin = x;
 
@@ -859,11 +1268,24 @@ impl SimdMath for f32x8 {
                 f32x8::from_bits(_mm256_xor_ps(xmm1, sign_bit_sin)),
                 f32x8::from_bits(_mm256_xor_ps(xmm2, sign_bit_cos)),
             )
-        }
+        }*/
+        (self.sin(), self.cos())
     }
 
-    fn ln(&self) -> Self {
-        let mut x = __m256::from_bits(*self);
+    fn tan(self) -> Self {
+        let mut x = self;
+        for i in 0..Self::lanes() {
+            x = x.replace(i, x.extract(i).tan());
+        }
+        x
+    }
+
+    fn floor(self) -> Self {
+        Self::from(u32x8::from(self))
+    }
+
+    fn ln(self) -> Self {
+        let mut x = __m256::from_bits(self);
         let mut imm0: __m256i;
         let one: __m256 = __m256::from_bits(f32x8::splat(1.0));
         unsafe {
@@ -950,20 +1372,21 @@ impl SimdMath for f32x8 {
             x = _mm256_add_ps(x, y);
             x = _mm256_add_ps(x, tmp);
             x = _mm256_or_ps(x, invalid_mask); // negative arg will be NAN
-            return f32x8::from_bits(x);
+            f32x8::from_bits(x)
         }
     }
 
-    fn sqrt(&self) -> Self {
-        let mut x = *self;
+    fn sqrt(self) -> Self {
+        /*let mut x = self;
         for i in 0..Self::lanes() {
             x = x.replace(i, x.extract(i).sqrt());
         }
-        x
+        x*/
+        self.sqrt()
     }
 
-    fn exp(&self) -> Self {
-        let mut x = __m256::from_bits(*self);
+    fn exp(self) -> Self {
+        let mut x = __m256::from_bits(self);
         let one: __m256 = __m256::from_bits(f32x8::splat(1.0));
 
         unsafe {
@@ -991,7 +1414,7 @@ impl SimdMath for f32x8 {
             x = _mm256_sub_ps(x, tmp);
             x = _mm256_sub_ps(x, z);
 
-            z = _mm256_mul_ps(x,x);
+            z = _mm256_mul_ps(x, x);
 
             let mut y: __m256 = __m256::from_bits(f32x8::splat(1.9875691500e-4));
             y = _mm256_mul_ps(y, x);
@@ -1014,7 +1437,7 @@ impl SimdMath for f32x8 {
             // another two AVX2 instructions
             /*imm0 = _mm256_add_epi32(imm0, __m256i::from_bits(u32x8::splat(0x7f)));
             imm0 = _mm256_slli_epi32(imm0, 23);*/
-                // impl `(x + 0x7f) << 32` without avx2...
+            // impl `(x + 0x7f) << 32` without avx2...
                 // ...with intrinsics
                 /*let (mut a, mut b): (__m128i, __m128i) = transmute(imm0);
                 a = _mm_add_epi32(a, __m128i::from_bits(u32x4::splat(0x7f)));
@@ -1022,27 +1445,421 @@ impl SimdMath for f32x8 {
                 a = _mm_slli_epi32(a, 23);
                 b = _mm_slli_epi32(b, 23);
                 imm0 = transmute((a, b));*/
-                // ...or with abstraction
-                imm0 = __m256i::from_bits(u32x8::from_bits(imm0) + u32x8::splat(0x7f));
-                imm0 = __m256i::from_bits(u32x8::from_bits(imm0) << 23);
+            // ...or with abstraction
+            imm0 = __m256i::from_bits(u32x8::from_bits(imm0) + u32x8::splat(0x7f));
+            imm0 = __m256i::from_bits(u32x8::from_bits(imm0) << 23);
 
             let pow2n: __m256 = _mm256_castsi256_ps(imm0);
             y = _mm256_mul_ps(y, pow2n);
-            return f32x8::from_bits(y);
+            f32x8::from_bits(y)
         }
+    }
+
+    fn powf(self, n: f32x8) -> f32x8 {
+        let mut powf = f32x8::default();
+        for i in 0..f32x8::lanes() {
+            let n = n.extract(i);
+            powf = powf.replace(i, self.extract(i).powf(n));
+        }
+        powf
+    }
+
+    fn log_gamma(self) -> Self {
+        // precalculated 6 coefficients for the first 6 terms of the series
+        let coefficients = [
+            76.18009172947146,
+            -86.50532032941677,
+            24.01409824083091,
+            -1.231739572450155,
+            0.1208650973866179e-2,
+            -0.5395239384953e-5,
+        ];
+
+        // (x+0.5)*ln(x+g+0.5)-(x+g+0.5)
+        let tmp = self + 5.5;
+        let log = (self + 0.5) * tmp.ln() - tmp;
+
+        // the first few terms of the series for Ag(x)
+        let mut a = Self::splat(1.000000000190015);
+        let mut denom = self;
+        for &coeff in &coefficients {
+            denom += 1.0;
+            a += coeff / denom;
+        }
+
+        // get everything together
+        // a is Ag(x)
+        // 2.5066... is sqrt(2pi)
+        log + (2.5066282746310005 * a / self).ln()
+    }
+}
+
+#[cfg(feature="simd_support")]
+macro_rules! impl_simd_math_f64 {
+    ($fty:ident, $uty:ident, $uscalar:ty, $fscalar:ident, $intrinsic:ident, $round:ident) => {
+        impl SimdMath for $fty {
+            fn sin_cos(self) -> ($fty, $fty) {
+                /*let mut sin = $fty::default();
+                let mut cos = $fty::default();
+                for i in 0..$fty::lanes() {
+                    let (_sin, _cos) = self.extract(i).sin_cos();
+                    sin = sin.replace(i, _sin);
+                    cos = cos.replace(i, _cos);
+                }
+                (sin, cos)*/
+                (self.sin(), self.cos())
+            }
+
+            fn tan(self) -> Self {
+                let mut x = self;
+
+                let z = x * ::core::f64::consts::FRAC_PI_2.recip();
+                let y = unsafe { $fty::from_bits($round($intrinsic::from_bits(z), 0)) };
+                let m = ($uty::from(z) & 1).eq($uty::splat(1));
+
+                #[cfg(target_feature = "fma")]
+                {
+                    let mut x_vec = Self::default();
+                    for i in 0..Self::lanes() {
+                        let mut x = x.extract(i);
+                        unsafe {
+                            x = fmaf64(y, -2.0 * 0.78539816290140151978, x);
+                            x = fmaf64(y, -2.0 * 4.9604678871439933374e-10, x);
+                            x = fmaf64(y, -2.0 * 1.1258708853173288931e-18, x);
+                            x = fmaf64(y, -2.0 * 1.7607799325916000908e-27, x);
+                        }
+                        x_vec = x_vec.replace(i, p);
+                    }
+
+                    x = m.select($fty::splat(-0.0), x_vec);
+
+                    let x2 = x * x;
+
+                    // force the compiler to use FMA intructions
+                    let mut p_vec = Self::default();
+                    for i in 0..Self::lanes() {
+                        let x2 = x2.extract(i);
+
+                        let mut p;
+                        unsafe {
+                            p = fmaf64(
+                                1.01419718511083373224408e-5,
+                                x2,
+                                -2.59519791585924697698614e-5,
+                            );
+                            p = fmaf64(p, x2, 5.23388081915899855325186e-5);
+                            p = fmaf64(p, x2, -3.05033014433946488225616e-5);
+                            p = fmaf64(p, x2, 7.14707504084242744267497e-5);
+                            p = fmaf64(p, x2, 8.09674518280159187045078e-5);
+                            p = fmaf64(p, x2, 0.000244884931879331847054404);
+                            p = fmaf64(p, x2, 0.000588505168743587154904506);
+                            p = fmaf64(p, x2, 0.00145612788922812427978848);
+                            p = fmaf64(p, x2, 0.00359208743836906619142924);
+                            p = fmaf64(p, x2, 0.00886323944362401618113356);
+                            p = fmaf64(p, x2, 0.0218694882853846389592078);
+                            p = fmaf64(p, x2, 0.0539682539781298417636002);
+                            p = fmaf64(p, x2, 0.133333333333125941821962);
+                            p = fmaf64(p, x2, 0.333333333333334980164153);
+                        }
+
+                        p_vec = p_vec.replace(i, p);
+                    }
+
+                    let p = x2 * p_vec * x + x;
+                    return m.select(p, 1.0 / p);
+                }
+
+                x += y * (-2.0 * 0.78539816290140151978);
+                x += y * (-2.0 * 4.9604678871439933374e-10);
+                x += y * (-2.0 * 1.1258708853173288931e-18);
+                x += y * (-2.0 * 1.7607799325916000908e-27);
+
+                x = m.select($fty::splat(-0.0), x);
+
+                let x2 = x * x;
+
+                let mut p;
+                p = 1.01419718511083373224408e-5 * x2 + -2.59519791585924697698614e-5;
+                p = p * x2 + 5.23388081915899855325186e-5;
+                p = p * x2 + -3.05033014433946488225616e-5;
+                p = p * x2 + 7.14707504084242744267497e-5;
+                p = p * x2 + 8.09674518280159187045078e-5;
+                p = p * x2 + 0.000244884931879331847054404;
+                p = p * x2 + 0.000588505168743587154904506;
+                p = p * x2 + 0.00145612788922812427978848;
+                p = p * x2 + 0.00359208743836906619142924;
+                p = p * x2 + 0.00886323944362401618113356;
+                p = p * x2 + 0.0218694882853846389592078;
+                p = p * x2 + 0.0539682539781298417636002;
+                p = p * x2 + 0.133333333333125941821962;
+                p = p * x2 + 0.333333333333334980164153;
+                p = x2 * p * x + x;
+
+                m.select(p, 1.0 / p)
+            }
+
+            fn floor(self) -> Self {
+                $fty::from($uty::from(self))
+            }
+
+            fn ln(self) -> $fty {
+                let mut ln = $fty::default();
+                for i in 0..$fty::lanes() {
+                    ln = ln.replace(i, self.extract(i).ln());
+                }
+                ln
+            }
+
+            // should compile down to a single instruction
+            fn sqrt(self) -> Self {
+                /*let mut x = self;
+                for i in 0..Self::lanes() {
+                    x = x.replace(i, x.extract(i).sqrt());
+                }
+                x*/
+                self.sqrt()
+            }
+
+            fn exp(self) -> Self {
+                let mut exp = $fty::default();
+                for i in 0..$fty::lanes() {
+                    exp = exp.replace(i, self.extract(i).exp());
+                }
+                exp
+            }
+
+            fn powf(self, n: Self) -> Self {
+                let mut powf = $fty::default();
+                for i in 0..$fty::lanes() {
+                    let n = n.extract(i);
+                    powf = powf.replace(i, self.extract(i).powf(n));
+                }
+                powf
+            }
+
+            fn log_gamma(self) -> Self {
+                // precalculated 6 coefficients for the first 6 terms of the series
+                let coefficients = [
+                    76.18009172947146,
+                    -86.50532032941677,
+                    24.01409824083091,
+                    -1.231739572450155,
+                    0.1208650973866179e-2,
+                    -0.5395239384953e-5,
+                ];
+
+                // (x+0.5)*ln(x+g+0.5)-(x+g+0.5)
+                let tmp = self + 5.5;
+                let log = (self + 0.5) * tmp.ln() - tmp;
+
+                // the first few terms of the series for Ag(x)
+                let mut a = Self::splat(1.000000000190015);
+                let mut denom = self;
+                for &coeff in &coefficients {
+                    denom += 1.0;
+                    a += coeff / denom;
+                }
+
+                // get everything together
+                // a is Ag(x)
+                // 2.5066... is sqrt(2pi)
+                log + (2.5066282746310005 * a / self).ln()
+            }
+        }
+    };
+}
+
+#[cfg(feature="simd_support")]
+impl_simd_math_f64!(f64x2, u64x2, u64, f64, __m128d, _mm_round_pd);
+#[cfg(feature="simd_support")]
+impl_simd_math_f64!(f64x4, u64x4, u64, f64, __m256d, _mm256_round_pd);
+/*#[cfg(feature="simd_support")]
+impl_simd_math_f64!(f64x8, u64x8, u64, f64, __m512d, _mm512_round_pd);*/
+
+#[cfg(feature="simd_support")]
+impl SimdMath for f64x8 {
+    fn sin_cos(self) -> (Self, Self) {
+        /*let mut sin = Self::default();
+        let mut cos = Self::default();
+        for i in 0..Self::lanes() {
+            let (_sin, _cos) = self.extract(i).sin_cos();
+            sin = sin.replace(i, _sin);
+            cos = cos.replace(i, _cos);
+        }
+        (sin, cos)*/
+        (self.sin(), self.cos())
+    }
+
+    fn tan(self) -> Self {
+        let mut x = self;
+
+        let z = x * ::core::f64::consts::FRAC_PI_2.recip();
+        let ceil = |x: Self| -(-x).floor();
+        let y = (ceil(2.0 * z) / 2.0).floor();
+        let m = (u64x8::from(z) & 1).eq(u64x8::splat(1));
+
+        #[cfg(target_feature = "fma")]
+        {
+            // We have no FMA intrinsics, so we force the compiler to do it
+            // with the scalar version.
+            let mut x_vec = Self::default();
+            for i in 0..Self::lanes() {
+                let mut x = x.extract(i);
+                unsafe {
+                    x = fmaf64(y, -2.0 * 0.78539816290140151978, x);
+                    x = fmaf64(y, -2.0 * 4.9604678871439933374e-10, x);
+                    x = fmaf64(y, -2.0 * 1.1258708853173288931e-18, x);
+                    x = fmaf64(y, -2.0 * 1.7607799325916000908e-27, x);
+                }
+                x_vec = x_vec.replace(i, p);
+            }
+
+            x = m.select(Self::splat(-0.0), x_vec);
+
+            let x2 = x * x;
+
+            // force the compiler to use FMA intructions
+            let mut p_vec = Self::default();
+            for i in 0..Self::lanes() {
+                let x2 = x2.extract(i);
+
+                let mut p;
+                unsafe {
+                    p = fmaf64(
+                        1.01419718511083373224408e-5,
+                        x2,
+                        -2.59519791585924697698614e-5,
+                    );
+                    p = fmaf64(p, x2, 5.23388081915899855325186e-5);
+                    p = fmaf64(p, x2, -3.05033014433946488225616e-5);
+                    p = fmaf64(p, x2, 7.14707504084242744267497e-5);
+                    p = fmaf64(p, x2, 8.09674518280159187045078e-5);
+                    p = fmaf64(p, x2, 0.000244884931879331847054404);
+                    p = fmaf64(p, x2, 0.000588505168743587154904506);
+                    p = fmaf64(p, x2, 0.00145612788922812427978848);
+                    p = fmaf64(p, x2, 0.00359208743836906619142924);
+                    p = fmaf64(p, x2, 0.00886323944362401618113356);
+                    p = fmaf64(p, x2, 0.0218694882853846389592078);
+                    p = fmaf64(p, x2, 0.0539682539781298417636002);
+                    p = fmaf64(p, x2, 0.133333333333125941821962);
+                    p = fmaf64(p, x2, 0.333333333333334980164153);
+                }
+
+                p_vec = p_vec.replace(i, p);
+            }
+
+            let p = x2 * p_vec * x + x;
+            return m.select(p, 1.0 / p);
+        }
+
+        x += y * (-2.0 * 0.78539816290140151978);
+        x += y * (-2.0 * 4.9604678871439933374e-10);
+        x += y * (-2.0 * 1.1258708853173288931e-18);
+        x += y * (-2.0 * 1.7607799325916000908e-27);
+
+        x = m.select(Self::splat(-0.0), x);
+
+        let x2 = x * x;
+
+        let mut p;
+        p = 1.01419718511083373224408e-5 * x2 + -2.59519791585924697698614e-5;
+        p = p * x2 + 5.23388081915899855325186e-5;
+        p = p * x2 + -3.05033014433946488225616e-5;
+        p = p * x2 + 7.14707504084242744267497e-5;
+        p = p * x2 + 8.09674518280159187045078e-5;
+        p = p * x2 + 0.000244884931879331847054404;
+        p = p * x2 + 0.000588505168743587154904506;
+        p = p * x2 + 0.00145612788922812427978848;
+        p = p * x2 + 0.00359208743836906619142924;
+        p = p * x2 + 0.00886323944362401618113356;
+        p = p * x2 + 0.0218694882853846389592078;
+        p = p * x2 + 0.0539682539781298417636002;
+        p = p * x2 + 0.133333333333125941821962;
+        p = p * x2 + 0.333333333333334980164153;
+        p = x2 * p * x + x;
+
+        m.select(p, 1.0 / p)
+    }
+
+    fn floor(self) -> Self {
+        f64x8::from(u64x8::from(self))
+    }
+
+    fn ln(self) -> f64x8 {
+        let mut ln = f64x8::default();
+        for i in 0..f64x8::lanes() {
+            ln = ln.replace(i, self.extract(i).ln());
+        }
+        ln
+    }
+
+    // should compile down to a single instruction
+    fn sqrt(self) -> Self {
+        /*let mut x = self;
+        for i in 0..Self::lanes() {
+            x = x.replace(i, x.extract(i).sqrt());
+        }
+        x*/
+        self.sqrt()
+    }
+
+    fn exp(self) -> Self {
+        let mut exp = f64x8::default();
+        for i in 0..f64x8::lanes() {
+            exp = exp.replace(i, self.extract(i).exp());
+        }
+        exp
+    }
+
+    fn powf(self, n: Self) -> Self {
+        let mut powf = f64x8::default();
+        for i in 0..Self::lanes() {
+            let n = n.extract(i);
+            powf = powf.replace(i, self.extract(i).powf(n));
+        }
+        powf
+    }
+
+    fn log_gamma(self) -> Self {
+        // precalculated 6 coefficients for the first 6 terms of the series
+        let coefficients = [
+            76.18009172947146,
+            -86.50532032941677,
+            24.01409824083091,
+            -1.231739572450155,
+            0.1208650973866179e-2,
+            -0.5395239384953e-5,
+        ];
+
+        // (x+0.5)*ln(x+g+0.5)-(x+g+0.5)
+        let tmp = self + 5.5;
+        let log = (self + 0.5) * tmp.ln() - tmp;
+
+        // the first few terms of the series for Ag(x)
+        let mut a = Self::splat(1.000000000190015);
+        let mut denom = self;
+        for &coeff in &coefficients {
+            denom += 1.0;
+            a += coeff / denom;
+        }
+
+        // get everything together
+        // a is Ag(x)
+        // 2.5066... is sqrt(2pi)
+        log + (2.5066282746310005 * a / self).ln()
     }
 }
 
 #[cfg(all(test, feature="simd_support"))]
 mod tests {
     use super::*;
-    use SeedableRng;
     use prng::Sfc32x4Rng;
+    use SeedableRng;
 
     const TEST_N: usize = 1 << 10;
 
     macro_rules! make_log_test {
-        ($test_name:ident, $ty:ident) => (
+        ($test_name:ident, $ty:ident) => {
             #[test]
             fn $test_name() {
                 let mut rng = Sfc32x4Rng::from_rng(&mut ::thread_rng()).unwrap();
@@ -1053,14 +1870,11 @@ mod tests {
                     for i in 0..$ty::lanes() {
                         let expected = num.extract(i).ln();
                         let actual = actual.extract(i);
-                        assert!(
-                            (expected - actual) < 1e-6,
-                            "\n{:?}\n{:?}", expected, actual
-                        );
+                        assert!((expected - actual) < 1e-6, "\n{:?}\n{:?}", expected, actual);
                     }
                 }
             }
-        )
+        };
     }
 
     make_log_test!(log_f32x2, f32x2);
@@ -1069,7 +1883,7 @@ mod tests {
     make_log_test!(log_f32x16, f32x16);
 
     macro_rules! make_sincos_test {
-        ($test_name:ident, $ty:ident) => (
+        ($test_name:ident, $ty:ident) => {
             #[test]
             fn $test_name() {
                 let mut rng = Sfc32x4Rng::from_rng(&mut ::thread_rng()).unwrap();
@@ -1085,16 +1899,20 @@ mod tests {
 
                         assert!(
                             (expected_sin - actual_sin) < 5e-7,
-                            "\n{:?}\n{:?}", expected_sin, actual_sin
+                            "\n{:?}\n{:?}",
+                            expected_sin,
+                            actual_sin
                         );
                         assert!(
                             (expected_cos - actual_cos) < 5e-7,
-                            "\n{:?}\n{:?}", expected_cos, actual_cos
+                            "\n{:?}\n{:?}",
+                            expected_cos,
+                            actual_cos
                         );
                     }
                 }
             }
-        )
+        };
     }
 
     make_sincos_test!(sincos_f32x2, f32x2);
@@ -1103,7 +1921,7 @@ mod tests {
     make_sincos_test!(sincos_f32x16, f32x16);
 
     macro_rules! make_exp_test {
-        ($test_name:ident, $ty:ident) => (
+        ($test_name:ident, $ty:ident) => {
             #[test]
             fn $test_name() {
                 let mut rng = Sfc32x4Rng::from_rng(&mut ::thread_rng()).unwrap();
@@ -1115,14 +1933,11 @@ mod tests {
                         let expected = num.extract(i).exp();
                         let actual = actual.extract(i);
 
-                        assert!(
-                            (expected - actual) < 5e-7,
-                            "\n{:?}\n{:?}", expected, actual
-                        );
+                        assert!((expected - actual) < 5e-7, "\n{:?}\n{:?}", expected, actual);
                     }
                 }
             }
-        )
+        };
     }
 
     make_exp_test!(exp_f32x2, f32x2);

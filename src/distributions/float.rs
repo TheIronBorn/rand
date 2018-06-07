@@ -14,7 +14,7 @@ use core::mem;
 use Rng;
 use distributions::{Distribution, Standard};
 #[cfg(feature="simd_support")]
-use std::simd::*;
+use stdsimd::simd::*;
 
 pub(crate) trait IntoFloat {
     type F;
@@ -63,8 +63,14 @@ float_impls! { f64, u64, 52, 1023 }
 
 #[cfg(feature="simd_support")]
 macro_rules! simd_float_impls {
-    ($ty:ident, $uty:ident, $f_scalar:ty, $u_scalar:ty,
-     $fraction_bits:expr, $exponent_bias:expr) => {
+    (
+        $ty:ident,
+        $uty:ident,
+        $f_scalar:ty,
+        $u_scalar:ty,
+        $fraction_bits:expr,
+        $exponent_bias:expr
+    ) => {
         impl IntoFloat for $uty {
             type F = $ty;
             #[inline(always)]
@@ -72,7 +78,7 @@ macro_rules! simd_float_impls {
                 // The exponent is encoded using an offset-binary representation
                 let exponent_bits: $u_scalar =
                     (($exponent_bias + exponent) as $u_scalar) << $fraction_bits;
-                unsafe { mem::transmute(self | $uty::splat(exponent_bits)) }
+                unsafe { mem::transmute(self | exponent_bits) }
             }
         }
 
@@ -85,7 +91,7 @@ macro_rules! simd_float_impls {
 
                 let value: $uty = rng.gen();
                 let fraction = value >> (float_size - $fraction_bits);
-                fraction.into_float_with_exponent(0) - $ty::splat(1.0 - EPSILON / 2.0)
+                fraction.into_float_with_exponent(0) - (1.0 - EPSILON / 2.0)
             }
         }
     }

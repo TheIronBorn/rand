@@ -10,14 +10,16 @@
 
 //! SFC generators (32-bit).
 
-use core::{fmt, slice, mem};
+use core::fmt;
+#[cfg(feature = "simd_support")]
+use stdsimd::simd::*;
 
-#[cfg(feature="simd_support")]
-use core::simd::*;
-
-use rand_core::{RngCore, SeedableRng, Error, impls, le};
-#[cfg(feature="simd_support")]
+#[cfg(feature = "simd_support")]
+use distributions::box_muller::SimdIntegerMath;
+#[cfg(feature = "simd_support")]
 use rand_core::simd_impls::{SimdRng, SimdRngImpls};
+use rand_core::{impls, le, Error, RngCore, SeedableRng};
+use Rng;
 
 /// A Small Fast Counting RNG designed by Chris Doty-Humphrey (32-bit version).
 ///
@@ -47,13 +49,16 @@ impl fmt::Debug for Sfc32Rng {
 impl SeedableRng for Sfc32Rng {
     type Seed = [u8; 12];
 
+    #[cfg_attr(feature = "cargo-clippy", allow(let_and_return))]
     fn from_seed(seed: Self::Seed) -> Self {
         let mut seed_u32 = [0u32; 3];
         le::read_u32_into(&seed, &mut seed_u32);
-        let state = Self { a: seed_u32[0],
-                               b: seed_u32[1],
-                               c: seed_u32[2],
-                               counter: 1};
+        let state = Self {
+            a: seed_u32[0],
+            b: seed_u32[1],
+            c: seed_u32[2],
+            counter: 1,
+        };
         // Skip the first 15 outputs, just in case we have a bad seed.
 /* We are allowed to assume the seed is good. Possibly use this in `from_seed_u64`
         for _ in 0..15 {
@@ -65,16 +70,17 @@ impl SeedableRng for Sfc32Rng {
 
     fn from_rng<R: RngCore>(mut rng: R) -> Result<Self, Error> {
         // Custom `from_rng` function. Because we can assume the seed to be of
-        // good quality, it is not neccesary to discard the first couple of
+        // good quality, it is not necessary to discard the first couple of
         // rounds.
         let mut seed_u32 = [0u32; 3];
-        unsafe {
-            let ptr = seed_u32.as_mut_ptr() as *mut u8;
+        rng.try_fill(&mut seed_u32)?;
 
-            let slice = slice::from_raw_parts_mut(ptr, 4*3);
-            rng.try_fill_bytes(slice)?;
-        }
-        Ok(Self { a: seed_u32[0], b: seed_u32[1], c: seed_u32[2], counter: 1 })
+        Ok(Self {
+            a: seed_u32[0],
+            b: seed_u32[1],
+            c: seed_u32[2],
+            counter: 1,
+        })
     }
 }
 
@@ -107,10 +113,17 @@ impl RngCore for Sfc32Rng {
     }
 }
 
-
-#[cfg(feature="simd_support")]
-macro_rules! make_sfc_32_simd {
-    ($rng_name:ident, $vector:ident, $test_name:ident, $debug_str:expr, $vector32:ident, $vector8:ident) => (
+#[cfg(feature = "simd_support")]
+macro_rules! make_sfc_simd {
+    (
+        $rng_name:ident,
+        $vector:ident,
+        $test_name:ident,
+        $debug_str:expr,rot:
+        $rot:expr,rsh:
+        $rsh:expr,lsh:
+        $lsh:expr
+    ) => {
         /// A SIMD implementation of Chris Doty-Humphrey's Small Fast Counting RNG (32-bit)
         pub struct $rng_name {
             a: $vector,
@@ -152,12 +165,14 @@ macro_rules! make_sfc_32_simd {
             /// Create a new PRNG using the given vector seeds.
             pub fn from_vector(a: $vector, b: $vector, c: $vector) -> Self {
                 Self {
-                    a, b, c,
+                    a,
+                    b,
+                    c,
                     counter: $vector::splat(1),
                 }
             }
 
-            /// Create a new PRNG using the given non-SIMD PRNGs.
+            /*/// Create a new PRNG using the given non-SIMD PRNGs.
             pub fn from_non_simd(reg_rngs: &[Sfc32Rng]) -> Self {
                 let mut a = $vector::default();
                 let mut b = $vector::default();
@@ -170,29 +185,17 @@ macro_rules! make_sfc_32_simd {
                 }
 
                 Self::from_vector(a, b, c)
-            }
+            }*/
         }
 
         impl SimdRng<$vector> for $rng_name {
             #[inline(always)]
             fn generate(&mut self) -> $vector {
-                #[inline]
-                fn rotate_left(x: $vector, n: u32) -> $vector {
-                    const BITS: u32 = 32;
-                    // Protect against undefined behaviour for over-long bit shifts
-                    let n = n % BITS;
-                    (x << n) | (x >> ((BITS - n) % BITS))
-                }
-
-                const BARREL_SHIFT: u32 = 21;
-                const RSHIFT: u32 = 9;
-                const LSHIFT: u32 = 3;
-
                 let tmp = self.a + self.b + self.counter;
-                self.counter += $vector::splat(1);
-                self.a = self.b ^ (self.b >> RSHIFT);
-                self.b = self.c + (self.c << LSHIFT);
-                self.c = rotate_left(self.c, BARREL_SHIFT) + tmp;
+                self.counter += 1;
+                self.a = self.b ^ (self.b >> $rsh);
+                self.b = self.c + (self.c << $lsh);
+                self.c = self.c.rotate_left($rot) + tmp;
                 tmp
             }
         }
@@ -206,22 +209,10 @@ macro_rules! make_sfc_32_simd {
 
             #[inline]
             fn from_rng<R: RngCore>(mut rng: R) -> Result<Self, Error> {
-                let mut seed_u32 = [0u32; $vector::lanes() * 3];
-                unsafe {
-                    let ptr = seed_u32.as_mut_ptr() as *mut u8;
+                let mut seed = [$vector::default(); 3];
+                rng.try_fill(&mut seed)?;
 
-                    let slice = slice::from_raw_parts_mut(ptr, mem::size_of::<$vector>() * 3);
-                    rng.try_fill_bytes(slice)?;
-                }
-
-                let lanes = $vector::lanes();
-                let load = |x| $vector::load_unaligned(x);
-
-                Ok(Self::from_vector(
-                    load(&seed_u32[..lanes]),
-                    load(&seed_u32[lanes..(2*lanes)]),
-                    load(&seed_u32[(lanes*2)..]),
-                ))
+                Ok(Self::from_vector(seed[0], seed[1], seed[2]))
             }
         }
 
@@ -251,12 +242,67 @@ macro_rules! make_sfc_32_simd {
                 test(&mut reg_rngs);
             }
         }*/
+    };
+}
+
+#[cfg(feature = "simd_support")]
+macro_rules! make_sfc_16_simd {
+    ($($rng_name:ident, $vec:ident, $test_name:ident, $debug_str:expr,)+) => (
+        $(make_sfc_simd!($rng_name, $vec, $test_name, $debug_str, rot: 3, rsh: 2, lsh: 1);)+
     )
 }
 
-#[cfg(feature="simd_support")]
-make_sfc_32_simd!(Sfc32x2Rng, u32x2, test_sfc_32_x2, "Sfc32x2Rng {{}}", u32x2, u8x8);
-#[cfg(feature="simd_support")]
-make_sfc_32_simd!(Sfc32x4Rng, u32x4, test_sfc_32_x4, "Sfc32x4Rng {{}}", u32x4, u8x16);
-#[cfg(feature="simd_support")]
-make_sfc_32_simd!(Sfc32x8Rng, u32x8, test_sfc_32_x8, "Sfc32x8Rng {{}}", u32x8, u8x32);
+#[cfg(feature = "simd_support")]
+make_sfc_16_simd! {
+    Sfc8x2Rng, u8x2, test_sfc_16_x2, "Sfc8x2Rng {{}}",
+    // Sfc8x4Rng, u8x4, test_sfc_16_x4, "Sfc8x4Rng {{}}",
+    // Sfc8x8Rng, u8x8, test_sfc_16_x8, "Sfc8x8Rng {{}}",
+    // Sfc8x16Rng, u8x16, test_sfc_16_x16, "Sfc8x16Rng {{}}",
+    // Sfc8x32Rng, u8x32, test_sfc_16_x32, "Sfc8x32Rng {{}}",
+    // Sfc8x64Rng, u8x64, test_sfc_16_x64, "Sfc8x64Rng {{}}",
+}
+
+#[cfg(feature = "simd_support")]
+macro_rules! make_sfc_16_simd {
+    ($($rng_name:ident, $vec:ident, $test_name:ident, $debug_str:expr,)+) => (
+        $(make_sfc_simd!($rng_name, $vec, $test_name, $debug_str, rot: 6, rsh: 5, lsh: 3);)+
+    )
+}
+
+#[cfg(feature = "simd_support")]
+make_sfc_16_simd! {
+    Sfc16x2Rng, u16x2, test_sfc_16_x2, "Sfc16x2Rng {{}}",
+    Sfc16x4Rng, u16x4, test_sfc_16_x4, "Sfc16x4Rng {{}}",
+    Sfc16x8Rng, u16x8, test_sfc_16_x8, "Sfc16x8Rng {{}}",
+    Sfc16x16Rng, u16x16, test_sfc_16_x16, "Sfc16x16Rng {{}}",
+    Sfc16x32Rng, u16x32, test_sfc_16_x32, "Sfc16x32Rng {{}}",
+}
+
+#[cfg(feature = "simd_support")]
+macro_rules! make_sfc_32_simd {
+    ($($rng_name:ident, $vec:ident, $test_name:ident, $debug_str:expr,)+) => (
+        $(make_sfc_simd!($rng_name, $vec, $test_name, $debug_str, rot: 21, rsh: 9, lsh: 3);)+
+    )
+}
+
+#[cfg(feature = "simd_support")]
+make_sfc_32_simd! {
+    Sfc32x2Rng, u32x2, test_sfc_32_x2, "Sfc32x2Rng {{}}",
+    Sfc32x4Rng, u32x4, test_sfc_32_x4, "Sfc32x4Rng {{}}",
+    Sfc32x8Rng, u32x8, test_sfc_32_x8, "Sfc32x8Rng {{}}",
+    Sfc32x16Rng, u32x16, test_sfc_32_x16, "Sfc32x16Rng {{}}",
+}
+
+#[cfg(feature = "simd_support")]
+macro_rules! make_sfc_64_simd {
+    ($($rng_name:ident, $vec:ident, $test_name:ident, $debug_str:expr,)+) => (
+        $(make_sfc_simd!($rng_name, $vec, $test_name, $debug_str, rot: 24, rsh: 11, lsh: 3);)+
+    )
+}
+
+#[cfg(feature = "simd_support")]
+make_sfc_64_simd! {
+    Sfc64x2Rng, u64x2, test_sfc_64_x2, "Sfc64x2Rng {{}}",
+    Sfc64x4Rng, u64x4, test_sfc_64_x4, "Sfc64x4Rng {{}}",
+    Sfc64x8Rng, u64x8, test_sfc_64_x8, "Sfc64x8Rng {{}}",
+}
