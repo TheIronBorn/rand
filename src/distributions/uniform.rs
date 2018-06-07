@@ -103,7 +103,7 @@ use std::time::Duration;
 use stdsimd::simd::*;
 
 use Rng;
-use distributions::Distribution;
+use distributions::{Distribution, SimdRejectionSampling};
 use distributions::float::IntoFloat;
 
 /// Sample values uniformly between two bounds.
@@ -420,6 +420,7 @@ macro_rules! uniform_simd_int_impl {
         // for a PRNG which generates less than 512 bits. Generating
         // then casting a u64x2 to a u8x2 would be an optimization the
         // user must make.
+        // Unless we decide on a minimum SIMD PRNG output size.
 
         // TODO: look into `Uniform::<u32x4>::new(0u32, 100)` functionality
         //        perhaps `impl SampleUniform for $u_scalar`?
@@ -463,16 +464,38 @@ macro_rules! uniform_simd_int_impl {
                 // TODO: ensure these casts are a no-op
                 let zone = $unsigned::from($signed::from(self.zone));
 
-                let mut v: $unsigned = rng.gen();
+                // This might seem very slow, generating a whole new
+                // SIMD vector for every sample rejection. However, for
+                // most uses the chance of rejection is small. With many
+                // lanes that chance is increased. To mitigate this, we
+                // can replace only the lanes of the vector which fail,
+                // reducing the chance of rejection for each iteration.
+                // The replacement method does however add a little
+                // overhead. Benchmarking or calculating probabilities
+                // might reveal contexts where replacing is slower.
+                /*let mut v: $unsigned = rng.gen();
                 loop {
                     let (hi, lo) = v.wmul(range);
                     let mask = lo.le(zone);
                     if mask.all() {
                         return self.low + $ty::from(hi);
                     }
+                    // Replace only the failing lanes
                     v = mask.select(v, rng.gen());
-                }
+                }*/
+
+                let cmp = |v: $unsigned| {
+                    let (_, lo) = v.wmul(range);
+                    lo.le(zone)
+                };
+
+                let distr = ::distributions::Standard;
+                let v = SimdRejectionSampling::sample(rng, &distr, cmp);
+                let (hi, _) = v.wmul(range);
+                self.low + $ty::from(hi)
             }
+
+            // TODO: look into leading_zeros approximation speeds
         }
     };
 
@@ -537,7 +560,6 @@ macro_rules! wmul_impl {
 
             #[inline(always)]
             fn wmul(self, x: $ty) -> Self::Output {
-                // TODO: look into SIMD optimizations
                 let tmp = (self as $wide) * (x as $wide);
                 ((tmp >> $shift) as $ty, tmp as $ty)
             }
@@ -656,7 +678,7 @@ wmul_impl_large! { u64, 32 }
 #[cfg(feature = "i128_support")]
 wmul_impl_large! { u128, 64 }
 
-// TODO: optimize
+// TODO: optimize, this seems to seriously slow things down
 #[cfg(feature = "simd_support")]
 wmul_impl_large! { (u64x2, u64x4, u64x8,) u64, 32 }
 #[cfg(feature = "simd_support")]
@@ -759,6 +781,8 @@ macro_rules! uniform_float_impl {
                 value1_2 * self.scale + self.offset
             }
 
+            // explicit `sample_single` provided here to let users control
+            // inputs more exactly than `UniformSampler::sample_single`.
             fn sample_single<R: Rng + ?Sized>(low: Self::X,
                                               high: Self::X,
                                               rng: &mut R) -> Self::X {
@@ -771,29 +795,86 @@ macro_rules! uniform_float_impl {
                                .into_float_with_exponent(0);
                 // Doing multiply before addition allows some architectures to
                 // use a single instruction.
-                // TODO: use SIMD FMA
                 value1_2 * scale + offset
             }
         }
-    }
+    };
+
+    // bulk simd implementations
+    ($(($ty:ty, $uty:ident),)+, $bits_to_discard:expr) => {$(
+        impl SampleUniform for $ty {
+            type Sampler = UniformFloat<$ty>;
+        }
+
+        impl UniformSampler for UniformFloat<$ty> {
+            type X = $ty;
+
+            fn new(low: Self::X, high: Self::X) -> Self {
+                // We must use explicit `lt/le` because SIMD comparison
+                // operators use lexicographic ordering.
+                assert!(low.lt(high).all(), "Uniform::new called with `low >= high`");
+                let scale = high - low;
+                let offset = low - scale;
+                UniformFloat {
+                    scale: scale,
+                    offset: offset,
+                }
+            }
+
+            fn new_inclusive(low: Self::X, high: Self::X) -> Self {
+                assert!(low.le(high).all(),
+                        "Uniform::new_inclusive called with `low > high`");
+                let scale = high - low;
+                let offset = low - scale;
+                UniformFloat {
+                    scale: scale,
+                    offset: offset,
+                }
+            }
+
+            fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Self::X {
+                let value1_2 = (rng.gen::<$uty>() >> $uty::splat($bits_to_discard))
+                               .into_float_with_exponent(0);
+                // TODO: look into SIMD FMA
+                // value1_2 * self.scale + self.offset
+                value1_2.fma(self.scale, self.offset)
+            }
+
+            fn sample_single<R: Rng + ?Sized>(low: Self::X,
+                                              high: Self::X,
+                                              rng: &mut R) -> Self::X {
+                assert!(low.lt(high).all(),
+                        "Uniform::sample_single called with low >= high");
+                let scale = high - low;
+                let offset = low - scale;
+                let value1_2 = (rng.gen::<$uty>() >> $uty::splat($bits_to_discard))
+                               .into_float_with_exponent(0);
+                // TODO: look into SIMD FMA
+                // value1_2 * scale + offset
+                value1_2.fma(scale, offset)
+            }
+        }
+    )+};
 }
 
-uniform_float_impl! { f32, 32u32 - 23, u32 }
-uniform_float_impl! { f64, 64u64 - 52, u64 }
+uniform_float_impl! { f32, 32 - 23, u32 }
+uniform_float_impl! { f64, 64 - 52, u64 }
+
 #[cfg(feature = "simd_support")]
-uniform_float_impl! { f64x2, 64u64 - 52, u64x2 }
+uniform_float_impl! {
+    (f64x2, u64x2),
+    (f64x4, u64x4),
+    (f64x8, u64x8),,
+    64 - 52
+}
 #[cfg(feature = "simd_support")]
-uniform_float_impl! { f64x4, 64u64 - 52, u64x4 }
-#[cfg(feature = "simd_support")]
-uniform_float_impl! { f64x8, 64u64 - 52, u64x8 }
-#[cfg(feature = "simd_support")]
-uniform_float_impl! { f32x2, 32u32 - 23, u32x2 }
-#[cfg(feature = "simd_support")]
-uniform_float_impl! { f32x4, 32u32 - 23, u32x4 }
-#[cfg(feature = "simd_support")]
-uniform_float_impl! { f32x8, 32u32 - 23, u32x8 }
-#[cfg(feature = "simd_support")]
-uniform_float_impl! { f32x16, 32u32 - 23, u32x16 }
+uniform_float_impl! {
+    (f32x2, u32x2),
+    (f32x4, u32x4),
+    (f32x8, u32x8),
+    (f32x16, u32x16),,
+    64 - 52
+}
 
 
 

@@ -123,11 +123,11 @@ impl BoxMullerCore<f64> for BoxMuller<f64> {
         z0 * self.std_dev + self.mean
     }
 
-    fn polar<R: Rng + ?Sized>(rng: &mut R) -> (f64, f64) {
+    fn polar<R: Rng + ?Sized>(_rng: &mut R) -> (f64, f64) {
         unimplemented!();
     }
 
-    fn polar_no_rejection<R: Rng + ?Sized>(rng: &mut R) -> (f64, f64) {
+    fn polar_no_rejection<R: Rng + ?Sized>(_rng: &mut R) -> (f64, f64) {
         unimplemented!();
     }
 }
@@ -159,11 +159,11 @@ impl BoxMullerCore<f32> for BoxMuller<f32> {
         z0 * self.std_dev + self.mean
     }
 
-    fn polar<R: Rng + ?Sized>(rng: &mut R) -> (f32, f32) {
+    fn polar<R: Rng + ?Sized>(_rng: &mut R) -> (f32, f32) {
         unimplemented!();
     }
 
-    fn polar_no_rejection<R: Rng + ?Sized>(rng: &mut R) ->  (f32, f32) {
+    fn polar_no_rejection<R: Rng + ?Sized>(_rng: &mut R) ->  (f32, f32) {
         unimplemented!();
     }
 }
@@ -178,8 +178,10 @@ macro_rules! impl_box_muller {
                 let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrt();
                 // let (sin_theta, cos_theta) = (TWO_PI * rng.gen::<$vector>()).sin_cos();
                 let intermediate = TWO_PI * rng.gen::<$vector>();
-                let sin_theta = intermediate.sin();
-                let cos_theta = intermediate.cos();
+                // let sin_theta = intermediate.sin();
+                let sin_theta = unsafe { simd_fsin(intermediate) };
+                // let cos_theta = intermediate.cos();
+                let cos_theta = unsafe { simd_fcos(intermediate) };
 
                 (radius * sin_theta, radius * cos_theta)
             }
@@ -212,8 +214,8 @@ macro_rules! impl_box_muller {
                     s = u*u + v*v;
                 }
 
-                let intermed = (-2.0 * s.ln() / s).sqrt();
-                (u * intermed, v * intermed,)
+                let intermed = (-2.0 * s.ln() / s).sqrte();
+                (u * intermed, v * intermed)
             }
 
             fn polar_no_rejection<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
@@ -223,8 +225,8 @@ macro_rules! impl_box_muller {
                 let v = rng.sample(range);
                 let s = u*u + v*v;
 
-                let intermed = (-2.0 * s.ln() / s).sqrt();
-                (u * intermed, v * intermed,)
+                let intermed = (-2.0 * s.ln() / s).sqrte();
+                (u * intermed, v * intermed)
             }
         })+
     )
@@ -248,7 +250,12 @@ macro_rules! impl_box_muller {
                 const TWO_PI: $vector = $vector::splat(2.0 * $pi);
 
                 let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrt();
-                let (sin_theta, cos_theta) = (TWO_PI * rng.gen::<$vector>()).sin_cos();
+                // let (sin_theta, cos_theta) = (TWO_PI * rng.gen::<$vector>()).sin_cos();
+                let intermediate = TWO_PI * rng.gen::<$vector>();
+                // let sin_theta = intermediate.sin();
+                let sin_theta = unsafe { simd_fsin(intermediate) };
+                // let cos_theta = intermediate.cos();
+                let cos_theta = unsafe { simd_fcos(intermediate) };
 
                 (radius * sin_theta, radius * cos_theta)
             }
@@ -366,6 +373,11 @@ where
 }
 
 // TODO: add explicit standard normal distr?
+
+extern "platform-intrinsic" {
+    fn simd_fsin<T>(x: T) -> T;
+    fn simd_fcos<T>(x: T) -> T;
+}
 
 /// SIMD math functions not included in `feature(stdsimd)`.
 #[cfg(feature="simd_support")]
@@ -851,8 +863,8 @@ impl_simd_math!(f32x16, u32x16, u32, f32);
 // TODO: implement AVX2 & SVML versions with conditional compilation
 #[cfg(feature="simd_support")]
 impl SimdMath for f32x4 {
-    fn ln(self) -> f32x4 {
-        let one = __m128::from_bits(f32x4::splat(1.0));
+    fn ln(self) -> Self {
+        let one = __m128::from_bits(Self::splat(1.0));
 
         let mut x = __m128::from_bits(self);
 
@@ -861,20 +873,20 @@ impl SimdMath for f32x4 {
 
             x = _mm_max_ps(
                 x,
-                __m128::from_bits(f32x4::splat(::core::f32::MIN_POSITIVE)),
+                __m128::from_bits(Self::splat(::core::f32::MIN_POSITIVE)),
             );
 
             let mut emm0 = _mm_srli_epi32(_mm_castps_si128(x), 23);
 
             x = _mm_and_ps(x, __m128::from_bits(u32x4::splat(!0x7f800000)));
-            x = _mm_or_ps(x, __m128::from_bits(f32x4::splat(0.5)));
+            x = _mm_or_ps(x, __m128::from_bits(Self::splat(0.5)));
 
             emm0 = _mm_sub_epi32(emm0, __m128i::from_bits(u32x4::splat(0x7f)));
             let mut e = _mm_cvtepi32_ps(emm0);
 
             e = _mm_add_ps(e, one);
 
-            let mask = _mm_cmplt_ps(x, __m128::from_bits(f32x4::splat(0.707106781186547524)));
+            let mask = _mm_cmplt_ps(x, __m128::from_bits(Self::splat(0.707106781186547524)));
             let mut tmp = _mm_and_ps(x, mask);
             x = _mm_sub_ps(x, one);
             e = _mm_sub_ps(e, _mm_and_ps(one, mask));
@@ -882,42 +894,42 @@ impl SimdMath for f32x4 {
 
             let z = _mm_mul_ps(x, x);
 
-            let mut y = __m128::from_bits(f32x4::splat(7.0376836292e-2));
+            let mut y = __m128::from_bits(Self::splat(7.0376836292e-2));
             y = _mm_mul_ps(y, x);
-            y = _mm_add_ps(y, __m128::from_bits(f32x4::splat(-1.1514610310e-1)));
+            y = _mm_add_ps(y, __m128::from_bits(Self::splat(-1.1514610310e-1)));
             y = _mm_mul_ps(y, x);
-            y = _mm_add_ps(y, __m128::from_bits(f32x4::splat(1.1676998740e-1)));
+            y = _mm_add_ps(y, __m128::from_bits(Self::splat(1.1676998740e-1)));
             y = _mm_mul_ps(y, x);
-            y = _mm_add_ps(y, __m128::from_bits(f32x4::splat(-1.2420140846e-1)));
+            y = _mm_add_ps(y, __m128::from_bits(Self::splat(-1.2420140846e-1)));
             y = _mm_mul_ps(y, x);
-            y = _mm_add_ps(y, __m128::from_bits(f32x4::splat(1.4249322787e-1)));
+            y = _mm_add_ps(y, __m128::from_bits(Self::splat(1.4249322787e-1)));
             y = _mm_mul_ps(y, x);
-            y = _mm_add_ps(y, __m128::from_bits(f32x4::splat(-1.6668057665e-1)));
+            y = _mm_add_ps(y, __m128::from_bits(Self::splat(-1.6668057665e-1)));
             y = _mm_mul_ps(y, x);
-            y = _mm_add_ps(y, __m128::from_bits(f32x4::splat(2.0000714765e-1)));
+            y = _mm_add_ps(y, __m128::from_bits(Self::splat(2.0000714765e-1)));
             y = _mm_mul_ps(y, x);
-            y = _mm_add_ps(y, __m128::from_bits(f32x4::splat(-2.4999993993e-1)));
+            y = _mm_add_ps(y, __m128::from_bits(Self::splat(-2.4999993993e-1)));
             y = _mm_mul_ps(y, x);
-            y = _mm_add_ps(y, __m128::from_bits(f32x4::splat(3.3333331174e-1)));
+            y = _mm_add_ps(y, __m128::from_bits(Self::splat(3.3333331174e-1)));
             y = _mm_mul_ps(y, x);
 
             y = _mm_mul_ps(y, z);
 
-            tmp = _mm_mul_ps(e, __m128::from_bits(f32x4::splat(-2.12194440e-4)));
+            tmp = _mm_mul_ps(e, __m128::from_bits(Self::splat(-2.12194440e-4)));
             y = _mm_add_ps(y, tmp);
 
-            tmp = _mm_mul_ps(z, __m128::from_bits(f32x4::splat(0.5)));
+            tmp = _mm_mul_ps(z, __m128::from_bits(Self::splat(0.5)));
             y = _mm_sub_ps(y, tmp);
 
-            tmp = _mm_mul_ps(e, __m128::from_bits(f32x4::splat(0.693359375)));
+            tmp = _mm_mul_ps(e, __m128::from_bits(Self::splat(0.693359375)));
             x = _mm_add_ps(x, y);
             x = _mm_add_ps(x, tmp);
             x = _mm_or_ps(x, invalid_mask); // negative arg will be NAN
-            f32x4::from_bits(x)
+            Self::from_bits(x)
         }
     }
 
-    fn sin_cos(self) -> (f32x4, f32x4) {
+    fn sin_cos(self) -> (Self, Self) {
         /*let mut x = __m128::from_bits(self);
 
         unsafe {
@@ -930,7 +942,7 @@ impl SimdMath for f32x4 {
             // y= x * 4 / pi = x * (pi / 4)^-1
             let mut y = _mm_mul_ps(
                 x,
-                __m128::from_bits(f32x4::splat(::core::f32::consts::FRAC_PI_4.recip())),
+                __m128::from_bits(Self::splat(::core::f32::consts::FRAC_PI_4.recip())),
             );
 
             /* store the integer part of y in emm2 */
@@ -955,9 +967,9 @@ impl SimdMath for f32x4 {
 
             /* The magic pass: "Extended precision modular arithmetic"
                x = ((x - y * DP1) - y * DP2) - y * DP3; */
-            let mut xmm1 = __m128::from_bits(f32x4::splat(-0.78515625));
-            let mut xmm2 = __m128::from_bits(f32x4::splat(-2.4187564849853515625e-4));
-            let mut xmm3 = __m128::from_bits(f32x4::splat(-3.77489497744594108e-8));
+            let mut xmm1 = __m128::from_bits(Self::splat(-0.78515625));
+            let mut xmm2 = __m128::from_bits(Self::splat(-2.4187564849853515625e-4));
+            let mut xmm3 = __m128::from_bits(Self::splat(-3.77489497744594108e-8));
             xmm1 = _mm_mul_ps(y, xmm1);
             xmm2 = _mm_mul_ps(y, xmm2);
             xmm3 = _mm_mul_ps(y, xmm3);
@@ -974,25 +986,25 @@ impl SimdMath for f32x4 {
 
             /* Evaluate the first polynom  (0 <= x <= Pi/4) */
             let z = _mm_mul_ps(x, x);
-            y = __m128::from_bits(f32x4::splat(2.443315711809948e-5));
+            y = __m128::from_bits(Self::splat(2.443315711809948e-5));
 
             y = _mm_mul_ps(y, z);
-            y = _mm_add_ps(y, __m128::from_bits(f32x4::splat(-1.388731625493765e-3)));
+            y = _mm_add_ps(y, __m128::from_bits(Self::splat(-1.388731625493765e-3)));
             y = _mm_mul_ps(y, z);
-            y = _mm_add_ps(y, __m128::from_bits(f32x4::splat(4.166664568298827e-2)));
+            y = _mm_add_ps(y, __m128::from_bits(Self::splat(4.166664568298827e-2)));
             y = _mm_mul_ps(y, z);
             y = _mm_mul_ps(y, z);
-            let tmp = _mm_mul_ps(z, __m128::from_bits(f32x4::splat(1.6668057665e-1)));
+            let tmp = _mm_mul_ps(z, __m128::from_bits(Self::splat(1.6668057665e-1)));
             y = _mm_sub_ps(y, tmp);
-            y = _mm_add_ps(y, __m128::from_bits(f32x4::splat(1.0)));
+            y = _mm_add_ps(y, __m128::from_bits(Self::splat(1.0)));
 
             /* Evaluate the second polynom  (Pi/4 <= x <= 0) */
 
-            let mut y2 = __m128::from_bits(f32x4::splat(-1.9515295891e-4));
+            let mut y2 = __m128::from_bits(Self::splat(-1.9515295891e-4));
             y2 = _mm_mul_ps(y2, z);
-            y2 = _mm_add_ps(y2, __m128::from_bits(f32x4::splat(8.3321608736e-3)));
+            y2 = _mm_add_ps(y2, __m128::from_bits(Self::splat(8.3321608736e-3)));
             y2 = _mm_mul_ps(y2, z);
-            y2 = _mm_add_ps(y2, __m128::from_bits(f32x4::splat(-1.6666654611e-1)));
+            y2 = _mm_add_ps(y2, __m128::from_bits(Self::splat(-1.6666654611e-1)));
             y2 = _mm_mul_ps(y2, z);
             y2 = _mm_mul_ps(y2, x);
             y2 = _mm_add_ps(y2, x);
@@ -1009,8 +1021,8 @@ impl SimdMath for f32x4 {
 
             /* update the sign */
             (
-                f32x4::from_bits(_mm_xor_ps(xmm1, sign_bit_sin)),
-                f32x4::from_bits(_mm_xor_ps(xmm2, sign_bit_cos)),
+                Self::from_bits(_mm_xor_ps(xmm1, sign_bit_sin)),
+                Self::from_bits(_mm_xor_ps(xmm2, sign_bit_cos)),
             )
         }*/
         (self.sin(), self.cos())
@@ -1046,8 +1058,8 @@ impl SimdMath for f32x4 {
     }
 
     fn powf(self, n: Self) -> Self {
-        let mut powf = f32x4::default();
-        for i in 0..f32x4::lanes() {
+        let mut powf = Self::default();
+        for i in 0..Self::lanes() {
             let n = n.extract(i);
             powf = powf.replace(i, self.extract(i).powf(n));
         }
@@ -1287,7 +1299,7 @@ impl SimdMath for f32x8 {
     fn ln(self) -> Self {
         let mut x = __m256::from_bits(self);
         let mut imm0: __m256i;
-        let one: __m256 = __m256::from_bits(f32x8::splat(1.0));
+        let one: __m256 = __m256::from_bits(Self::splat(1.0));
         unsafe {
             //__m256 invalid_mask = _mm256_cmple_ps(x, _mm256_setzero_ps());
             // __m256 invalid_mask = _mm256_cmp_ps(x, _mm256_setzero_ps(), _CMP_LE_OS);
@@ -1309,7 +1321,7 @@ impl SimdMath for f32x8 {
 
             /* keep only the fractional part */
             x = _mm256_and_ps(x, __m256::from_bits(u32x8::splat(!0x7f800000)));
-            x = _mm256_or_ps(x, __m256::from_bits(f32x8::splat(0.5)));
+            x = _mm256_or_ps(x, __m256::from_bits(Self::splat(0.5)));
 
             // this is again another AVX2 instruction
           // imm0 = _mm256_sub_epi32(imm0, __m256i::from_bits(u32x8::splat(0x7f)));
@@ -1333,7 +1345,7 @@ impl SimdMath for f32x8 {
       */
             //__m256 mask = _mm256_cmplt_ps(x, *(__m256*)_ps256_cephes_SQRTHF);
             let mask: __m256 =
-                _mm256_cmp_ps(x, __m256::from_bits(f32x8::splat(0.707106781186547524)), 1);
+                _mm256_cmp_ps(x, __m256::from_bits(Self::splat(0.707106781186547524)), 1);
             let mut tmp: __m256 = _mm256_and_ps(x, mask);
             x = _mm256_sub_ps(x, one);
             e = _mm256_sub_ps(e, _mm256_and_ps(one, mask));
@@ -1341,38 +1353,38 @@ impl SimdMath for f32x8 {
 
             let z: __m256 = _mm256_mul_ps(x, x);
 
-            let mut y: __m256 = __m256::from_bits(f32x8::splat(7.0376836292E-2));
+            let mut y: __m256 = __m256::from_bits(Self::splat(7.0376836292E-2));
             y = _mm256_mul_ps(y, x);
-            y = _mm256_add_ps(y, __m256::from_bits(f32x8::splat(-1.1514610310E-1)));
+            y = _mm256_add_ps(y, __m256::from_bits(Self::splat(-1.1514610310E-1)));
             y = _mm256_mul_ps(y, x);
-            y = _mm256_add_ps(y, __m256::from_bits(f32x8::splat(1.1676998740E-1)));
+            y = _mm256_add_ps(y, __m256::from_bits(Self::splat(1.1676998740E-1)));
             y = _mm256_mul_ps(y, x);
-            y = _mm256_add_ps(y, __m256::from_bits(f32x8::splat(-1.2420140846E-1)));
+            y = _mm256_add_ps(y, __m256::from_bits(Self::splat(-1.2420140846E-1)));
             y = _mm256_mul_ps(y, x);
-            y = _mm256_add_ps(y, __m256::from_bits(f32x8::splat(1.4249322787E-1)));
+            y = _mm256_add_ps(y, __m256::from_bits(Self::splat(1.4249322787E-1)));
             y = _mm256_mul_ps(y, x);
-            y = _mm256_add_ps(y, __m256::from_bits(f32x8::splat(-1.6668057665E-1)));
+            y = _mm256_add_ps(y, __m256::from_bits(Self::splat(-1.6668057665E-1)));
             y = _mm256_mul_ps(y, x);
-            y = _mm256_add_ps(y, __m256::from_bits(f32x8::splat(2.0000714765E-1)));
+            y = _mm256_add_ps(y, __m256::from_bits(Self::splat(2.0000714765E-1)));
             y = _mm256_mul_ps(y, x);
-            y = _mm256_add_ps(y, __m256::from_bits(f32x8::splat(-2.4999993993E-1)));
+            y = _mm256_add_ps(y, __m256::from_bits(Self::splat(-2.4999993993E-1)));
             y = _mm256_mul_ps(y, x);
-            y = _mm256_add_ps(y, __m256::from_bits(f32x8::splat(3.3333331174E-1)));
+            y = _mm256_add_ps(y, __m256::from_bits(Self::splat(3.3333331174E-1)));
             y = _mm256_mul_ps(y, x);
 
             y = _mm256_mul_ps(y, z);
 
-            tmp = _mm256_mul_ps(e, __m256::from_bits(f32x8::splat(-2.12194440e-4)));
+            tmp = _mm256_mul_ps(e, __m256::from_bits(Self::splat(-2.12194440e-4)));
             y = _mm256_add_ps(y, tmp);
 
-            tmp = _mm256_mul_ps(z, __m256::from_bits(f32x8::splat(0.5)));
+            tmp = _mm256_mul_ps(z, __m256::from_bits(Self::splat(0.5)));
             y = _mm256_sub_ps(y, tmp);
 
-            tmp = _mm256_mul_ps(e, __m256::from_bits(f32x8::splat(0.693359375)));
+            tmp = _mm256_mul_ps(e, __m256::from_bits(Self::splat(0.693359375)));
             x = _mm256_add_ps(x, y);
             x = _mm256_add_ps(x, tmp);
             x = _mm256_or_ps(x, invalid_mask); // negative arg will be NAN
-            f32x8::from_bits(x)
+            Self::from_bits(x)
         }
     }
 
@@ -1387,15 +1399,15 @@ impl SimdMath for f32x8 {
 
     fn exp(self) -> Self {
         let mut x = __m256::from_bits(self);
-        let one: __m256 = __m256::from_bits(f32x8::splat(1.0));
+        let one: __m256 = __m256::from_bits(Self::splat(1.0));
 
         unsafe {
-            x = _mm256_min_ps(x, __m256::from_bits(f32x8::splat(88.3762626647949)));
-            x = _mm256_max_ps(x, __m256::from_bits(f32x8::splat(-88.3762626647949)));
+            x = _mm256_min_ps(x, __m256::from_bits(Self::splat(88.3762626647949)));
+            x = _mm256_max_ps(x, __m256::from_bits(Self::splat(-88.3762626647949)));
 
             /* express exp(x) as exp(g + n*log(2)) */
-            let mut fx = _mm256_mul_ps(x, __m256::from_bits(f32x8::splat(1.44269504088896341)));
-            fx = _mm256_add_ps(fx, __m256::from_bits(f32x8::splat(0.5)));
+            let mut fx = _mm256_mul_ps(x, __m256::from_bits(Self::splat(1.44269504088896341)));
+            fx = _mm256_add_ps(fx, __m256::from_bits(Self::splat(0.5)));
 
             /* how to perform a floorf with SSE: just below */
             let imm0 = _mm256_cvttps_epi32(fx);
@@ -1409,24 +1421,24 @@ impl SimdMath for f32x8 {
             mask = _mm256_and_ps(mask, one);
             fx = _mm256_sub_ps(tmp, mask);
 
-            let tmp = _mm256_mul_ps(fx, __m256::from_bits(f32x8::splat(0.693359375)));
-            let mut z: __m256 = _mm256_mul_ps(fx, __m256::from_bits(f32x8::splat(-2.12194440e-4)));
+            let tmp = _mm256_mul_ps(fx, __m256::from_bits(Self::splat(0.693359375)));
+            let mut z: __m256 = _mm256_mul_ps(fx, __m256::from_bits(Self::splat(-2.12194440e-4)));
             x = _mm256_sub_ps(x, tmp);
             x = _mm256_sub_ps(x, z);
 
             z = _mm256_mul_ps(x, x);
 
-            let mut y: __m256 = __m256::from_bits(f32x8::splat(1.9875691500e-4));
+            let mut y: __m256 = __m256::from_bits(Self::splat(1.9875691500e-4));
             y = _mm256_mul_ps(y, x);
-            y = _mm256_add_ps(y, __m256::from_bits(f32x8::splat(1.3981999507e-3)));
+            y = _mm256_add_ps(y, __m256::from_bits(Self::splat(1.3981999507e-3)));
             y = _mm256_mul_ps(y, x);
-            y = _mm256_add_ps(y, __m256::from_bits(f32x8::splat(8.3334519073e-3)));
+            y = _mm256_add_ps(y, __m256::from_bits(Self::splat(8.3334519073e-3)));
             y = _mm256_mul_ps(y, x);
-            y = _mm256_add_ps(y, __m256::from_bits(f32x8::splat(4.1665795894e-2)));
+            y = _mm256_add_ps(y, __m256::from_bits(Self::splat(4.1665795894e-2)));
             y = _mm256_mul_ps(y, x);
-            y = _mm256_add_ps(y, __m256::from_bits(f32x8::splat(1.6666665459e-1)));
+            y = _mm256_add_ps(y, __m256::from_bits(Self::splat(1.6666665459e-1)));
             y = _mm256_mul_ps(y, x);
-            y = _mm256_add_ps(y, __m256::from_bits(f32x8::splat(5.0000001201e-1)));
+            y = _mm256_add_ps(y, __m256::from_bits(Self::splat(5.0000001201e-1)));
             y = _mm256_mul_ps(y, z);
             y = _mm256_add_ps(y, x);
             y = _mm256_add_ps(y, one);
@@ -1451,13 +1463,13 @@ impl SimdMath for f32x8 {
 
             let pow2n: __m256 = _mm256_castsi256_ps(imm0);
             y = _mm256_mul_ps(y, pow2n);
-            f32x8::from_bits(y)
+            Self::from_bits(y)
         }
     }
 
-    fn powf(self, n: f32x8) -> f32x8 {
-        let mut powf = f32x8::default();
-        for i in 0..f32x8::lanes() {
+    fn powf(self, n: Self) -> Self {
+        let mut powf = Self::default();
+        for i in 0..Self::lanes() {
             let n = n.extract(i);
             powf = powf.replace(i, self.extract(i).powf(n));
         }
@@ -1782,12 +1794,12 @@ impl SimdMath for f64x8 {
     }
 
     fn floor(self) -> Self {
-        f64x8::from(u64x8::from(self))
+        Self::from(u64x8::from(self))
     }
 
-    fn ln(self) -> f64x8 {
-        let mut ln = f64x8::default();
-        for i in 0..f64x8::lanes() {
+    fn ln(self) -> Self {
+        let mut ln = Self::default();
+        for i in 0..Self::lanes() {
             ln = ln.replace(i, self.extract(i).ln());
         }
         ln
@@ -1804,15 +1816,15 @@ impl SimdMath for f64x8 {
     }
 
     fn exp(self) -> Self {
-        let mut exp = f64x8::default();
-        for i in 0..f64x8::lanes() {
+        let mut exp = Self::default();
+        for i in 0..Self::lanes() {
             exp = exp.replace(i, self.extract(i).exp());
         }
         exp
     }
 
     fn powf(self, n: Self) -> Self {
-        let mut powf = f64x8::default();
+        let mut powf = Self::default();
         for i in 0..Self::lanes() {
             let n = n.extract(i);
             powf = powf.replace(i, self.extract(i).powf(n));

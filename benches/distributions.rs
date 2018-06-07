@@ -168,11 +168,9 @@ mod simd {
     use rand::prng::*;
 
     macro_rules! many_int_distr {
-        ($(($fnn:ident, $rng:ident, $ty:ident),)+, $low:expr, $high:expr) => (
-            $(
-                distr_int!($fnn, $ty, $rng, Uniform::new($ty::splat($low), $ty::splat($high)));
-            )+
-        )
+        ($(($fnn:ident, $rng:ident, $ty:ident),)+, $low:expr, $high:expr) => ($(
+            distr_int!($fnn, $ty, $rng, Uniform::new($ty::splat($low), $ty::splat($high)));
+        )+)
     }
 
     many_int_distr! {
@@ -207,5 +205,23 @@ mod simd {
         (distr_uniform_i64x4, Sfc32x4Rng, i64x4),
         (distr_uniform_i64x8, Sfc32x4Rng, i64x8),,
         3, 123_456_789_123
+    }
+
+    macro_rules! many_float_distr {
+        ($(($fnn:ident, $rng:ident, $ty:ident),)+, $low:expr, $high:expr) => ($(
+            distr_float!($fnn, $ty, $rng, Uniform::new($ty::splat($low), $ty::splat($high)));
+        )+)
+    }
+
+    many_float_distr! {
+        (distr_range_f32x2, Sfc32x2Rng, f32x2),
+        (distr_range_f32x4, Sfc32x4Rng, f32x4),
+        (distr_range_f32x8, Sfc32x4Rng, f32x8),
+        (distr_range_f32x16, Sfc32x4Rng, f32x16),
+
+        (distr_range_f64x2, Sfc32x4Rng, f64x2),
+        (distr_range_f64x4, Sfc32x4Rng, f64x4),
+        (distr_range_f64x8, Sfc32x4Rng, f64x8),,
+        2.26, 2.319
     }
 }

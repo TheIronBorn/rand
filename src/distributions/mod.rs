@@ -209,6 +209,10 @@ mod log_gamma;
 mod other;
 #[cfg(feature="std")]
 mod ziggurat_tables;
+#[cfg(feature = "simd_support")]
+mod simd_sampling;
+#[cfg(feature = "simd_support")]
+pub use self::simd_sampling::SimdRejectionSampling;
 #[cfg(feature="std")]
 use distributions::float::IntoFloat;
 

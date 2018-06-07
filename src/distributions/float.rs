@@ -159,7 +159,6 @@ macro_rules! simd_float_impls {
             type F = $ty;
             #[inline(always)]
             fn into_float_with_exponent(self, exponent: i32) -> $ty {
-                // The exponent is encoded using an offset-binary representation
                 let exponent_bits: $u_scalar =
                     (($exponent_bias + exponent) as $u_scalar) << $fraction_bits;
                 unsafe { mem::transmute(self | exponent_bits) }

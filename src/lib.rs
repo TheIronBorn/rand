@@ -229,16 +229,22 @@
 #![deny(missing_debug_implementations)]
 #![doc(test(attr(allow(unused_variables), deny(warnings))))]
 
+#![cfg_attr(feature="cargo-clippy", warn(clippy_pedantic))]
+#![cfg_attr(feature="cargo-clippy", warn(clippy_nursery))]
+#![cfg_attr(feature="cargo-clippy", warn(clippy_cargo))]
 #![cfg_attr(feature="cargo-clippy", allow(unreadable_literal))]
 #![cfg_attr(feature="cargo-clippy", allow(many_single_char_names))]
 #![cfg_attr(feature="cargo-clippy", allow(excessive_precision))]
 #![cfg_attr(feature="cargo-clippy", allow(float_cmp))]
-// #![feature(core_intrinsics)]
+#![cfg_attr(feature="cargo-clippy", allow(cast_possible_wrap))]
+#![cfg_attr(feature="cargo-clippy", allow(cast_lossless))]
+
 #![cfg_attr(not(feature="std"), no_std)]
 #![cfg_attr(all(feature="alloc", not(feature="std")), feature(alloc))]
 #![cfg_attr(all(feature="i128_support", feature="nightly"), allow(stable_features))] // stable since 2018-03-27
 #![cfg_attr(all(feature="i128_support", feature="nightly"), feature(i128_type, i128))]
 #![cfg_attr(all(feature="simd_support", feature="nightly"), feature(stdsimd))]
+#![cfg_attr(all(feature="simd_support", feature="nightly"), feature(platform_intrinsics))]
 #![cfg_attr(feature = "stdweb", recursion_limit="128")]
 
 #[cfg(feature="std")] extern crate std as core;

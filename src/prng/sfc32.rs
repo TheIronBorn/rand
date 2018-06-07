@@ -51,7 +51,7 @@ impl SeedableRng for Sfc32Rng {
 
     #[cfg_attr(feature = "cargo-clippy", allow(let_and_return))]
     fn from_seed(seed: Self::Seed) -> Self {
-        let mut seed_u32 = [0u32; 3];
+        let mut seed_u32 = [0_u32; 3];
         le::read_u32_into(&seed, &mut seed_u32);
         let state = Self {
             a: seed_u32[0],
@@ -72,7 +72,7 @@ impl SeedableRng for Sfc32Rng {
         // Custom `from_rng` function. Because we can assume the seed to be of
         // good quality, it is not necessary to discard the first couple of
         // rounds.
-        let mut seed_u32 = [0u32; 3];
+        let mut seed_u32 = [0_u32; 3];
         rng.try_fill(&mut seed_u32)?;
 
         Ok(Self {
