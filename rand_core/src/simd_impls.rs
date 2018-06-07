@@ -1,5 +1,5 @@
-use core::simd::*;
 use core::mem;
+use stdsimd::simd::*;
 
 /// Enables an RNG to use [`SimdRngImpls`].
 ///
@@ -16,7 +16,7 @@ use core::mem;
 ///
 /// impl SimdRng<u32x4> for CountingSimdRng {
 ///     fn generate(&mut self) -> u32x4 {
-///         self.0 += u32x4::splat(1);
+///         self.0 += 1;
 ///         self.0
 ///     }
 /// }
@@ -45,7 +45,7 @@ pub trait SimdRng<Vector> {
 ///
 /// impl SimdRng<u32x4> for CountingSimdRng {
 ///     fn generate(&mut self) -> u32x4 {
-///         self.0 += u32x4::splat(1);
+///         self.0 += 1;
 ///         self.0
 ///     }
 /// }
@@ -80,13 +80,13 @@ pub trait SimdRngImpls<V> {
 
     /// Implement `fill_bytes` via SIMD vectors.
     ///
-    /// This is useful for generating other vector types.  If the code uses 
+    /// This is useful for generating other vector types.  If the code uses
     /// it in a SIMD context, the result should stay in SIMD registers.
     fn fill_bytes_via_simd<R: SimdRng<V>>(rng: &mut R, dest: &mut [u8]);
 }
 
 macro_rules! impl_simd_rng {
-    ($vector:ty, $v8:ident, $v32:ident, $v64:ident) => (
+    ($vector:ty, $v8:ident, $v32:ident, $v64:ident) => {
         impl SimdRngImpls<$vector> for $vector {
             #[inline(always)]
             fn next_u32_via_simd<R: SimdRng<$vector>>(rng: &mut R) -> u32 {
@@ -108,24 +108,39 @@ macro_rules! impl_simd_rng {
                     // FIXME: on big-endian we should do byte swapping around
                     // here.
                     let results = $v8::from_bits(rng.generate());
-                    results.store_aligned(&mut dest[read_len..]);
+                    results.store_unaligned(&mut dest[read_len..]);
                     read_len += CHUNK_SIZE;
                 }
                 let remainder = dest.len() % CHUNK_SIZE;
                 if remainder > 0 {
-                    // This could be `ptr::copy_nonoverlapping` but I'm not
-                    // sure SIMD is happy with it.
+                    // This could be `ptr::copy_nonoverlapping` which doubles
+                    // the speed, but I'm not sure SIMD is happy with it.
                     let results = $v8::from_bits(rng.generate());
                     let len = dest.len() - remainder;
                     let mut buf = [0_u8; $v8::lanes()];
-                    results.store_aligned(&mut buf);
+                    results.store_unaligned(&mut buf);
                     dest[len..].copy_from_slice(&buf[..remainder]);
                 }
             }
         }
-    )
+    };
 }
 
+// Some vectors cannot use `impl_simd_rng`
+// impl_simd_rng!(u8x2, u8x2, u32x0.5, u64x0.25);
+// impl_simd_rng!(u8x4, u8x4, u32x1, u64x0.5);
+// impl_simd_rng!(u8x8, u8x8, u32x2, u64x1);
+impl_simd_rng!(u8x16, u8x16, u32x4, u64x2);
+impl_simd_rng!(u8x32, u8x32, u32x8, u64x4);
+impl_simd_rng!(u8x64, u8x64, u32x16, u64x8);
+
+// impl_simd_rng!(u16x2, u8x4, u32x1, u64x0.5);
+// impl_simd_rng!(u16x4, u8x8, u32x2, u64x1);
+impl_simd_rng!(u16x8, u8x16, u32x4, u64x2);
+impl_simd_rng!(u16x16, u8x32, u32x8, u64x4);
+impl_simd_rng!(u16x32, u8x64, u32x16, u64x8);
+
+// impl_simd_rng!(u32x2, u8x8, u32x2, u64x1);
 impl_simd_rng!(u32x4, u8x16, u32x4, u64x2);
 impl_simd_rng!(u32x8, u8x32, u32x8, u64x4);
 impl_simd_rng!(u32x16, u8x64, u32x16, u64x8);
@@ -133,6 +148,122 @@ impl_simd_rng!(u32x16, u8x64, u32x16, u64x8);
 impl_simd_rng!(u64x2, u8x16, u32x4, u64x2);
 impl_simd_rng!(u64x4, u8x32, u32x8, u64x4);
 impl_simd_rng!(u64x8, u8x64, u32x16, u64x8);
+
+// We can't do `u64x1::from_bits(u32x2)` etc so we do it manually.
+
+impl SimdRngImpls<u8x2> for u8x2 {
+    #[inline(always)]
+    fn next_u32_via_simd<R: SimdRng<u8x2>>(rng: &mut R) -> u32 {
+        // Use LE; we explicitly generate one value before the next.
+        let x: u16 = unsafe { mem::transmute(rng.generate()) };
+        let y: u16 = unsafe { mem::transmute(rng.generate()) };
+        (u32::from(y) << 16) | u32::from(x)
+    }
+
+    #[inline(always)]
+    fn next_u64_via_simd<R: SimdRng<u8x2>>(rng: &mut R) -> u64 {
+        // Use LE; we explicitly generate one value before the next.
+        let x = u64::from(u8x2::next_u32_via_simd(rng));
+        let y = u64::from(u8x2::next_u32_via_simd(rng));
+        (y << 32) | x
+    }
+
+    #[inline(always)]
+    fn fill_bytes_via_simd<R: SimdRng<u8x2>>(rng: &mut R, dest: &mut [u8]) {
+        // Forced inlining will keep the result in SIMD registers if
+        // the code using it also uses it in a SIMD context.
+        const CHUNK_SIZE: usize = mem::size_of::<u8x2>();
+        let mut read_len = 0;
+        for _ in 0..dest.len() / CHUNK_SIZE {
+            // FIXME: on big-endian we should do byte swapping around
+            // here.
+            let results = u8x2::from_bits(rng.generate());
+            results.store_unaligned(&mut dest[read_len..]);
+            read_len += CHUNK_SIZE;
+        }
+        let remainder = dest.len() % CHUNK_SIZE;
+        if remainder > 0 {
+            let results = u8x2::from_bits(rng.generate());
+            let len = dest.len() - remainder;
+            let mut buf = [0_u8; u8x2::lanes()];
+            results.store_unaligned(&mut buf);
+            dest[len..].copy_from_slice(&buf[..remainder]);
+        }
+    }
+}
+
+impl SimdRngImpls<u16x2> for u16x2 {
+    #[inline(always)]
+    fn next_u32_via_simd<R: SimdRng<u16x2>>(rng: &mut R) -> u32 {
+        unsafe { mem::transmute(rng.generate()) }
+    }
+
+    #[inline(always)]
+    fn next_u64_via_simd<R: SimdRng<u16x2>>(rng: &mut R) -> u64 {
+        // Use LE; we explicitly generate one value before the next.
+        let x = u64::from(u16x2::next_u32_via_simd(rng));
+        let y = u64::from(u16x2::next_u32_via_simd(rng));
+        (y << 32) | x
+    }
+
+    #[inline(always)]
+    fn fill_bytes_via_simd<R: SimdRng<u16x2>>(rng: &mut R, dest: &mut [u8]) {
+        // Forced inlining will keep the result in SIMD registers if
+        // the code using it also uses it in a SIMD context.
+        const CHUNK_SIZE: usize = mem::size_of::<u16x2>();
+        let mut read_len = 0;
+        for _ in 0..dest.len() / CHUNK_SIZE {
+            // FIXME: on big-endian we should do byte swapping around
+            // here.
+            let results = u8x4::from_bits(rng.generate());
+            results.store_unaligned(&mut dest[read_len..]);
+            read_len += CHUNK_SIZE;
+        }
+        let remainder = dest.len() % CHUNK_SIZE;
+        if remainder > 0 {
+            let results = u8x4::from_bits(rng.generate());
+            let len = dest.len() - remainder;
+            let mut buf = [0_u8; u8x8::lanes()];
+            results.store_unaligned(&mut buf);
+            dest[len..].copy_from_slice(&buf[..remainder]);
+        }
+    }
+}
+
+impl SimdRngImpls<u16x4> for u16x4 {
+    #[inline(always)]
+    fn next_u32_via_simd<R: SimdRng<u16x4>>(rng: &mut R) -> u32 {
+        u32x2::from_bits(rng.generate()).extract(0)
+    }
+
+    #[inline(always)]
+    fn next_u64_via_simd<R: SimdRng<u16x4>>(rng: &mut R) -> u64 {
+        unsafe { mem::transmute(rng.generate()) }
+    }
+
+    #[inline(always)]
+    fn fill_bytes_via_simd<R: SimdRng<u16x4>>(rng: &mut R, dest: &mut [u8]) {
+        // Forced inlining will keep the result in SIMD registers if
+        // the code using it also uses it in a SIMD context.
+        const CHUNK_SIZE: usize = mem::size_of::<u16x4>();
+        let mut read_len = 0;
+        for _ in 0..dest.len() / CHUNK_SIZE {
+            // FIXME: on big-endian we should do byte swapping around
+            // here.
+            let results = u8x8::from_bits(rng.generate());
+            results.store_unaligned(&mut dest[read_len..]);
+            read_len += CHUNK_SIZE;
+        }
+        let remainder = dest.len() % CHUNK_SIZE;
+        if remainder > 0 {
+            let results = u8x8::from_bits(rng.generate());
+            let len = dest.len() - remainder;
+            let mut buf = [0_u8; u8x8::lanes()];
+            results.store_unaligned(&mut buf);
+            dest[len..].copy_from_slice(&buf[..remainder]);
+        }
+    }
+}
 
 impl SimdRngImpls<u32x2> for u32x2 {
     #[inline(always)]
@@ -143,11 +274,7 @@ impl SimdRngImpls<u32x2> for u32x2 {
     #[inline(always)]
     fn next_u64_via_simd<R: SimdRng<u32x2>>(rng: &mut R) -> u64 {
         // We can't do `u64x1::from_bits(u32x2)` so we do it manually.
-        let results = rng.generate();
-        // Use LE; we explicitly generate one value before the next.
-        let x = u64::from(results.extract(0));
-        let y = u64::from(results.extract(1));
-        (y << 32) | x
+        unsafe { mem::transmute(rng.generate()) }
     }
 
     #[inline(always)]
@@ -160,17 +287,15 @@ impl SimdRngImpls<u32x2> for u32x2 {
             // FIXME: on big-endian we should do byte swapping around
             // here.
             let results = u8x8::from_bits(rng.generate());
-            results.store_aligned(&mut dest[read_len..]);
+            results.store_unaligned(&mut dest[read_len..]);
             read_len += CHUNK_SIZE;
         }
         let remainder = dest.len() % CHUNK_SIZE;
         if remainder > 0 {
-            // This could be `ptr::copy_nonoverlapping` but I'm not
-            // sure SIMD is happy with it.
             let results = u8x8::from_bits(rng.generate());
             let len = dest.len() - remainder;
             let mut buf = [0_u8; u8x8::lanes()];
-            results.store_aligned(&mut buf);
+            results.store_unaligned(&mut buf);
             dest[len..].copy_from_slice(&buf[..remainder]);
         }
     }

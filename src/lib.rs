@@ -9,9 +9,9 @@
 // except according to those terms.
 
 //! Utilities for random number generation
-//! 
+//!
 //! ## Example
-//! 
+//!
 //! ```rust
 //! // Rng is the main trait and needs to be imported:
 //! use rand::{Rng, thread_rng};
@@ -35,30 +35,30 @@
 //! The most convenient source of randomness is likely [`thread_rng`], which
 //! automatically initialises a fast algorithmic generator on first use per
 //! thread with thread-local storage.
-//! 
+//!
 //! If one wants to obtain random data directly from an external source it is
 //! recommended to use [`EntropyRng`] which manages multiple available sources
 //! or [`OsRng`] which retrieves random data directly from the OS. It should be
 //! noted that this is significantly slower than using a local generator like
 //! [`thread_rng`] and potentially much slower if [`EntropyRng`] must fall back to
 //! [`JitterRng`] as a source.
-//! 
+//!
 //! It is also common to use an algorithmic generator in local memory; this may
 //! be faster than `thread_rng` and provides more control. In this case
 //! [`StdRng`] — the generator behind [`thread_rng`] — and [`SmallRng`] — a
 //! small, fast, weak generator — are good choices; more options can be found in
 //! the [`prng`] module as well as in other crates.
-//! 
+//!
 //! Local generators need to be seeded. It is recommended to use [`NewRng`] or
 //! to seed from a strong parent generator with [`from_rng`]:
-//! 
+//!
 //! ```
 //! # use rand::{Rng, Error};
 //! // seed with fresh entropy:
 //! use rand::{StdRng, NewRng};
 //! let mut rng = StdRng::new();
 //! # let v: u32 = rng.gen();
-//! 
+//!
 //! // seed from thread_rng:
 //! use rand::{SmallRng, SeedableRng, thread_rng};
 //!
@@ -69,15 +69,15 @@
 //! # }
 //! # try_inner().unwrap()
 //! ```
-//! 
+//!
 //! In case you specifically want to have a reproducible stream of "random"
 //! data (e.g. to procedurally generate a game world), select a named algorithm
 //! (i.e. not [`StdRng`]/[`SmallRng`] which may be adjusted in the future), and
 //! use [`SeedableRng::from_seed`] or a constructor specific to the generator
 //! (e.g. [`IsaacRng::new_from_u64`]).
-//! 
+//!
 //! ## Applying / converting random data
-//! 
+//!
 //! The [`RngCore`] trait allows generators to implement a common interface for
 //! retrieving random data, but how should you use this? Typically users should
 //! use the [`Rng`] trait not [`RngCore`]; this provides more flexible ways to
@@ -86,16 +86,16 @@
 //! overhead). It also provides several useful algorithms,
 //! e.g. `gen_bool(p)` to generate events with weighted probability and
 //! `shuffle(&mut v[..])` to randomly-order a vector.
-//! 
+//!
 //! The [`distributions`] module provides several more ways to convert random
 //! data to useful values, e.g. time of decay is often modelled with an
 //! exponential distribution, and the log-normal distribution provides a good
 //! model of many natural phenomona.
-//! 
+//!
 //! The [`seq`] module has a few tools applicable to sliceable or iterable data.
-//! 
+//!
 //! ## Cryptographic security
-//! 
+//!
 //! First, lets recap some terminology:
 //!
 //! - **PRNG:** *Pseudo-Random-Number-Generator* is another name for an
@@ -105,7 +105,7 @@
 //! Security analysis requires a threat model and expert review; we can provide
 //! neither, but we can provide a few hints. We assume that the goal is to
 //! produce secret apparently-random data. Therefore, we need:
-//! 
+//!
 //! - A good source of entropy. A known algorithm given known input data is
 //!   trivial to predict, and likewise if there's a non-negligable chance that
 //!   the input to a PRNG is guessable then there's a chance its output is too.
@@ -131,11 +131,11 @@
 //!   - in the future we plan to add some protection against fork attacks
 //!     (where the process is forked and each clone generates the same "random"
 //!     numbers); this is not yet implemented (see issues #314, #370)
-//! 
+//!
 //! # Examples
 //!
 //! For some inspiration, see the examples:
-//! 
+//!
 //! *   [Monte Carlo estimation of π](
 //!     https://github.com/rust-lang-nursery/rand/blob/master/examples/monte-carlo.rs)
 //! *   [Monty Hall Problem](
@@ -173,6 +173,11 @@
 #![deny(missing_debug_implementations)]
 #![doc(test(attr(allow(unused_variables), deny(warnings))))]
 
+#![cfg_attr(feature="cargo-clippy", allow(unreadable_literal))]
+#![cfg_attr(feature="cargo-clippy", allow(many_single_char_names))]
+#![cfg_attr(feature="cargo-clippy", allow(excessive_precision))]
+#![cfg_attr(feature="cargo-clippy", allow(float_cmp))]
+// #![feature(core_intrinsics)]
 #![cfg_attr(not(feature="std"), no_std)]
 #![cfg_attr(all(feature="alloc", not(feature="std")), feature(alloc))]
 #![cfg_attr(all(feature="i128_support", feature="nightly"), allow(stable_features))] // stable since 2018-03-27
@@ -200,6 +205,8 @@ extern crate rand_core;
 #[cfg(not(feature = "log"))] macro_rules! warn { ($($x:tt)*) => () }
 #[cfg(all(feature="std", not(feature = "log")))] macro_rules! error { ($($x:tt)*) => () }
 
+#[cfg(feature="simd_support")]
+extern crate stdsimd;
 
 // Re-exports from rand_core
 pub use rand_core::{RngCore, BlockRngCore, CryptoRng, SeedableRng};
@@ -243,6 +250,8 @@ mod reseeding;
 
 
 // Normal imports just for this file
+#[cfg(feature="simd_support")]
+use stdsimd::simd::*;
 use core::{marker, mem, slice};
 use distributions::{Distribution, Standard, Range};
 use distributions::range::SampleRange;
@@ -250,10 +259,10 @@ use prng::hc128::Hc128Rng;
 
 
 /// A type that can be randomly generated using an [`Rng`].
-/// 
+///
 /// This is merely an adaptor around the [`Standard`] distribution for
 /// convenience and backwards-compatibility.
-/// 
+///
 /// [`Rng`]: trait.Rng.html
 /// [`Standard`]: distributions/struct.Standard.html
 #[deprecated(since="0.5.0", note="replaced by distributions::Standard")]
@@ -265,20 +274,20 @@ pub trait Rand : Sized {
 
 /// An automatically-implemented extension trait on [`RngCore`] providing high-level
 /// generic methods for sampling values and other convenience methods.
-/// 
+///
 /// This is the primary trait to use when generating random values.
-/// 
+///
 /// # Generic usage
-/// 
+///
 /// The basic pattern is `fn foo<R: Rng + ?Sized>(rng: &mut R)`. Some
 /// things are worth noting here:
-/// 
+///
 /// - Since `Rng: RngCore` and every `RngCore` implements `Rng`, it makes no
 ///   difference whether we use `R: Rng` or `R: RngCore`.
 /// - The `+ ?Sized` un-bounding allows functions to be called directly on
 ///   type-erased references; i.e. `foo(r)` where `r: &mut RngCore`. Without
 ///   this it would be necessary to write `foo(&mut r)`.
-/// 
+///
 /// An alternative pattern is possible: `fn foo<R: Rng>(rng: R)`. This has some
 /// trade-offs. It allows the argument to be consumed directly without a `&mut`
 /// (which is how `from_rng(thread_rng())` works); also it still works directly
@@ -287,20 +296,20 @@ pub trait Rand : Sized {
 /// hence many uses of `rng` require an extra reference, either explicitly
 /// (`distr.sample(&mut rng)`) or implicitly (`rng.gen()`); one may hope the
 /// optimiser can remove redundant references later.
-/// 
+///
 /// Example:
-/// 
+///
 /// ```rust
 /// # use rand::thread_rng;
 /// use rand::Rng;
-/// 
+///
 /// fn foo<R: Rng + ?Sized>(rng: &mut R) -> f32 {
 ///     rng.gen()
 /// }
 ///
 /// # let v = foo(&mut thread_rng());
 /// ```
-/// 
+///
 /// [`RngCore`]: trait.RngCore.html
 pub trait Rng: RngCore {
     /// Return a random value supporting the [`Standard`] distribution.
@@ -477,7 +486,7 @@ pub trait Rng: RngCore {
     /// # Accuracy note
     ///
     /// `gen_bool` uses 32 bits of the RNG, so if you use it to generate close
-    /// to or more than `2^32` results, a tiny bias may become noticable.
+    /// to or more than `2^32` results, a tiny bias may become noticeable.
     /// A notable consequence of the method used here is that the worst case is
     /// `rng.gen_bool(0.0)`: it has a chance of 1 in `2^32` of being true, while
     /// it should always be false. But using `gen_bool` to consume *many* values
@@ -617,15 +626,15 @@ pub trait Rng: RngCore {
 impl<R: RngCore + ?Sized> Rng for R {}
 
 /// Trait for casting types to byte slices
-/// 
+///
 /// This is used by the [`fill`] and [`try_fill`] methods.
-/// 
+///
 /// [`fill`]: trait.Rng.html#method.fill
 /// [`try_fill`]: trait.Rng.html#method.try_fill
 pub trait AsByteSliceMut {
     /// Return a mutable reference to self as a byte slice
     fn as_byte_slice_mut(&mut self) -> &mut [u8];
-    
+
     /// Call `to_le` on each element (i.e. byte-swap on Big Endian platforms).
     fn to_le(&mut self);
 }
@@ -634,7 +643,7 @@ impl AsByteSliceMut for [u8] {
     fn as_byte_slice_mut(&mut self) -> &mut [u8] {
         self
     }
-    
+
     fn to_le(&mut self) {}
 }
 
@@ -650,7 +659,7 @@ macro_rules! impl_as_byte_slice {
                     )
                 }
             }
-            
+
             fn to_le(&mut self) {
                 for x in self {
                     *x = x.to_le();
@@ -672,11 +681,46 @@ impl_as_byte_slice!(i64);
 #[cfg(feature="i128_support")] impl_as_byte_slice!(i128);
 impl_as_byte_slice!(isize);
 
+#[cfg(feature="simd_support")]
+macro_rules! impl_as_byte_slice_simd {
+    ($($t:ty,)+) => (
+        $(
+            impl AsByteSliceMut for [$t] {
+                #[inline]
+                fn as_byte_slice_mut(&mut self) -> &mut [u8] {
+                    unsafe {
+                        slice::from_raw_parts_mut(&mut self[0]
+                            as *mut $t
+                            as *mut u8,
+                            self.len() * mem::size_of::<$t>()
+                        )
+                    }
+                }
+
+                #[inline]
+                fn to_le(&mut self) {
+                    /*for x in self {
+                        *x = x.to_le();
+                    }*/
+                }
+            }
+        )+
+    )
+}
+
+#[cfg(feature="simd_support")]
+impl_as_byte_slice_simd! {
+    u8x2,  u8x4,  u8x8,  u8x16,  u8x32,  u8x64,
+    u16x2, u16x4, u16x8, u16x16, u16x32,
+    u32x2, u32x4, u32x8, u32x16,
+    u64x2, u64x4, u64x8,
+}
+
 macro_rules! impl_as_byte_slice_arrays {
     ($n:expr,) => {};
     ($n:expr, $N:ident, $($NN:ident,)*) => {
         impl_as_byte_slice_arrays!($n - 1, $($NN,)*);
-        
+
         impl<T> AsByteSliceMut for [T; $n] where [T]: AsByteSliceMut {
             fn as_byte_slice_mut(&mut self) -> &mut [u8] {
                 self[..].as_byte_slice_mut()
@@ -695,7 +739,7 @@ macro_rules! impl_as_byte_slice_arrays {
             fn as_byte_slice_mut(&mut self) -> &mut [u8] {
                 self[..].as_byte_slice_mut()
             }
-            
+
             fn to_le(&mut self) {
                 self[..].to_le()
             }
@@ -784,7 +828,7 @@ pub trait NewRng: SeedableRng {
     /// used instead. Both should be suitable for cryptography. It is possible
     /// that both entropy sources will fail though unlikely; failures would
     /// almost certainly be platform limitations or build issues, i.e. most
-    /// applications targetting PC/mobile platforms should not need to worry
+    /// applications targeting PC/mobile platforms should not need to worry
     /// about this failing.
     ///
     /// If all entropy sources fail this will panic. If you need to handle
@@ -1058,18 +1102,18 @@ mod test {
             }
         }
     }
-    
+
     #[test]
     fn test_fill() {
-        let x = 9041086907909331047;    // a random u64
+        let x = 9041086907909331047; // a random u64
         let mut rng = StepRng::new(x, 0);
-        
+
         // Convert to byte sequence and back to u64; byte-swap twice if BE.
         let mut array = [0u64; 2];
         rng.fill(&mut array[..]);
         assert_eq!(array, [x, x]);
         assert_eq!(rng.next_u64(), x);
-        
+
         // Convert to bytes then u32 in LE order
         let mut array = [0u32; 2];
         rng.fill(&mut array[..]);

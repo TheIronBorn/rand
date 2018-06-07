@@ -9,23 +9,23 @@
 // except according to those terms.
 
 //! Random number generation traits
-//! 
+//!
 //! This crate is mainly of interest to crates publishing implementations of
 //! [`RngCore`]. Other users are encouraged to use the [rand] crate instead
 //! which re-exports the main traits and error types.
 //!
 //! [`RngCore`] is the core trait implemented by algorithmic pseudo-random number
 //! generators and external random-number sources.
-//! 
+//!
 //! [`SeedableRng`] is an extension trait for construction from fixed seeds and
 //! other random number generators.
-//! 
+//!
 //! [`Error`] is provided for error-handling. It is safe to use in `no_std`
 //! environments.
-//! 
+//!
 //! The [`impls`] and [`le`] sub-modules include a few small functions to assist
 //! implementation of [`RngCore`].
-//! 
+//!
 //! [rand]: https://crates.io/crates/rand
 //! [`RngCore`]: trait.RngCore.html
 //! [`SeedableRng`]: trait.SeedableRng.html
@@ -48,6 +48,8 @@
 #[cfg(feature="serde1")] extern crate serde;
 #[cfg(feature="serde1")] #[macro_use] extern crate serde_derive;
 
+#[cfg(feature="simd_support")]
+extern crate stdsimd;
 
 use core::default::Default;
 use core::convert::AsMut;
@@ -65,34 +67,34 @@ pub mod simd_impls;
 
 
 /// The core of a random number generator.
-/// 
+///
 /// This trait encapsulates the low-level functionality common to all
 /// generators, and is the "back end", to be implemented by generators.
 /// End users should normally use [`Rng`] from the [rand] crate, which is
 /// automatically implemented for every type implementing `RngCore`.
-/// 
+///
 /// Three different methods for generating random data are provided since the
 /// optimal implementation of each is dependent on the type of generator. There
 /// is no required relationship between the output of each; e.g. many
 /// implementations of [`fill_bytes`] consume a whole number of `u32` or `u64`
 /// values and drop any remaining unused bytes.
-/// 
+///
 /// The [`try_fill_bytes`] method is a variant of [`fill_bytes`] allowing error
 /// handling; it is not deemed sufficiently useful to add equivalents for
 /// [`next_u32`] or [`next_u64`] since the latter methods are almost always used
 /// with algorithmic generators (PRNGs), which are normally infallible.
-/// 
+///
 /// Algorithmic generators implementing [`SeedableRng`] should normally have
 /// *portable, reproducible* output, i.e. fix Endianness when converting values
 /// to avoid platform differences, and avoid making any changes which affect
 /// output (except by communicating that the release has breaking changes).
-/// 
+///
 /// Typically implementators will implement only one of the methods available
 /// in this trait directly, then use the helper functions from the
 /// [`rand_core::impls`] module to implement the other methods.
-/// 
+///
 /// It is recommended that implementations also implement:
-/// 
+///
 /// - `Debug` with a custom implementation which *does not* print any internal
 ///   state (at least, [`CryptoRng`]s should not risk leaking state through Debug)
 /// - `Serialize` and `Deserialize` (from Serde), preferably making Serde
@@ -103,36 +105,36 @@ pub mod simd_impls;
 /// - also *do not* implement `Default`, but instead implement `SeedableRng`
 ///   thus allowing use of `rand::NewRng` (which is automatically implemented)
 /// - `Eq` and `PartialEq` could be implemented, but are probably not useful
-/// 
+///
 /// # Example
-/// 
+///
 /// A simple example, obviously not generating very *random* output:
-/// 
+///
 /// ```rust
 /// use rand_core::{RngCore, Error, impls};
-/// 
+///
 /// struct CountingRng(u64);
-/// 
+///
 /// impl RngCore for CountingRng {
 ///     fn next_u32(&mut self) -> u32 {
 ///         self.next_u64() as u32
 ///     }
-///     
+///
 ///     fn next_u64(&mut self) -> u64 {
 ///         self.0 += 1;
 ///         self.0
 ///     }
-///     
+///
 ///     fn fill_bytes(&mut self, dest: &mut [u8]) {
 ///         impls::fill_bytes_via_u64(self, dest)
 ///     }
-///     
+///
 ///     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
 ///         Ok(self.fill_bytes(dest))
 ///     }
 /// }
 /// ```
-/// 
+///
 /// [rand]: https://crates.io/crates/rand
 /// [`Rng`]: ../rand/trait.Rng.html
 /// [`SeedableRng`]: trait.SeedableRng.html
@@ -168,7 +170,7 @@ pub trait RngCore {
     /// via `try_fill_bytes`; if this generator can fail the implementation
     /// must choose how best to handle errors here (e.g. panic with a
     /// descriptive message or log a warning and retry a few times).
-    /// 
+    ///
     /// This method should guarantee that `dest` is entirely filled
     /// with new data, and may panic if this is impossible
     /// (e.g. reading past the end of a file that is being used as the
@@ -181,12 +183,12 @@ pub trait RngCore {
     /// generating random data thus making this the primary method implemented
     /// by external (true) RNGs (e.g. `OsRng`) which can fail. It may be used
     /// directly to generate keys and to seed (infallible) PRNGs.
-    /// 
+    ///
     /// Other than error handling, this method is identical to [`fill_bytes`];
     /// thus this may be implemented using `Ok(self.fill_bytes(dest))` or
     /// `fill_bytes` may be implemented with
     /// `self.try_fill_bytes(dest).unwrap()` or more specific error handling.
-    /// 
+    ///
     /// [`fill_bytes`]: trait.RngCore.html#method.fill_bytes
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error>;
 }
@@ -194,48 +196,48 @@ pub trait RngCore {
 /// A trait for RNGs which do not generate random numbers individually, but in
 /// blocks (typically `[u32; N]`). This technique is commonly used by
 /// cryptographic RNGs to improve performance.
-/// 
+///
 /// Usage of this trait is optional, but provides two advantages:
 /// implementations only need to concern themselves with generation of the
 /// block, not the various [`RngCore`] methods (especially [`fill_bytes`], where the
 /// optimal implementations are not trivial), and this allows `ReseedingRng` to
 /// perform periodic reseeding with very low overhead.
-/// 
+///
 /// # Example
-/// 
+///
 /// ```norun
 /// use rand_core::BlockRngCore;
 /// use rand_core::impls::BlockRng;
-/// 
+///
 /// struct MyRngCore;
-/// 
+///
 /// impl BlockRngCore for MyRngCore {
 ///     type Results = [u32; 16];
-///     
+///
 ///     fn generate(&mut self, results: &mut Self::Results) {
 ///         unimplemented!()
 ///     }
 /// }
-/// 
+///
 /// impl SeedableRng for MyRngCore {
 ///     type Seed = unimplemented!();
 ///     fn from_seed(seed: Self::Seed) -> Self {
 ///         unimplemented!()
 ///     }
 /// }
-/// 
+///
 /// // optionally, also implement CryptoRng for MyRngCore
-/// 
+///
 /// // Final RNG.
 /// type MyRng = BlockRng<u32, MyRngCore>;
 /// ```
-/// 
+///
 /// [`RngCore`]: trait.RngCore.html
 /// [`fill_bytes`]: trait.RngCore.html#tymethod.fill_bytes
 pub trait BlockRngCore {
     /// Results element type, e.g. `u32`.
     type Item;
-    
+
     /// Results type. This is the 'block' an RNG implementing `BlockRngCore`
     /// generates, which will usually be an array like `[u32; 16]`.
     type Results: AsRef<[Self::Item]> + Default;
@@ -246,25 +248,25 @@ pub trait BlockRngCore {
 
 /// A marker trait used to indicate that an [`RngCore`] or [`BlockRngCore`]
 /// implementation is supposed to be cryptographically secure.
-/// 
+///
 /// *Cryptographically secure generators*, also known as *CSPRNGs*, should
 /// satisfy an additional properties over other generators: given the first
 /// *k* bits of an algorithm's output
 /// sequence, it should not be possible using polynomial-time algorithms to
 /// predict the next bit with probability significantly greater than 50%.
-/// 
+///
 /// Some generators may satisfy an additional property, however this is not
 /// required by this trait: if the CSPRNG's state is revealed, it should not be
 /// computationally-feasible to reconstruct output prior to this. Some other
 /// generators allow backwards-computation and are consided *reversible*.
-/// 
+///
 /// Note that this trait is provided for guidance only and cannot guarantee
 /// suitability for cryptographic applications. In general it should only be
 /// implemented for well-reviewed code implementing well-regarded algorithms.
-/// 
+///
 /// Note also that use of a `CryptoRng` does not protect against other
 /// weaknesses such as seeding from a weak entropy source or leaking state.
-/// 
+///
 /// [`RngCore`]: trait.RngCore.html
 /// [`BlockRngCore`]: trait.BlockRngCore.html
 pub trait CryptoRng {}
@@ -273,10 +275,10 @@ pub trait CryptoRng {}
 ///
 /// This trait encapsulates the low-level functionality common to all
 /// pseudo-random number generators (PRNGs, or algorithmic generators).
-/// 
+///
 /// The [`rand::NewRng`] trait is automatically implemented for every type
 /// implementing `SeedableRng`, providing a convenient `new()` method.
-/// 
+///
 /// [`rand::NewRng`]: ../rand/trait.NewRng.html
 pub trait SeedableRng: Sized {
     /// Seed type, which is restricted to types mutably-dereferencable as `u8`
@@ -316,7 +318,7 @@ pub trait SeedableRng: Sized {
     ///
     /// This is the recommended way to initialize PRNGs with fresh entropy. The
     /// [`NewRng`] trait provides a convenient new method based on `from_rng`.
-    /// 
+    ///
     /// Usage of this method is not recommended when reproducibility is required
     /// since implementing PRNGs are not required to fix Endianness and are
     /// allowed to modify implementations in new releases.
@@ -340,7 +342,7 @@ pub trait SeedableRng: Sized {
     ///
     /// PRNG implementations are allowed to assume that a good RNG is provided
     /// for seeding, and that it is cryptographically secure when appropriate.
-    /// 
+    ///
     /// [`NewRng`]: ../rand/trait.NewRng.html
     /// [`OsRng`]: ../rand/os/struct.OsRng.html
     fn from_rng<R: RngCore>(mut rng: R) -> Result<Self, Error> {

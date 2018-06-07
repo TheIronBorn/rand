@@ -34,6 +34,7 @@ rand_core = { path="rand_core", default-features = false }
 log = { version = "0.4", optional = true }
 serde = { version = "1", optional = true }
 serde_derive = { version = "1", optional = true }
+stdsimd = { git = "https://github.com/rust-lang-nursery/stdsimd" }
 
 [target.'cfg(unix)'.dependencies]
 libc = { version = "0.2", optional = true }
