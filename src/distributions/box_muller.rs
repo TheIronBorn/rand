@@ -21,7 +21,7 @@ use core::{f32, f64};
 
 use Rng;
 #[cfg(feature="simd_support")]
-use distributions::Range;
+use distributions::Uniform;
 
 /// The normal distribution `N(mean, std_dev**2)`.
 ///
@@ -197,7 +197,7 @@ macro_rules! impl_box_muller {
             }
 
             fn polar<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
-                let range = Range::new($vector::splat(-1.0), $vector::splat(1.0));
+                let range = Uniform::new($vector::splat(-1.0), $vector::splat(1.0));
 
                 let mut u = rng.sample(range);
                 let mut v = rng.sample(range);
@@ -217,7 +217,7 @@ macro_rules! impl_box_muller {
             }
 
             fn polar_no_rejection<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
-                let range = Range::new($vector::splat(-1.0), $vector::splat(1.0));
+                let range = Uniform::new($vector::splat(-1.0), $vector::splat(1.0));
 
                 let u = rng.sample(range);
                 let v = rng.sample(range);
@@ -266,7 +266,7 @@ macro_rules! impl_box_muller {
             }
 
             fn polar<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
-                let range = Range::new($vector::splat(-1.0), $vector::splat(1.0));
+                let range = Uniform::new($vector::splat(-1.0), $vector::splat(1.0));
 
                 let mut u = rng.sample(range);
                 let mut v = rng.sample(range);
@@ -286,7 +286,7 @@ macro_rules! impl_box_muller {
             }
 
             fn polar_no_rejection<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
-                let range = Range::new($vector::splat(-1.0), $vector::splat(1.0));
+                let range = Uniform::new($vector::splat(-1.0), $vector::splat(1.0));
 
                 let u = rng.sample(range);
                 let v = rng.sample(range);

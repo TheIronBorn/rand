@@ -12,8 +12,8 @@
 
 use core::{fmt, slice};
 use core::num::Wrapping as w;
-use rand_core::{BlockRngCore, RngCore, SeedableRng, Error, le};
-use rand_core::impls::BlockRng;
+use rand_core::{RngCore, SeedableRng, Error, le};
+use rand_core::block::{BlockRngCore, BlockRng};
 use prng::isaac_array::IsaacArray;
 
 #[allow(non_camel_case_types)]
@@ -72,8 +72,10 @@ const RAND_SIZE: usize = 1 << RAND_SIZE_LEN;
 /// runs once every 256 times you ask for a next random number. In all other
 /// circumstances the last element of the results array is returned.
 ///
-/// ISAAC therefore needs a lot of memory, relative to other non-vrypto RNGs.
+/// ISAAC therefore needs a lot of memory, relative to other non-crypto RNGs.
 /// 2 * 256 * 4 = 2 kb to hold the state and results.
+///
+/// This implementation uses [`BlockRng`] to implement the [`RngCore`] methods.
 ///
 /// ## References
 /// [1]: Bob Jenkins, [*ISAAC: A fast cryptographic random number generator*](
@@ -86,6 +88,8 @@ const RAND_SIZE: usize = 1 << RAND_SIZE_LEN;
 ///      https://eprint.iacr.org/2006/438)
 ///
 /// [`Hc128Rng`]: ../hc128/struct.Hc128Rng.html
+/// [`BlockRng`]: ../../../rand_core/block/struct.BlockRng.html
+/// [`RngCore`]: ../../trait.RngCore.html
 #[derive(Clone, Debug)]
 #[cfg_attr(feature="serde1", derive(Serialize, Deserialize))]
 pub struct IsaacRng(BlockRng<IsaacCore>);
@@ -127,7 +131,7 @@ impl IsaacRng {
     /// fixed seed.
     ///
     /// DEPRECATED. `IsaacRng::new_from_u64(0)` will produce identical results.
-    #[deprecated(since="0.5.0", note="use the NewRng or SeedableRng trait")]
+    #[deprecated(since="0.5.0", note="use the FromEntropy or SeedableRng trait")]
     pub fn new_unseeded() -> Self {
         Self::new_from_u64(0)
     }
@@ -163,7 +167,7 @@ impl BlockRngCore for IsaacCore {
     type Results = IsaacArray<Self::Item>;
 
     /// Refills the output buffer, `results`. See also the pseudocode desciption
-    /// of the algorithm in the [`Isaac64Rng`] documentation.
+    /// of the algorithm in the [`IsaacRng`] documentation.
     ///
     /// Optimisations used (similar to the reference implementation):
     /// 

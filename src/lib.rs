@@ -287,8 +287,11 @@ pub mod rngs;
 #[doc(hidden)] pub use rngs::jitter;
 #[cfg(feature="std")] #[doc(hidden)] pub use rngs::{os, EntropyRng, OsRng};
 
-#[doc(hidden)] pub use prng::{ChaChaRng, IsaacRng, Isaac64Rng, XorShiftRng};
+#[doc(hidden)] pub use prng::{ChaChaRng, IsaacRng, Isaac64Rng, XorShiftRng, Sfc32Rng};
 #[doc(hidden)] pub use rngs::StdRng;
+
+#[cfg(feature="simd_support")]
+#[doc(hidden)] pub use prng::Sfc32x4Rng;
 
 
 #[doc(hidden)]
@@ -307,12 +310,8 @@ pub mod isaac {
 ////////////////////////////////////////////////////////////////////////////////
 
 
-<<<<<<< HEAD
-// Normal imports just for this file
 #[cfg(feature="simd_support")]
 use stdsimd::simd::*;
-=======
->>>>>>> origin
 use core::{marker, mem, slice};
 use distributions::{Distribution, Standard};
 use distributions::uniform::{SampleUniform, UniformSampler};

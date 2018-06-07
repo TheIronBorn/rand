@@ -11,8 +11,8 @@
 //! The HC-128 random number generator.
 
 use core::fmt;
-use rand_core::{BlockRngCore, CryptoRng, RngCore, SeedableRng, Error, le};
-use rand_core::impls::BlockRng;
+use rand_core::{CryptoRng, RngCore, SeedableRng, Error, le};
+use rand_core::block::{BlockRngCore, BlockRng};
 
 const SEED_WORDS: usize = 8; // 128 bit key followed by 128 bit iv
 
@@ -40,14 +40,17 @@ const SEED_WORDS: usize = 8; // 128 bit key followed by 128 bit iv
 /// current state of known attacks / weaknesses of HC-128 is given in [4].
 ///
 /// The average cycle length is expected to be
-/// 2<sup>1024*32-1</sup> = 2<sup>32767</sup>.
+/// 2<sup>1024*32+10-1</sup> = 2<sup>32777</sup>.
 /// We support seeding with a 256-bit array, which matches the 128-bit key
 /// concatenated with a 128-bit IV from the stream cipher.
+///
+/// This implementation uses an output buffer of sixteen `u32` words, and uses
+/// [`BlockRng`] to implement the [`RngCore`] methods.
 ///
 /// ## References
 /// [1]: Hongjun Wu (2008). ["The Stream Cipher HC-128"](
 ///      http://www.ecrypt.eu.org/stream/p3ciphers/hc/hc128_p3.pdf).
-///      *The eSTREAM Finalists*, LNCS 4986, pp. 39--47, Springer-Verlag.
+///      *The eSTREAM Finalists*, LNCS 4986, pp. 39–47, Springer-Verlag.
 ///
 /// [2]: [eSTREAM: the ECRYPT Stream Cipher Project](
 ///      http://www.ecrypt.eu.org/stream/)
@@ -59,8 +62,11 @@ const SEED_WORDS: usize = 8; // 128 bit key followed by 128 bit iv
 ///      Implementation Of HC-128 Stream Cipher"](
 ///      http://library.isical.ac.in:8080/jspui/bitstream/123456789/6636/1/TH431.pdf).
 ///
-/// [5]: Internet Engineering Task Force (Februari 2015),
+/// [5]: Internet Engineering Task Force (February 2015),
 ///      ["Prohibiting RC4 Cipher Suites"](https://tools.ietf.org/html/rfc7465).
+///
+/// [`BlockRng`]: ../../../rand_core/block/struct.BlockRng.html
+/// [`RngCore`]: ../../trait.RngCore.html
 #[derive(Clone, Debug)]
 pub struct Hc128Rng(BlockRng<Hc128Core>);
 

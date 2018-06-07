@@ -13,7 +13,8 @@
 use {Rng};
 use distributions::{Distribution, Standard};
 #[cfg(feature="simd_support")]
-use std::simd::*;
+use stdsimd::simd::*;
+#[cfg(feature="simd_support")]
 use std::mem;
 
 impl Distribution<u8> for Standard {

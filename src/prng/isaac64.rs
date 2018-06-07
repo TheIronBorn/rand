@@ -12,8 +12,8 @@
 
 use core::{fmt, slice};
 use core::num::Wrapping as w;
-use rand_core::{BlockRngCore, RngCore, SeedableRng, Error, le};
-use rand_core::impls::BlockRng64;
+use rand_core::{RngCore, SeedableRng, Error, le};
+use rand_core::block::{BlockRngCore, BlockRng64};
 use prng::isaac_array::IsaacArray;
 
 #[allow(non_camel_case_types)]
@@ -69,6 +69,8 @@ const RAND_SIZE: usize = 1 << RAND_SIZE_LEN;
 /// }
 /// ```
 ///
+/// This implementation uses [`BlockRng64`] to implement the [`RngCore`] methods.
+///
 /// See for more information the documentation of [`IsaacRng`].
 ///
 /// [1]: Bob Jenkins, [*ISAAC and RC4*](
@@ -76,6 +78,8 @@ const RAND_SIZE: usize = 1 << RAND_SIZE_LEN;
 ///
 /// [`IsaacRng`]: ../isaac/struct.IsaacRng.html
 /// [`Hc128Rng`]: ../hc128/struct.Hc128Rng.html
+/// [`BlockRng64`]: ../../../rand_core/block/struct.BlockRng64.html
+/// [`RngCore`]: ../../trait.RngCore.html
 #[derive(Clone, Debug)]
 #[cfg_attr(feature="serde1", derive(Serialize, Deserialize))]
 pub struct Isaac64Rng(BlockRng64<Isaac64Core>);
@@ -117,7 +121,7 @@ impl Isaac64Rng {
     /// default fixed seed.
     ///
     /// DEPRECATED. `Isaac64Rng::new_from_u64(0)` will produce identical results.
-    #[deprecated(since="0.5.0", note="use the NewRng or SeedableRng trait")]
+    #[deprecated(since="0.5.0", note="use the FromEntropy or SeedableRng trait")]
     pub fn new_unseeded() -> Self {
         Self::new_from_u64(0)
     }

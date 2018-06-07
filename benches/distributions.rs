@@ -1,16 +1,19 @@
 #![feature(test)]
 #![cfg_attr(all(feature="i128_support", feature="nightly"), allow(stable_features))] // stable since 2018-03-27
 #![cfg_attr(all(feature="i128_support", feature="nightly"), feature(i128_type, i128))]
+#![cfg_attr(all(feature="simd_support", feature="nightly"), feature(stdsimd))]
 
 extern crate test;
 extern crate rand;
+// #[cfg(features = "simd_support")]
+extern crate stdsimd;
 
 const RAND_BENCH_N: u64 = 1000;
 
 use std::mem::size_of;
 use test::Bencher;
 #[cfg(feature = "simd_support")]
-use std::simd::*;
+use stdsimd::simd::*;
 
 use rand::{Rng, FromEntropy, XorShiftRng};
 use rand::distributions::*;
@@ -20,7 +23,7 @@ use rand::prng::Sfc32x4Rng;
 use rand::distributions::box_muller::*;
 
 macro_rules! distr_int {
-    ($fnn:ident, $ty:ty, $rng:ident, $distr:expr) => {
+    ($fnn:ident, $ty:ident, $rng:ident, $distr:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
             let mut rng = $rng::from_entropy();
@@ -31,7 +34,7 @@ macro_rules! distr_int {
                 for _ in 0..::RAND_BENCH_N {
                     let x: $ty = distr.sample(&mut rng);
                     // stdsimd has no `wrapping_add`, so we must rely
-                    // on the lack of overlfow checks in release mode.
+                    // on the lack of overflow checks in release mode.
                     accum += x;
                 }
                 accum
@@ -63,17 +66,17 @@ macro_rules! distr_float {
 }
 
 macro_rules! distr {
-    ($fnn:ident, $ty:ty, $rng:ident, $distr:expr) => {
+    ($fnn:ident, $ty:ident, $rng:ident, $distr:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
             let mut rng = $rng::from_entropy();
             let distr = $distr;
 
             b.iter(|| {
-                let mut accum = $ty::default();
+                let mut accum = 0u32;
                 for _ in 0..::RAND_BENCH_N {
                     let x: $ty = distr.sample(&mut rng);
-                    accum += x;
+                    accum = accum.wrapping_add(x as u32);
                 }
                 accum
             });
@@ -83,7 +86,7 @@ macro_rules! distr {
 }
 
 // uniform
-distr_int!(distr_uniform_i8,, XorShiftRng i8, Uniform::new(20i8, 100));
+distr_int!(distr_uniform_i8, i8, XorShiftRng, Uniform::new(20i8, 100));
 distr_int!(distr_uniform_i16, i16, XorShiftRng, Uniform::new(-500i16, 2000));
 distr_int!(distr_uniform_i32, i32, XorShiftRng, Uniform::new(-200_000_000i32, 800_000_000));
 distr_int!(distr_uniform_i64, i64, XorShiftRng, Uniform::new(3i64, 123_456_789_123));

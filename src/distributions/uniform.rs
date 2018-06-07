@@ -30,10 +30,10 @@
 //! ```
 //! use rand::{Rng, thread_rng};
 //! use rand::distributions::Uniform;
-//! 
+//!
 //! let mut rng = thread_rng();
 //! let side = Uniform::new(-10.0, 10.0);
-//! 
+//!
 //! // sample between 1 and 10 points
 //! for _ in 0..rng.gen_range(1, 11) {
 //!     // sample a point from the square with sides -10 - 10 in two dimensions
@@ -99,6 +99,8 @@
 
 #[cfg(feature = "std")]
 use std::time::Duration;
+#[cfg(feature = "simd_support")]
+use stdsimd::simd::*;
 
 use Rng;
 use distributions::Distribution;
@@ -524,7 +526,7 @@ pub struct UniformFloat<X> {
 }
 
 macro_rules! uniform_float_impl {
-    ($ty:ty, $bits_to_discard:expr, $next_u:ident) => {
+    ($ty:ty, $bits_to_discard:expr, $uty:ty) => {
         impl SampleUniform for $ty {
             type Sampler = UniformFloat<$ty>;
         }
@@ -555,7 +557,7 @@ macro_rules! uniform_float_impl {
 
             fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Self::X {
                 // Generate a value in the range [1, 2)
-                let value1_2 = (rng.$next_u() >> $bits_to_discard)
+                let value1_2 = (rng.gen::<$uty>() >> $bits_to_discard)
                                .into_float_with_exponent(0);
                 // We don't use `f64::mul_add`, because it is not available with
                 // `no_std`. Furthermore, it is slower for some targets (but
@@ -573,18 +575,33 @@ macro_rules! uniform_float_impl {
                 let scale = high - low;
                 let offset = low - scale;
                 // Generate a value in the range [1, 2)
-                let value1_2 = (rng.$next_u() >> $bits_to_discard)
+                let value1_2 = (rng.gen::<$uty>() >> $bits_to_discard)
                                .into_float_with_exponent(0);
                 // Doing multiply before addition allows some architectures to
                 // use a single instruction.
+                // TODO: use SIMD FMA
                 value1_2 * scale + offset
             }
         }
     }
 }
 
-uniform_float_impl! { f32, 32 - 23, next_u32 }
-uniform_float_impl! { f64, 64 - 52, next_u64 }
+uniform_float_impl! { f32, 32u32 - 23, u32 }
+uniform_float_impl! { f64, 64u64 - 52, u64 }
+#[cfg(feature = "simd_support")]
+uniform_float_impl! { f64x2, 64u64 - 52, u64x2 }
+#[cfg(feature = "simd_support")]
+uniform_float_impl! { f64x4, 64u64 - 52, u64x4 }
+#[cfg(feature = "simd_support")]
+uniform_float_impl! { f64x8, 64u64 - 52, u64x8 }
+#[cfg(feature = "simd_support")]
+uniform_float_impl! { f32x2, 32u32 - 23, u32x2 }
+#[cfg(feature = "simd_support")]
+uniform_float_impl! { f32x4, 32u32 - 23, u32x4 }
+#[cfg(feature = "simd_support")]
+uniform_float_impl! { f32x8, 32u32 - 23, u32x8 }
+#[cfg(feature = "simd_support")]
+uniform_float_impl! { f32x16, 32u32 - 23, u32x16 }
 
 
 

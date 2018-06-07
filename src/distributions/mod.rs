@@ -182,8 +182,6 @@ pub use self::uniform::Uniform as Range;
 #[cfg(feature = "std")]
 #[doc(inline)] pub use self::binomial::Binomial;
 #[doc(inline)] pub use self::bernoulli::Bernoulli;
-#[cfg(feature = "std")]
-pub use self::binomial::Binomial;
 #[cfg(feature="simd_support")] // neccessary for doc tests?
 pub use self::box_muller::{BoxMuller, BoxMullerCore, LogBoxMuller};
 #[doc(inline)] pub use self::cauchy::Cauchy;

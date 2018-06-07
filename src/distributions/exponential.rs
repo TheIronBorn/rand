@@ -29,11 +29,11 @@ use distributions::{ziggurat, ziggurat_tables, Distribution};
 /// College, Oxford
 ///
 /// # Example
-/// ```rust
-/// use rand::{NewRng, SmallRng, Rng};
+/// ```
+/// use rand::prelude::*;
 /// use rand::distributions::Exp1;
 ///
-/// let val: f64 = SmallRng::new().sample(Exp1);
+/// let val: f64 = SmallRng::from_entropy().sample(Exp1);
 /// println!("{}", val);
 /// ```
 #[derive(Clone, Copy, Debug)]
@@ -66,7 +66,7 @@ impl Distribution<f64> for Exp1 {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```
 /// use rand::distributions::{Exp, Distribution};
 ///
 /// let exp = Exp::new(2.0);

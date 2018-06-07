@@ -15,7 +15,7 @@ use self::ChiSquaredRepr::*;
 
 use Rng;
 use distributions::normal::StandardNormal;
-use distributions::{Distribution, Exp};
+use distributions::{Distribution, Exp, Open01};
 
 /// The Gamma distribution `Gamma(shape, scale)` distribution.
 ///
@@ -35,7 +35,7 @@ use distributions::{Distribution, Exp};
 ///
 /// # Example
 ///
-/// ```rust
+/// ```
 /// use rand::distributions::{Distribution, Gamma};
 ///
 /// let gamma = Gamma::new(2.0, 5.0);
@@ -142,7 +142,7 @@ impl Distribution<f64> for Gamma {
 }
 impl Distribution<f64> for GammaSmallShape {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        let u: f64 = rng.gen();
+        let u: f64 = rng.sample(Open01);
 
         self.large_shape.sample(rng) * u.powf(self.inv_shape)
     }
@@ -157,7 +157,7 @@ impl Distribution<f64> for GammaLargeShape {
             }
 
             let v = v_cbrt * v_cbrt * v_cbrt;
-            let u: f64 = rng.gen();
+            let u: f64 = rng.sample(Open01);
 
             let x_sqr = x * x;
             if u < 1.0 - 0.0331 * x_sqr * x_sqr ||
@@ -178,7 +178,7 @@ impl Distribution<f64> for GammaLargeShape {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```
 /// use rand::distributions::{ChiSquared, Distribution};
 ///
 /// let chi = ChiSquared::new(11.0);
@@ -233,7 +233,7 @@ impl Distribution<f64> for ChiSquared {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```
 /// use rand::distributions::{FisherF, Distribution};
 ///
 /// let f = FisherF::new(2.0, 32.0);
@@ -274,7 +274,7 @@ impl Distribution<f64> for FisherF {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```
 /// use rand::distributions::{StudentT, Distribution};
 ///
 /// let t = StudentT::new(11.0);

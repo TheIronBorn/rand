@@ -1,3 +1,5 @@
+//! Helper functions for implementing `RngCore` functions for SIMD PRNGs.
+
 use core::mem;
 use stdsimd::simd::*;
 

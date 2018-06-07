@@ -47,7 +47,7 @@ impl XorShiftRng {
     /// by this function will yield the same stream of random numbers. It is
     /// highly recommended that this is created through `SeedableRng` instead of
     /// this function
-    #[deprecated(since="0.5.0", note="use the NewRng or SeedableRng trait")]
+    #[deprecated(since="0.5.0", note="use the FromEntropy or SeedableRng trait")]
     pub fn new_unseeded() -> XorShiftRng {
         XorShiftRng {
             x: w(0x193a6754),
@@ -71,12 +71,14 @@ impl RngCore for XorShiftRng {
         self.w.0
     }
 
+    #[inline]
     fn next_u64(&mut self) -> u64 {
         impls::next_u64_via_u32(self)
     }
 
+    #[inline]
     fn fill_bytes(&mut self, dest: &mut [u8]) {
-        impls::fill_bytes_via_u32(self, dest)
+        impls::fill_bytes_via_next(self, dest)
     }
 
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {

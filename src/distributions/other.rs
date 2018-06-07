@@ -11,9 +11,10 @@
 //! The implementations of the `Standard` distribution for other built-in types.
 
 use core::char;
+use core::num::Wrapping;
 
 use {Rng};
-use distributions::{Distribution, Standard, Range};
+use distributions::{Distribution, Standard, Uniform};
 
 // ----- Sampling distributions -----
 
@@ -22,7 +23,7 @@ use distributions::{Distribution, Standard, Range};
 /// 
 /// # Example
 ///
-/// ```rust
+/// ```
 /// use std::iter;
 /// use rand::{Rng, thread_rng};
 /// use rand::distributions::Alphanumeric;
@@ -43,7 +44,7 @@ pub struct Alphanumeric;
 impl Distribution<char> for Standard {
     #[inline]
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> char {
-        let range = Range::new(0u32, 0x11_0000);
+        let range = Uniform::new(0u32, 0x11_0000);
         loop {
             match char::from_u32(range.sample(rng)) {
                 Some(c) => return c,
@@ -63,7 +64,7 @@ impl Distribution<char> for Alphanumeric {
                 abcdefghijklmnopqrstuvwxyz\
                 0123456789";
         // We can pick from 62 characters. This is so close to a power of 2, 64,
-        // that we can do better than `Range`. Use a simple bitshift and
+        // that we can do better than `Uniform`. Use a simple bitshift and
         // rejection sampling. We do not use a bitmask, because for small RNGs
         // the most significant bits are usually of higher quality.
         loop {
@@ -158,6 +159,13 @@ impl<T> Distribution<Option<T>> for Standard where Standard: Distribution<T> {
         } else {
             None
         }
+    }
+}
+
+impl<T> Distribution<Wrapping<T>> for Standard where Standard: Distribution<T> {
+    #[inline]
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Wrapping<T> {
+        Wrapping(rng.gen())
     }
 }
 
