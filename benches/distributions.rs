@@ -12,6 +12,7 @@ use std::mem::size_of;
 use test::Bencher;
 
 use rand::{Rng, FromEntropy, XorShiftRng};
+use rand::prng::hc128::Hc128Rng;
 use rand::distributions::*;
 
 macro_rules! distr_int {
@@ -103,6 +104,8 @@ distr!(distr_standard_codepoint, char, XorShiftRng, Standard);
 // distributions
 distr_float!(distr_exp, f64, XorShiftRng, Exp::new(1.23 * 4.56));
 distr_float!(distr_normal, f64, XorShiftRng, Normal::new(-1.23, 4.56));
+distr_float!(distr_stdnorm_xorshift, f64, XorShiftRng, StandardNormal);
+distr_float!(distr_stdnorm_hc128, f64, Hc128Rng, StandardNormal);
 distr_float!(distr_log_normal, f64, XorShiftRng, LogNormal::new(-1.23, 4.56));
 distr_float!(distr_gamma_large_shape, f64, XorShiftRng, Gamma::new(10., 1.0));
 distr_float!(distr_gamma_small_shape, f64, XorShiftRng, Gamma::new(0.1, 1.0));

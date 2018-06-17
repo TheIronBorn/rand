@@ -191,6 +191,8 @@ pub mod uniform;
 #[doc(hidden)] pub mod gamma;
 #[cfg(feature="std")]
 #[doc(hidden)] pub mod normal;
+#[cfg(all(feature="std", feature = "simd_support"))]
+#[doc(hidden)] pub mod central_limit;
 #[cfg(feature="std")]
 #[doc(hidden)] pub mod exponential;
 #[cfg(feature = "std")]

@@ -3,6 +3,10 @@ use stdsimd::simd::*;
 use distributions::Distribution;
 use Rng;
 
+// We can use this trait to tune behavior for various SIMD vectors. i.e.
+// for vectors with few lanes, the `mask.select` replacement method
+// might actually be slower.
+
 /// A helper trait to perform rejection sampling for SIMD types.
 pub trait SimdRejectionSampling
 where
@@ -23,6 +27,7 @@ macro_rules! impl_simd_rejection_sampling {
         impl SimdRejectionSampling for $ty {
             type Mask = $mask;
 
+            #[inline(always)]
             fn sample<R: Rng + ?Sized, D: Distribution<Self>, F>(
                 rng: &mut R,
                 distr: &D,

@@ -92,6 +92,7 @@ macro_rules! impl_simd_rng {
         impl SimdRngImpls<$vector> for $vector {
             #[inline(always)]
             fn next_u32_via_simd<R: SimdRng<$vector>>(rng: &mut R) -> u32 {
+                // TODO: benchmark/optimize
                 $v32::from_bits(rng.generate()).extract(0)
             }
 
@@ -108,7 +109,7 @@ macro_rules! impl_simd_rng {
                 let mut read_len = 0;
                 for _ in 0..dest.len() / CHUNK_SIZE {
                     // FIXME: on big-endian we should do byte swapping around
-                    // here.
+                    // here. (unnecessary? check stdsimd docs and RFC)
                     let results = $v8::from_bits(rng.generate());
                     results.store_unaligned(&mut dest[read_len..]);
                     read_len += CHUNK_SIZE;
@@ -119,9 +120,14 @@ macro_rules! impl_simd_rng {
                     // the speed, but I'm not sure SIMD is happy with it.
                     let results = $v8::from_bits(rng.generate());
                     let len = dest.len() - remainder;
-                    let mut buf = [0_u8; $v8::lanes()];
-                    results.store_unaligned(&mut buf);
-                    dest[len..].copy_from_slice(&buf[..remainder]);
+
+                    // ensure `store_aligned` safety, perhaps overzealous
+                    #[repr(align(16))]
+                    struct Aligned([u8; $v8::lanes()]);
+                    let mut buf = Aligned([0_u8; $v8::lanes()]);
+                    results.store_aligned(&mut buf.0);
+
+                    dest[len..].copy_from_slice(&buf.0[..remainder]);
                 }
             }
         }
@@ -152,6 +158,8 @@ impl_simd_rng!(u64x4, u8x32, u32x8, u64x4);
 impl_simd_rng!(u64x8, u8x64, u32x16, u64x8);
 
 // We can't do `u64x1::from_bits(u32x2)` etc so we do it manually.
+// Too much code/work? Could perhaps just use a generic
+// `ptr::copy_nonoverlapping` in the above macro.
 
 impl SimdRngImpls<u8x2> for u8x2 {
     #[inline(always)]

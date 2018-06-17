@@ -7,7 +7,7 @@ use rand::rngs::SmallRng;
 use rand::distributions::{Distribution, Bernoulli};
 
 /// This test should make sure that we don't accidentally have undefined
-/// behavior for large propabilties due to
+/// behavior for large probabilities due to
 /// https://github.com/rust-lang/rust/issues/10184.
 /// Expressions like `1.0*(u64::MAX as f64) as u64` have to be avoided.
 #[test]

@@ -86,6 +86,15 @@ pub trait BoxMullerCore<T> {
     /// distribution.
     fn box_muller<R: Rng + ?Sized>(rng: &mut R) -> (T, T);
 
+    /// uses `simd_fsin`/`simd_fcos`
+    fn ftrig<R: Rng + ?Sized>(rng: &mut R) -> (T, T);
+
+    /// uses `simd_sin`/`simd_cos`
+    fn stdsimd_trig<R: Rng + ?Sized>(rng: &mut R) -> (T, T);
+
+    /// uses my hacked together `sin_cos`
+    fn hacked_trig<R: Rng + ?Sized>(rng: &mut R) -> (T, T);
+
     /// Generate a random value of `T`, using `rng` as the source of randomness.
     fn sample<R: Rng + ?Sized>(&mut self, rng: &mut R) -> T;
 
@@ -96,7 +105,7 @@ pub trait BoxMullerCore<T> {
     fn polar_no_rejection<R: Rng + ?Sized>(rng: &mut R) -> (T, T);
 }
 
-#[cfg(feature="simd_support")] // necessary for doc tests?
+/*#[cfg(feature="simd_support")] // necessary for doc tests?
 impl BoxMullerCore<f64> for BoxMuller<f64> {
     fn box_muller<R: Rng + ?Sized>(rng: &mut R) -> (f64, f64) {
         const TWO_PI: f64 = PI_64 * 2.0;
@@ -166,26 +175,57 @@ impl BoxMullerCore<f32> for BoxMuller<f32> {
     fn polar_no_rejection<R: Rng + ?Sized>(_rng: &mut R) ->  (f32, f32) {
         unimplemented!();
     }
-}
+}*/
 
 #[cfg(feature="simd_support")]
 macro_rules! impl_box_muller {
     ($pi:expr, $(($vector:ident, $uty:ident)),+) => (
         $(impl BoxMullerCore<$vector> for BoxMuller<$vector> {
+            #[inline(always)]
             fn box_muller<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
                 const TWO_PI: $vector = $vector::splat(2.0 * $pi);
 
-                let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrt();
-                // let (sin_theta, cos_theta) = (TWO_PI * rng.gen::<$vector>()).sin_cos();
+                let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrte();
+                let (sin_theta, cos_theta) = (TWO_PI * rng.gen::<$vector>()).sin_cos();
+
+                (radius * sin_theta, radius * cos_theta)
+            }
+
+            #[inline(always)]
+            fn ftrig<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
+                const TWO_PI: $vector = $vector::splat(2.0 * $pi);
+
+                let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrte();
                 let intermediate = TWO_PI * rng.gen::<$vector>();
-                // let sin_theta = intermediate.sin();
                 let sin_theta = unsafe { simd_fsin(intermediate) };
-                // let cos_theta = intermediate.cos();
                 let cos_theta = unsafe { simd_fcos(intermediate) };
 
                 (radius * sin_theta, radius * cos_theta)
             }
 
+            #[inline(always)]
+            fn stdsimd_trig<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
+                const TWO_PI: $vector = $vector::splat(2.0 * $pi);
+
+                let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrte();
+                let intermediate = TWO_PI * rng.gen::<$vector>();
+                let sin_theta = intermediate.sin();
+                let cos_theta = intermediate.cos();
+
+                (radius * sin_theta, radius * cos_theta)
+            }
+
+            #[inline(always)]
+            fn hacked_trig<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
+                const TWO_PI: $vector = $vector::splat(2.0 * $pi);
+
+                let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrte();
+                let (sin_theta, cos_theta) = (TWO_PI * rng.gen::<$vector>()).sin_cos();
+
+                (radius * sin_theta, radius * cos_theta)
+            }
+
+            #[inline(always)]
             fn sample<R: Rng + ?Sized>(&mut self, rng: &mut R) -> $vector {
                 self.flag = !self.flag;
 
@@ -198,6 +238,7 @@ macro_rules! impl_box_muller {
                 z0 * self.std_dev + self.mean
             }
 
+            #[inline(always)]
             fn polar<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
                 let range = Uniform::new($vector::splat(-1.0), $vector::splat(1.0));
 
@@ -218,12 +259,14 @@ macro_rules! impl_box_muller {
                 (u * intermed, v * intermed)
             }
 
+            #[inline(always)]
             fn polar_no_rejection<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
                 let range = Uniform::new($vector::splat(-1.0), $vector::splat(1.0));
 
                 let u = rng.sample(range);
                 let v = rng.sample(range);
                 let s = u*u + v*v;
+                // let s = u.fma(u, v*v);
 
                 let intermed = (-2.0 * s.ln() / s).sqrte();
                 (u * intermed, v * intermed)
@@ -242,24 +285,57 @@ impl_box_muller!(
 );
 // TODO: 64-bit versions?
 #[cfg(feature="simd_support")]
-macro_rules! impl_box_muller {
+macro_rules! impl_box_muller_64 {
     ($pi:expr, $(($vector:ident, $uty:ident)),+) => (
         $(impl BoxMullerCore<$vector> for BoxMuller<$vector> {
             #[allow(unused_variables)]
+            #[inline(always)]
             fn box_muller<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
                 const TWO_PI: $vector = $vector::splat(2.0 * $pi);
 
-                let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrt();
-                // let (sin_theta, cos_theta) = (TWO_PI * rng.gen::<$vector>()).sin_cos();
+                let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrte();
                 let intermediate = TWO_PI * rng.gen::<$vector>();
-                // let sin_theta = intermediate.sin();
                 let sin_theta = unsafe { simd_fsin(intermediate) };
-                // let cos_theta = intermediate.cos();
                 let cos_theta = unsafe { simd_fcos(intermediate) };
 
                 (radius * sin_theta, radius * cos_theta)
             }
 
+            #[inline(always)]
+            fn ftrig<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
+                const TWO_PI: $vector = $vector::splat(2.0 * $pi);
+
+                let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrte();
+                let intermediate = TWO_PI * rng.gen::<$vector>();
+                let sin_theta = unsafe { simd_fsin(intermediate) };
+                let cos_theta = unsafe { simd_fcos(intermediate) };
+
+                (radius * sin_theta, radius * cos_theta)
+            }
+
+            #[inline(always)]
+            fn stdsimd_trig<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
+                const TWO_PI: $vector = $vector::splat(2.0 * $pi);
+
+                let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrte();
+                let intermediate = TWO_PI * rng.gen::<$vector>();
+                let sin_theta = intermediate.sin();
+                let cos_theta = intermediate.cos();
+
+                (radius * sin_theta, radius * cos_theta)
+            }
+
+            #[inline(always)]
+            fn hacked_trig<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
+                const TWO_PI: $vector = $vector::splat(2.0 * $pi);
+
+                let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrte();
+                let (sin_theta, cos_theta) = (TWO_PI * rng.gen::<$vector>()).sin_cos();
+
+                (radius * sin_theta, radius * cos_theta)
+            }
+
+            #[inline(always)]
             fn sample<R: Rng + ?Sized>(&mut self, rng: &mut R) -> $vector {
                 self.flag = !self.flag;
 
@@ -272,6 +348,7 @@ macro_rules! impl_box_muller {
                 z0 * self.std_dev + self.mean
             }
 
+            #[inline(always)]
             fn polar<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
                 let range = Uniform::new($vector::splat(-1.0), $vector::splat(1.0));
 
@@ -288,25 +365,27 @@ macro_rules! impl_box_muller {
                     s = u*u + v*v;
                 }
 
-                let intermed = (-2.0 * s.ln() / s).sqrt();
-                (u * intermed, v * intermed,)
+                let intermed = (-2.0 * s.ln() / s).sqrte();
+                (u * intermed, v * intermed)
             }
 
+            #[inline(always)]
             fn polar_no_rejection<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
                 let range = Uniform::new($vector::splat(-1.0), $vector::splat(1.0));
 
                 let u = rng.sample(range);
                 let v = rng.sample(range);
                 let s = u*u + v*v;
+                // let s = u.fma(u, v*v);
 
-                let intermed = (-2.0 * s.ln() / s).sqrt();
-                (u * intermed, v * intermed,)
+                let intermed = (-2.0 * s.ln() / s).sqrte();
+                (u * intermed, v * intermed)
             }
         })+
     )
 }
 #[cfg(feature="simd_support")]
-impl_box_muller!(PI_64, (f64x2, u64x2), (f64x4, u64x4), (f64x8, u64x8));
+impl_box_muller_64!(PI_64, (f64x2, u64x2), (f64x4, u64x4), (f64x8, u64x8));
 
 /// The log-normal distribution `ln N(mean, std_dev**2)`.
 ///
@@ -374,6 +453,7 @@ where
 
 // TODO: add explicit standard normal distr?
 
+#[cfg(feature="simd_support")]
 extern "platform-intrinsic" {
     fn simd_fsin<T>(x: T) -> T;
     fn simd_fcos<T>(x: T) -> T;
@@ -592,7 +672,7 @@ macro_rules! impl_simd_math {
     ($fty:ident, $uty:ident, $uscalar:ty, $fscalar:ident) => (
         impl SimdMath for $fty {
             fn sin_cos(self) -> ($fty, $fty) {
-                /*const SIGN_MASK: $uscalar = 1 << size_of::<$uscalar>() * 8 - 1;
+                const SIGN_MASK: $uscalar = 1 << size_of::<$uscalar>() * 8 - 1;
 
                 let mut x = self;
                 /* extract the sign bit (upper one) */
@@ -682,8 +762,8 @@ macro_rules! impl_simd_math {
                 (
                     $fty::from_bits($uty::from_bits(xmm1) ^ $uty::from_bits(sign_bit_sin)),
                     $fty::from_bits($uty::from_bits(xmm2) ^ $uty::from_bits(sign_bit_cos))
-                )*/
-                (self.sin(), self.cos())
+                )
+                // (self.sin(), self.cos())
             }
 
             fn tan(self) -> Self {
@@ -930,7 +1010,7 @@ impl SimdMath for f32x4 {
     }
 
     fn sin_cos(self) -> (Self, Self) {
-        /*let mut x = __m128::from_bits(self);
+        let mut x = __m128::from_bits(self);
 
         unsafe {
             /* extract the sign bit (upper one) */
@@ -1024,8 +1104,8 @@ impl SimdMath for f32x4 {
                 Self::from_bits(_mm_xor_ps(xmm1, sign_bit_sin)),
                 Self::from_bits(_mm_xor_ps(xmm2, sign_bit_cos)),
             )
-        }*/
-        (self.sin(), self.cos())
+        }
+        // (self.sin(), self.cos())
     }
 
     fn tan(self) -> Self {
@@ -1099,7 +1179,7 @@ impl SimdMath for f32x4 {
 #[cfg(feature="simd_support")]
 impl SimdMath for f32x8 {
     fn sin_cos(self) -> (Self, Self) {
-        /*let minus_cephes_dp1 = __m256::from_bits(f32x8::splat(-0.78515625));
+        let minus_cephes_dp1 = __m256::from_bits(f32x8::splat(-0.78515625));
         let minus_cephes_dp2 = __m256::from_bits(f32x8::splat(-2.4187564849853515625e-4));
         let minus_cephes_dp3 = __m256::from_bits(f32x8::splat(-3.77489497744594108e-8));
 
@@ -1280,8 +1360,8 @@ impl SimdMath for f32x8 {
                 f32x8::from_bits(_mm256_xor_ps(xmm1, sign_bit_sin)),
                 f32x8::from_bits(_mm256_xor_ps(xmm2, sign_bit_cos)),
             )
-        }*/
-        (self.sin(), self.cos())
+        }
+        // (self.sin(), self.cos())
     }
 
     fn tan(self) -> Self {

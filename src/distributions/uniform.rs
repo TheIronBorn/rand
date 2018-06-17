@@ -101,9 +101,13 @@
 use std::time::Duration;
 #[cfg(feature = "simd_support")]
 use stdsimd::simd::*;
+#[cfg(feature = "simd_support")]
+use stdsimd::arch::x86_64::*;
 
 use Rng;
-use distributions::{Distribution, SimdRejectionSampling};
+use distributions::{Distribution, Standard};
+#[cfg(feature = "simd_support")]
+use distributions::SimdRejectionSampling;
 use distributions::float::IntoFloat;
 
 /// Sample values uniformly between two bounds.
@@ -484,13 +488,14 @@ macro_rules! uniform_simd_int_impl {
                     v = mask.select(v, rng.gen());
                 }*/
 
+                // strangely `SimdRejectionSampling` seems to be faster
+                // than the above.
                 let cmp = |v: $unsigned| {
                     let (_, lo) = v.wmul(range);
                     lo.le(zone)
                 };
 
-                let distr = ::distributions::Standard;
-                let v = SimdRejectionSampling::sample(rng, &distr, cmp);
+                let v = SimdRejectionSampling::sample(rng, &Standard, cmp);
                 let (hi, _) = v.wmul(range);
                 self.low + $ty::from(hi)
             }
@@ -547,7 +552,7 @@ uniform_simd_int_impl! {
 }
 
 
-trait WideningMultiply<RHS = Self> {
+pub (crate) trait WideningMultiply<RHS = Self> {
     type Output;
 
     fn wmul(self, x: RHS) -> Self::Output;
@@ -574,7 +579,9 @@ macro_rules! wmul_impl {
 
                 #[inline(always)]
                 fn wmul(self, x: $ty) -> Self::Output {
-                    // TODO: look into SIMD optimizations
+                    // TODO: optimize
+                    //       u16xN vectors could use mulhi/mullo
+                    //       perhaps better mul/shuf/blend operations for general
                     let tmp = $wide::from(self) * $wide::from(x);
                     ($ty::from(tmp >> $shift), $ty::from(tmp))
                 }
@@ -601,7 +608,7 @@ wmul_impl! {
 wmul_impl! {
     (u16x2, u32x2),
     (u16x4, u32x4),
-    (u16x8, u32x8),
+    // (u16x8, u32x8),
     (u16x16, u32x16),,
     16
 }
@@ -611,6 +618,20 @@ wmul_impl! {
     (u32x4, u64x4),
     (u32x8, u64x8),,
     32
+}
+
+#[cfg(feature = "simd_support")]
+impl WideningMultiply for u16x8 {
+    type Output = (u16x8, u16x8);
+
+    #[inline(always)]
+    fn wmul(self, x: u16x8) -> Self::Output {
+        let a = __m128i::from_bits(self);
+        let b = __m128i::from_bits(x);
+        let hi = u16x8::from_bits(unsafe { _mm_mulhi_epu16(a, b) });
+        let lo = u16x8::from_bits(unsafe { _mm_mullo_epi32(a, b) });
+        (hi, lo)
+    }
 }
 
 // This code is a translation of the __mulddi3 function in LLVM's
@@ -836,8 +857,8 @@ macro_rules! uniform_float_impl {
                 let value1_2 = (rng.gen::<$uty>() >> $uty::splat($bits_to_discard))
                                .into_float_with_exponent(0);
                 // TODO: look into SIMD FMA
-                // value1_2 * self.scale + self.offset
-                value1_2.fma(self.scale, self.offset)
+                value1_2 * self.scale + self.offset
+                // value1_2.fma(self.scale, self.offset)
             }
 
             fn sample_single<R: Rng + ?Sized>(low: Self::X,
@@ -849,7 +870,8 @@ macro_rules! uniform_float_impl {
                 let offset = low - scale;
                 let value1_2 = (rng.gen::<$uty>() >> $uty::splat($bits_to_discard))
                                .into_float_with_exponent(0);
-                // TODO: look into SIMD FMA
+                // conditional compilation with SIMD FMA would be good here
+                // target_feature = "fma"
                 // value1_2 * scale + offset
                 value1_2.fma(scale, offset)
             }
@@ -873,7 +895,7 @@ uniform_float_impl! {
     (f32x4, u32x4),
     (f32x8, u32x8),
     (f32x16, u32x16),,
-    64 - 52
+    32 - 23
 }
 
 
