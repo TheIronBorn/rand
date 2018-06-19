@@ -17,6 +17,7 @@ use core::intrinsics::fmaf64;
 #[cfg(feature="simd_support")]
 use core::mem::*;
 #[cfg(feature="simd_support")]
+#[allow(unused_imports)]
 use core::{f32, f64};
 
 use Rng;

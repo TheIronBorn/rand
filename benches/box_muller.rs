@@ -12,7 +12,7 @@ use std::mem::{size_of, transmute};
 use stdsimd::simd::*;
 use test::Bencher;
 
-use rand::{Rng, FromEntropy};
+use rand::{Rng, RngCore, FromEntropy};
 use rand::prng::{SfcAltSplit64x2a, XorShiftRng};
 use rand::prng::hc128::Hc128Rng;
 use rand::distributions::box_muller::{BoxMuller, BoxMullerCore};
@@ -84,7 +84,7 @@ macro_rules! distr_fx {
     }
 }
 
-// module structure to allow easy `cargo benchcmp` use
+// module structure to ease `cargo benchcmp` use
 
 // hacked sin_cos method
 mod hacked {

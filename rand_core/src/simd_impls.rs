@@ -11,9 +11,12 @@ use stdsimd::simd::*;
 ///
 /// ```rust
 /// #![feature(stdsimd)]
-/// use std::simd::u32x4;
+/// extern crate stdsimd;
+/// extern crate rand_core;
+/// use stdsimd::simd::u32x4;
 /// use rand_core::simd_impls::SimdRng;
 ///
+/// #[allow(dead_code)]
 /// struct CountingSimdRng(u32x4);
 ///
 /// impl SimdRng<u32x4> for CountingSimdRng {
@@ -39,10 +42,13 @@ pub trait SimdRng<Vector> {
 ///
 /// ```rust
 /// #![feature(stdsimd)]
-/// use std::simd::u32x4;
+/// extern crate stdsimd;
+/// extern crate rand_core;
+/// use stdsimd::simd::u32x4;
 /// use rand_core::{RngCore, Error};
 /// use rand_core::simd_impls::{SimdRng, SimdRngImpls};
 ///
+/// #[allow(dead_code)]
 /// struct CountingSimdRng(u32x4);
 ///
 /// impl SimdRng<u32x4> for CountingSimdRng {

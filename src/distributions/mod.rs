@@ -16,7 +16,7 @@
 //! of course [`sample`].
 //!
 //! Abstractly, a [probability distribution] describes the probability of
-//! occurance of each value in its sample space.
+//! occurrence of each value in its sample space.
 //!
 //! More concretely, an implementation of `Distribution<T>` for type `X` is an
 //! algorithm for choosing values from the sample space (a subset of `T`)
@@ -182,7 +182,7 @@ pub use self::uniform::Uniform as Range;
 #[cfg(feature = "std")]
 #[doc(inline)] pub use self::binomial::Binomial;
 #[doc(inline)] pub use self::bernoulli::Bernoulli;
-#[cfg(feature="simd_support")] // neccessary for doc tests?
+#[cfg(feature="simd_support")] // necessary for doc tests?
 pub use self::box_muller::{BoxMuller, BoxMullerCore, LogBoxMuller};
 #[doc(inline)] pub use self::cauchy::Cauchy;
 
@@ -192,7 +192,7 @@ pub mod uniform;
 #[cfg(feature="std")]
 #[doc(hidden)] pub mod normal;
 #[cfg(all(feature="std", feature = "simd_support"))]
-#[doc(hidden)] pub mod central_limit;
+pub mod central_limit;
 #[cfg(feature="std")]
 #[doc(hidden)] pub mod exponential;
 #[cfg(feature = "std")]

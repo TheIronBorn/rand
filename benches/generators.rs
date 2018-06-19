@@ -140,6 +140,7 @@ init_gen!(init_hc128, Hc128Rng);
 init_gen!(init_isaac, IsaacRng);
 init_gen!(init_isaac64, Isaac64Rng);
 init_gen!(init_chacha, ChaChaRng);
+#[cfg(features = "simd_support")]
 init_gen!(init_sfc32x4, Sfc32x4Rng);
 
 #[bench]
