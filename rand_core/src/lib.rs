@@ -92,7 +92,7 @@ pub mod simd_impls;
 /// to avoid platform differences, and avoid making any changes which affect
 /// output (except by communicating that the release has breaking changes).
 ///
-/// Typically implementators will implement only one of the methods available
+/// Typically implementors will implement only one of the methods available
 /// in this trait directly, then use the helper functions from the
 /// [`rand_core::impls`] module to implement the other methods.
 ///
@@ -209,7 +209,7 @@ pub trait RngCore {
 /// Some generators may satisfy an additional property, however this is not
 /// required by this trait: if the CSPRNG's state is revealed, it should not be
 /// computationally-feasible to reconstruct output prior to this. Some other
-/// generators allow backwards-computation and are consided *reversible*.
+/// generators allow backwards-computation and are considered *reversible*.
 ///
 /// Note that this trait is provided for guidance only and cannot guarantee
 /// suitability for cryptographic applications. In general it should only be
@@ -293,7 +293,7 @@ pub trait SeedableRng: Sized {
     ///
     /// It is however not required that this function yield the same state as a
     /// reference implementation of the PRNG given equivalent seed; if necessary
-    /// another constructor replicating behaviour from a reference
+    /// another constructor replicating behavior from a reference
     /// implementation can be added.
     ///
     /// PRNG implementations should make sure `from_seed` never panics. In the

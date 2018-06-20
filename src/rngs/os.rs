@@ -87,7 +87,7 @@ use rand_core::{CryptoRng, RngCore, Error, impls};
 /// # Panics
 ///
 /// `OsRng` is extremely unlikely to fail if `OsRng::new()`, and one read from
-/// it, where succesfull. But in case it does fail, only [`try_fill_bytes`] is
+/// it, where successful. But in case it does fail, only [`try_fill_bytes`] is
 /// able to report the cause. Depending on the error the other [`RngCore`]
 /// methods will retry several times, and panic in case the error remains.
 ///
@@ -963,7 +963,7 @@ mod imp {
 #[cfg(windows)]
 mod imp {
     extern crate winapi;
-    
+
     use {Error, ErrorKind};
     use super::OsRngImpl;
 

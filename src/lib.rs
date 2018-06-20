@@ -270,6 +270,11 @@ extern crate rand_core;
 #[cfg(feature="simd_support")]
 extern crate stdsimd;
 
+#[cfg(feature="simd_support")]
+mod simd_shuffle;
+#[cfg(feature="simd_support")]
+pub use simd_shuffle::SimdShuf;
+
 // Re-exports from rand_core
 pub use rand_core::{RngCore, CryptoRng, SeedableRng};
 pub use rand_core::{ErrorKind, Error};
@@ -318,7 +323,7 @@ pub mod isaac {
 
 #[cfg(feature="simd_support")]
 use stdsimd::simd::*;
-use core::{marker, mem, slice};
+use core::{marker, mem, slice, ptr};
 use distributions::{Distribution, Standard};
 use distributions::uniform::{SampleUniform, UniformSampler};
 
@@ -622,7 +627,8 @@ pub trait Rng: RngCore {
             // invariant: elements with index >= i have been locked in place.
             i -= 1;
             // lock element i in place.
-            values.swap(i, self.gen_range(0, i + 1));
+            let r = self.gen_range(0, i + 1);
+            unsafe { swap_unchecked(values, i, r); }
         }
     }
 
@@ -686,6 +692,15 @@ pub trait Rng: RngCore {
     fn gen_ascii_chars(&mut self) -> AsciiGenerator<&mut Self> {
         AsciiGenerator { rng: self }
     }
+}
+
+/// Use to remove bound checks when the compiler isn't smart enough about
+/// `gen_range` and related.
+#[inline]
+unsafe fn swap_unchecked<T>(values: &mut [T], a: usize, b: usize) {
+    let pa: *mut T = values.get_unchecked_mut(a);
+    let pb: *mut T = values.get_unchecked_mut(b);
+    ptr::swap(pa, pb);
 }
 
 impl<R: RngCore + ?Sized> Rng for R {}
