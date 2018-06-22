@@ -44,6 +44,7 @@
 #![cfg_attr(not(feature="std"), no_std)]
 #![cfg_attr(all(feature="alloc", not(feature="std")), feature(alloc))]
 #![cfg_attr(feature="simd_support", feature(stdsimd))]
+#![cfg_attr(all(feature="simd_support"), feature(platform_intrinsics))]
 
 #[cfg(feature="std")] extern crate core;
 #[cfg(all(feature = "alloc", not(feature="std")))] extern crate alloc;
@@ -65,6 +66,7 @@ mod error;
 pub mod block;
 pub mod impls;
 pub mod le;
+pub mod math_helpers;
 #[cfg(feature="simd_support")]
 pub mod simd_impls;
 

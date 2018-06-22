@@ -1,7 +1,11 @@
 //! Helper functions for implementing `RngCore` functions for SIMD PRNGs.
 
+// Some slight complexity in this module because we can't use `gen::<vector>()`
+
 use core::mem;
 use stdsimd::simd::*;
+
+use math_helpers::ToLittleEndian;
 
 /// Enables an RNG to use [`SimdRngImpls`].
 ///
@@ -114,9 +118,8 @@ macro_rules! impl_simd_rng {
                 const CHUNK_SIZE: usize = mem::size_of::<$vector>();
                 let mut read_len = 0;
                 for _ in 0..dest.len() / CHUNK_SIZE {
-                    // FIXME: on big-endian we should do byte swapping around
-                    // here. (unnecessary? check stdsimd docs and RFC)
-                    let results = $v8::from_bits(rng.generate());
+                    let mut results = $v8::from_bits(rng.generate());
+                    results = results.to_le(); // TODO: look into reverse store intrinsics
                     results.store_unaligned(&mut dest[read_len..]);
                     read_len += CHUNK_SIZE;
                 }
@@ -124,7 +127,8 @@ macro_rules! impl_simd_rng {
                 if remainder > 0 {
                     // This could be `ptr::copy_nonoverlapping` which doubles
                     // the speed, but I'm not sure SIMD is happy with it.
-                    let results = $v8::from_bits(rng.generate());
+                    let mut results = $v8::from_bits(rng.generate());
+                    results = results.to_le();
                     let len = dest.len() - remainder;
 
                     // ensure `store_aligned` safety, perhaps overzealous
@@ -191,15 +195,15 @@ impl SimdRngImpls<u8x2> for u8x2 {
         const CHUNK_SIZE: usize = mem::size_of::<u8x2>();
         let mut read_len = 0;
         for _ in 0..dest.len() / CHUNK_SIZE {
-            // FIXME: on big-endian we should do byte swapping around
-            // here.
-            let results = u8x2::from_bits(rng.generate());
+            let mut results = u8x2::from_bits(rng.generate());
+            results = results.to_le();
             results.store_unaligned(&mut dest[read_len..]);
             read_len += CHUNK_SIZE;
         }
         let remainder = dest.len() % CHUNK_SIZE;
         if remainder > 0 {
-            let results = u8x2::from_bits(rng.generate());
+            let mut results = u8x2::from_bits(rng.generate());
+            results = results.to_le();
             let len = dest.len() - remainder;
             let mut buf = [0_u8; u8x2::lanes()];
             results.store_unaligned(&mut buf);
@@ -229,15 +233,15 @@ impl SimdRngImpls<u16x2> for u16x2 {
         const CHUNK_SIZE: usize = mem::size_of::<u16x2>();
         let mut read_len = 0;
         for _ in 0..dest.len() / CHUNK_SIZE {
-            // FIXME: on big-endian we should do byte swapping around
-            // here.
-            let results = u8x4::from_bits(rng.generate());
+            let mut results = u8x4::from_bits(rng.generate());
+            results = results.to_le();
             results.store_unaligned(&mut dest[read_len..]);
             read_len += CHUNK_SIZE;
         }
         let remainder = dest.len() % CHUNK_SIZE;
         if remainder > 0 {
-            let results = u8x4::from_bits(rng.generate());
+            let mut results = u8x4::from_bits(rng.generate());
+            results = results.to_le();
             let len = dest.len() - remainder;
             let mut buf = [0_u8; u8x8::lanes()];
             results.store_unaligned(&mut buf);
@@ -264,15 +268,15 @@ impl SimdRngImpls<u16x4> for u16x4 {
         const CHUNK_SIZE: usize = mem::size_of::<u16x4>();
         let mut read_len = 0;
         for _ in 0..dest.len() / CHUNK_SIZE {
-            // FIXME: on big-endian we should do byte swapping around
-            // here.
-            let results = u8x8::from_bits(rng.generate());
+            let mut results = u8x8::from_bits(rng.generate());
+            results = results.to_le();
             results.store_unaligned(&mut dest[read_len..]);
             read_len += CHUNK_SIZE;
         }
         let remainder = dest.len() % CHUNK_SIZE;
         if remainder > 0 {
-            let results = u8x8::from_bits(rng.generate());
+            let mut results = u8x8::from_bits(rng.generate());
+            results = results.to_le();
             let len = dest.len() - remainder;
             let mut buf = [0_u8; u8x8::lanes()];
             results.store_unaligned(&mut buf);
@@ -300,15 +304,15 @@ impl SimdRngImpls<u32x2> for u32x2 {
         const CHUNK_SIZE: usize = mem::size_of::<u32x2>();
         let mut read_len = 0;
         for _ in 0..dest.len() / CHUNK_SIZE {
-            // FIXME: on big-endian we should do byte swapping around
-            // here.
-            let results = u8x8::from_bits(rng.generate());
+            let mut results = u8x8::from_bits(rng.generate());
+            results = results.to_le();
             results.store_unaligned(&mut dest[read_len..]);
             read_len += CHUNK_SIZE;
         }
         let remainder = dest.len() % CHUNK_SIZE;
         if remainder > 0 {
-            let results = u8x8::from_bits(rng.generate());
+            let mut results = u8x8::from_bits(rng.generate());
+            results = results.to_le();
             let len = dest.len() - remainder;
             let mut buf = [0_u8; u8x8::lanes()];
             results.store_unaligned(&mut buf);

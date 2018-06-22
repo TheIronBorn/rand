@@ -327,6 +327,9 @@ use core::{marker, mem, slice, ptr};
 use distributions::{Distribution, Standard};
 use distributions::uniform::{SampleUniform, UniformSampler};
 
+#[cfg(feature="simd_support")]
+use rand_core::math_helpers::ToLittleEndian;
+
 
 /// A type that can be randomly generated using an [`Rng`].
 ///
@@ -786,9 +789,10 @@ macro_rules! impl_as_byte_slice_simd {
 
                 #[inline]
                 fn to_le(&mut self) {
-                    /*for x in self {
+                    // TODO: look into larger vector shuffles where applicable
+                    for x in self {
                         *x = x.to_le();
-                    }*/
+                    }
                 }
             }
         )+

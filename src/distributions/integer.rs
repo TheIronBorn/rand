@@ -16,6 +16,8 @@ use distributions::{Distribution, Standard};
 use stdsimd::simd::*;
 #[cfg(feature="simd_support")]
 use std::mem;
+#[cfg(feature="simd_support")]
+use ToLittleEndian;
 
 impl Distribution<u8> for Standard {
     #[inline]
@@ -91,23 +93,25 @@ impl_int_from_uint! { isize, usize }
 #[cfg(feature="simd_support")]
 macro_rules! simd_impl {
     () => {};
-    ($ty:ty, $($ty_more:ty,)*) => {
+    ($ty:ident, $($ty_more:ident,)*) => {
         simd_impl!($($ty_more,)*);
 
         impl Distribution<$ty> for Standard {
             #[inline]
             fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> $ty {
-                let mut vec = Default::default();
+                let mut vec: $ty = Default::default();
                 unsafe {
                     let ptr = &mut vec;
                     let b_ptr = &mut *(ptr as *mut $ty as *mut [u8; mem::size_of::<$ty>()]);
                     rng.fill_bytes(b_ptr);
-                    // FIXME: on big-endian we should do byte swapping here.
                 }
-                vec
+                // could also use `slice::reverse`, `swap_bytes` of `to_le`
+                // might be faster because it can assume memory length. Assembly
+                // inspection shows `swap_bytes` produces fewer instructions.
+                vec.to_le()
             }
         }
-    }
+    };
 }
 
 #[cfg(feature="simd_support")]

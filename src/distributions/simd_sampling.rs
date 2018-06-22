@@ -15,8 +15,8 @@ where
     /// The mask for the `Self` SIMD vector
     type Mask;
 
-    /// Returns a SIMD vector randomly sampled from `distr` for which the SIMD mask
-    /// `cmp` returns has only true lanes.
+    /// Returns a SIMD vector randomly sampled from `distr` for which each lane
+    /// of the SIMD mask returned by `cmp` is true.
     fn sample<R: Rng + ?Sized, D: Distribution<Self>, F>(rng: &mut R, distr: &D, cmp: F) -> Self
     where
         F: FnMut(Self) -> Self::Mask;
