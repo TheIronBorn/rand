@@ -105,9 +105,11 @@ use stdsimd::simd::*;
 use stdsimd::arch::x86_64::*;
 
 use Rng;
-use distributions::{Distribution, Standard};
+use distributions::Distribution;
 #[cfg(feature = "simd_support")]
-use distributions::SimdRejectionSampling;
+use distributions::{SimdRejectionSampling, Standard};
+#[cfg(feature = "simd_support")]
+use distributions::box_muller::LeadingZeros;
 use distributions::float::IntoFloat;
 
 /// Sample values uniformly between two bounds.
@@ -240,6 +242,13 @@ pub trait UniformSampler: Sized {
     {
         let uniform: Self = UniformSampler::new(low, high);
         uniform.sample(rng)
+    }
+
+    /// Allows optimizations for the `low = 0` case.
+    fn sample_single_below<R: Rng + ?Sized>(_high: Self::X, _rng: &mut R)
+        -> Self::X
+    {
+        unimplemented!()
     }
 }
 
@@ -500,7 +509,62 @@ macro_rules! uniform_simd_int_impl {
                 self.low + $ty::from(hi)
             }
 
-            // TODO: look into leading_zeros approximation speeds
+            fn sample_single<R: Rng + ?Sized>(low: Self::X,
+                                              high: Self::X,
+                                              rng: &mut R) -> Self::X
+            {
+                assert!(low.lt(high).all(),
+                        "Uniform::sample_single called with low >= high");
+                let range = $unsigned::from(high - low);
+                let zone =
+                    if size_of::<$u_scalar>() <= 2 {
+                        let unsigned_max = ::core::$u_scalar::MAX;
+                        let ints_to_reject = (unsigned_max - range + 1) % range;
+                        unsigned_max - ints_to_reject
+                    } else {
+                        // Benchmarks indicate that, unlike the scalar implementation,
+                        // for i8 and i16 the approximation is faster. Likely
+                        // because modulus is especially slow for SIMD.
+                        range << range.leading_zeros()
+                    };
+
+                let cmp = |v: $unsigned| {
+                    let (_, lo) = v.wmul(range);
+                    lo.le(zone)
+                };
+
+                let v = SimdRejectionSampling::sample(rng, &Standard, cmp);
+                let (hi, _) = v.wmul(range);
+                low + $ty::from(hi)
+            }
+
+            fn sample_single_below<R: Rng + ?Sized>(high: Self::X,
+                                                    rng: &mut R) -> Self::X
+            {
+                assert!($ty::splat(0).lt(high).all(),
+                        "Uniform::sample_single_below called with 0 >= high");
+                let range = $unsigned::from(high);
+                let zone =
+                    if size_of::<$u_scalar>() <= 2 {
+                        let unsigned_max = ::core::$u_scalar::MAX;
+                        let ints_to_reject = (unsigned_max - range + 1) % range;
+                        unsigned_max - ints_to_reject
+                    } else {
+                        // Benchmarks indicate that, unlike the scalar implementation,
+                        // for i8 and i16 the approximation is faster. Likely
+                        // because modulus is especially slow for SIMD.
+                        range << range.leading_zeros()
+                    };
+
+                let cmp = |v: $unsigned| {
+                    let (_, lo) = v.wmul(range);
+                    lo.le(zone)
+                };
+
+                let v = SimdRejectionSampling::sample(rng, &Standard, cmp);
+                let (hi, _) = v.wmul(range);
+                $ty::from(hi)
+            }
         }
     };
 

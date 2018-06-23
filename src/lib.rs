@@ -432,6 +432,11 @@ pub trait Rng: RngCore {
         T::Sampler::sample_single(low, high, self)
     }
 
+    ///
+    fn gen_below<T: PartialOrd + SampleUniform>(&mut self, high: T) -> T {
+        T::Sampler::sample_single_below(high, self)
+    }
+
     /// Sample a new value, using the given distribution.
     ///
     /// ### Example

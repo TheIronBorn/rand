@@ -1,9 +1,13 @@
+#![cfg_attr(all(feature="simd_support", feature="nightly"), feature(stdsimd))]
 #![feature(test)]
 
 extern crate test;
 extern crate rand;
+#[cfg(feature="simd_support")]
+extern crate stdsimd;
 
 const RAND_BENCH_N: u64 = 1000;
+const SHUF_SIZE: usize = 1000;
 
 use test::Bencher;
 
@@ -88,7 +92,7 @@ sample_binomial!(misc_binomial_1e12, 1000_000_000_000, 0.2);
 #[bench]
 fn misc_shuffle_100(b: &mut Bencher) {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
-    let x : &mut [usize] = &mut [1; 100];
+    let x: &mut [usize] = &mut [1; 100];
     b.iter(|| {
         rng.shuffle(x);
         x[0]
@@ -98,7 +102,7 @@ fn misc_shuffle_100(b: &mut Bencher) {
 #[bench]
 fn misc_sample_iter_10_of_100(b: &mut Bencher) {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
-    let x : &[usize] = &[1; 100];
+    let x: &[usize] = &[1; 100];
     b.iter(|| {
         sample_iter(&mut rng, x, 10).unwrap_or_else(|e| e)
     })
@@ -107,7 +111,7 @@ fn misc_sample_iter_10_of_100(b: &mut Bencher) {
 #[bench]
 fn misc_sample_slice_10_of_100(b: &mut Bencher) {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
-    let x : &[usize] = &[1; 100];
+    let x: &[usize] = &[1; 100];
     b.iter(|| {
         sample_slice(&mut rng, x, 10)
     })
@@ -116,7 +120,7 @@ fn misc_sample_slice_10_of_100(b: &mut Bencher) {
 #[bench]
 fn misc_sample_slice_ref_10_of_100(b: &mut Bencher) {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
-    let x : &[usize] = &[1; 100];
+    let x: &[usize] = &[1; 100];
     b.iter(|| {
         sample_slice_ref(&mut rng, x, 10)
     })
@@ -192,3 +196,94 @@ fn gen_1k_fill(b: &mut Bencher) {
     });
     b.bytes = 1024;
 }
+
+#[cfg(feature = "simd_support")]
+mod simd_benches {
+    use super::*;
+
+    use stdsimd::simd::*;
+
+    use rand::SimdShuf;
+    use rand::prng::SfcAltSplit64x2a;
+
+    const SHUF_BENCH: usize = 1 << 0;
+
+    macro_rules! simd_shuffle {
+        ($fnn:ident, $rng:ident, $vec:ident) => (
+            #[bench]
+            fn $fnn(b: &mut Bencher) {
+                let mut rng = $rng::from_rng(thread_rng()).unwrap();
+                let x: &mut [usize] = &mut [1; SHUF_SIZE];
+                b.iter(|| {
+                    let mut accum = 0usize;
+                    for _ in 0..SHUF_BENCH {
+                        $vec::simd_shuffle(&mut rng, x);
+                        accum = accum.wrapping_add(x[0]);
+                    }
+                    accum
+                })
+            }
+        )
+    }
+    macro_rules! shuffle {
+        ($fnn:ident, $rng:ident) => (
+            #[bench]
+            fn $fnn(b: &mut Bencher) {
+                let mut rng = $rng::from_rng(thread_rng()).unwrap();
+                let x: &mut [usize] = &mut [1; SHUF_SIZE];
+                b.iter(|| {
+                    let mut accum = 0usize;
+                    for _ in 0..SHUF_BENCH {
+                        rng.shuffle(x);
+                        accum = accum.wrapping_add(x[0]);
+                    }
+                    accum
+                })
+            }
+        )
+    }
+
+    simd_shuffle!(simd_shuffle_sfc32x4, SfcAltSplit64x2a, u16x8);
+    simd_shuffle!(simd_shuffle_smallrng, SmallRng, u16x8);
+    shuffle!(shuffle_smallrng, SmallRng);
+    simd_shuffle!(simd_shuffle_stdrng, StdRng, u16x8);
+    simd_shuffle!(simd_shuffle_stdrng_512, StdRng, u16x32);
+    simd_shuffle!(simd_shuffle_stdrng_256, StdRng, u16x16);
+    shuffle!(shuffle_stdrng, StdRng);
+}
+
+/*#[cfg(feature = "simd_support")]
+mod shuf_below {
+    use super::*;
+
+    use stdsimd::simd::*;
+
+    use rand::SimdShuf;
+    use rand::prng::SfcAltSplit64x2a;
+
+    macro_rules! simd_shuffle {
+        ($fnn:ident, $rng:ident, $vec:ident) => (
+            #[bench]
+            fn $fnn(b: &mut Bencher) {
+                let mut rng = $rng::from_rng(thread_rng()).unwrap();
+                let x: &mut [usize] = &mut [1; SHUF_SIZE];
+                b.iter(|| {
+                    let mut accum = 0usize;
+                    for _ in 0..SHUF_BENCH {
+                        $vec::simd_shuffle_below(&mut rng, x);
+                        accum = accum.wrapping_add(x[0]);
+                    }
+                    accum
+                })
+            }
+        )
+    }
+
+    simd_shuffle!(simd_shuffle_sfc32x4, SfcAltSplit64x2a, u16x8);
+    simd_shuffle!(simd_shuffle_smallrng, SmallRng, u16x8);
+    // shuffle!(shuffle_smallrng, SmallRng);
+    simd_shuffle!(simd_shuffle_stdrng, StdRng, u16x8);
+    simd_shuffle!(simd_shuffle_stdrng_512, StdRng, u16x32);
+    simd_shuffle!(simd_shuffle_stdrng_256, StdRng, u16x16);
+    // shuffle!(shuffle_stdrng, StdRng);
+}*/

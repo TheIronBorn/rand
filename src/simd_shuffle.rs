@@ -7,8 +7,6 @@
 // use core::mem::size_of;
 use stdsimd::simd::*;
 
-// use distributions::range::SampleSingleHigh;
-use distributions::uniform::WideningMultiply;
 use {swap_unchecked, Rng};
 
 /// A trait for shuffling slices.
@@ -58,7 +56,8 @@ macro_rules! impl_simd_shuf {
 
                 // shuffle a multiple of `$vec::lanes()` slice elements
                 for _ in 0..values.len() / $vec::lanes() {
-                    let rand_indices = rng.gen_range($vec::splat(0), interval);
+                    // `gen_below` is about 10% faster
+                    let rand_indices = rng.gen_below(interval);
 
                     // swap each `rand_idx` with the next `slice_idx`
                     // TODO: could probably be optimized
@@ -105,7 +104,7 @@ macro_rules! rem_shuf {
             interval = interval.replace(vec_idx, ($rem - vec_idx) as $scalar);
         }
 
-        let rand_indices = $rng.gen_range($vec::splat(0), interval);
+        let rand_indices = $rng.gen_below(interval);
         for vec_idx in 0..$rem - 1 {
             $slice_idx -= 1;
             let rand_idx = rand_indices.extract(vec_idx) as usize;

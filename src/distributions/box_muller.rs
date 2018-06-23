@@ -559,7 +559,7 @@ macro_rules! impl_simd_int_math {
 
     (vectors: ($($ty:ty,)+), $BITS:expr) => (
         $(impl_simd_int_math!($ty, (u32, $ty,), $BITS);)+
-    )
+    );
 }
 
 #[cfg(feature="simd_support")]
@@ -574,22 +574,24 @@ impl_simd_int_math!(vectors: (u64x2, u64x4, u64x8,), 64);
 /// Implements SIMD base 2 logarithm for use with the `zone` approximation of
 /// SIMD implementations of `sample_single`.
 #[cfg(feature="simd_support")]
-pub trait Log {
-    /// Returns the base 2 logarithm of the vector.
-    fn log2(self) -> Self;
+pub trait LeadingZeros {
+    /// Returns the number of leading zeros in the binary representation of each
+    /// lane of `self`.
+    fn leading_zeros(self) -> Self;
 }
 
 // adapted from https://graphics.stanford.edu/%7Eseander/bithacks.html#IntegerLogIEEE64Float
-// Only works natively for `u32x` types.
+// Only works natively for 32 and 16 lane width.
 //
-// Casting `u16x`|`u8x` to `u32x` works but only for `2|4|8` number of lanes.
-// It could work natively for smaller types if we knew how the `20` shift and
-// `0x3FF` "bias" were chosen.
+// Casting `u8x` to `u16x` works but only for `2|4|8|16` number of lanes.
+//
+// For more lanes perhaps just transmuting u8x32 to two u8x16 vectors would work?
 #[cfg(feature="simd_support")]
-macro_rules! impl_log {
+macro_rules! impl_ctlz {
     ($ty:ty, $large:ident, $fty:ident, $scalar:ty, $l_scalar:ty, $f_scalar:ident, $bits:expr) => {
-        impl Log for $ty {
-            fn log2(self) -> Self {
+        impl LeadingZeros for $ty {
+            #[inline(always)]
+            fn leading_zeros(self) -> Self {
                 let power =
                     ((1 as $l_scalar) << (::core::$f_scalar::MANTISSA_DIGITS - 1)) as $f_scalar;
                 let exponent: $l_scalar = unsafe { transmute(power) };
@@ -597,76 +599,423 @@ macro_rules! impl_log {
                 let mut t = $fty::from_bits($large::from(self) | exponent);
                 t -= power;
                 let x = Self::from($large::from_bits(t) >> $bits);
-                $bits as $scalar - 1 - ((x >> 20) - 0x3FF as $scalar)
+                const SHIFT: $scalar = $bits - (2 * $bits - ::core::$f_scalar::MANTISSA_DIGITS as $scalar + 1);
+                const SUB: $scalar = (1 << (2 * $bits - ::core::$f_scalar::MANTISSA_DIGITS as $scalar - 1)) - 1;
+                $bits as $scalar - 1 - ((x >> SHIFT) - SUB)
             }
         }
     };
+
+    // bulk implementation
+    ($(($ty:ty, $large:ident, $fty:ident),)+, $scalar:ty, $l_scalar:ty, $f_scalar:ident, $bits:expr) => {$(
+        impl_ctlz! { $ty, $large, $fty, $scalar, $l_scalar, $f_scalar, $bits }
+    )+};
 }
 
 #[cfg(feature="simd_support")]
-impl_log!(u32x2, u64x2, f64x2, u32, u64, f64, 32);
+impl_ctlz! {
+    (u32x2, u64x2, f64x2),
+    (u32x4, u64x4, f64x4),
+    (u32x8, u64x8, f64x8),,
+    u32, u64, f64, 32
+}
 #[cfg(feature="simd_support")]
-impl_log!(u32x4, u64x4, f64x4, u32, u64, f64, 32);
-#[cfg(feature="simd_support")]
-impl_log!(u32x8, u64x8, f64x8, u32, u64, f64, 32);
+impl_ctlz! {
+    (u16x2, u32x2, f32x2),
+    (u16x4, u32x4, f32x4),
+    (u16x8, u32x8, f32x8),
+    (u16x16, u32x16, f32x16),,
+    u16, u32, f32, 16
+}
+// f16 vectors/scalars would be nice
 
 #[cfg(feature="simd_support")]
-macro_rules! impl_log_w_u32 {
-    ($( ( $ty:ident, $large:ident ), )+, $bits:expr) => (
-        $(impl Log for $ty {
+macro_rules! impl_ctlz_w_u16 {
+    ($( ( $ty:ident, $large:ident ), )+, $bits:expr) => ($(
+        impl LeadingZeros for $ty {
             #[inline(always)]
-            fn log2(self) -> Self {
-                $ty::from($large::from(self).log2()) - $bits
+            fn leading_zeros(self) -> Self {
+                $ty::from($large::from(self).leading_zeros()) - (16 - $bits)
             }
-        })+
-    )
+        }
+    )+)
 }
 
 #[cfg(feature="simd_support")]
-impl_log_w_u32! {
-    (u16x2, u32x2),
-    (u16x4, u32x4),
-    (u16x8, u32x8),,
-    16
-}
-
-#[cfg(feature="simd_support")]
-impl_log_w_u32! {
-    (u8x2, u32x2),
-    (u8x4, u32x4),
-    (u8x8, u32x8),,
+impl_ctlz_w_u16! {
+    (u8x2, u16x2),
+    (u8x4, u16x4),
+    (u8x8, u16x8),
+    (u8x16, u16x16),,
     8
 }
 
 #[cfg(feature="simd_support")]
-macro_rules! impl_log_unim {
-    ($ty:ty) => {
-        impl Log for $ty {
-            fn log2(self) -> Self {
-                unimplemented!()
+macro_rules! impl_ctlz_w_scalar {
+    ($( $ty:ident, )+, $scalar:ty) => ($(
+        impl LeadingZeros for $ty {
+            #[inline(always)]
+            fn leading_zeros(self) -> Self {
+                let mut ctlz = $ty::default();
+                for i in 0..$ty::lanes() {
+                    ctlz = ctlz.replace(i, self.extract(i) as $scalar);
+                }
+                ctlz
             }
         }
-    };
+    )+)
 }
 
 #[cfg(feature="simd_support")]
-impl_log_unim!(u8x16);
+impl_ctlz_w_scalar! { u8x32, u8x64,, u8 }
 #[cfg(feature="simd_support")]
-impl_log_unim!(u8x32);
+impl_ctlz_w_scalar! { u16x32,, u16 }
 #[cfg(feature="simd_support")]
-impl_log_unim!(u8x64);
+impl_ctlz_w_scalar! { u32x16,, u32 }
 #[cfg(feature="simd_support")]
-impl_log_unim!(u16x16);
-#[cfg(feature="simd_support")]
-impl_log_unim!(u16x32);
-#[cfg(feature="simd_support")]
-impl_log_unim!(u32x16);
-#[cfg(feature="simd_support")]
-impl_log_unim!(u64x2);
-#[cfg(feature="simd_support")]
-impl_log_unim!(u64x4);
-#[cfg(feature="simd_support")]
-impl_log_unim!(u64x8);
+impl_ctlz_w_scalar! { u64x2, u64x4, u64x8,, u64 }
+
+#[cfg(test)]
+#[cfg(feature = "simd_support")]
+mod log2_tests {
+    use super::*;
+
+    // We know `range` of `UniformInt` won't ever be zero so we can ignore that
+    // special case. (Some of the below methods will break on zero inputs)
+
+    macro_rules! log2_test {
+        ($fnn:ident, $vec:ident, $scalar:ty) => {
+            #[test]
+            fn $fnn() {
+                let data = ::thread_rng().gen::<$vec>();
+
+                let mut expected = $vec::default();
+                for i in 0..$vec::lanes() {
+                    expected = expected.replace(i, data.extract(i).leading_zeros() as $scalar);
+                }
+
+                let actual = data.leading_zeros();
+
+                assert_eq!(expected, actual);
+            }
+        };
+    }
+
+    log2_test! { log2_u8x2, u8x2, u8 }
+    log2_test! { log2_u8x4, u8x4, u8 }
+    log2_test! { log2_u8x8, u8x8, u8 }
+    log2_test! { log2_u8x16, u8x16, u8 }
+
+    log2_test! { log2_u16x2, u16x2, u16 }
+    log2_test! { log2_u16x4, u16x4, u16 }
+    log2_test! { log2_u16x8, u16x8, u16 }
+    log2_test! { log2_u16x16, u16x16, u16 }
+
+    log2_test! { log2_u32x2, u32x2, u32 }
+    log2_test! { log2_u32x4, u32x4, u32 }
+    log2_test! { log2_u32x8, u32x8, u32 }
+
+    /*// An attempt at the lookup table method from
+    // https://graphics.stanford.edu/~seander/bithacks.html#IntegerLogLookup
+    //
+    // The 256 lookup table was replaced with comparisons to find the appropriate
+    // value. It takes too many comparisons for each "table" lookup. Perhaps a
+    // smaller table would be sufficient. Tuning the number of "lookups" vs
+    // input splitting might be helpful.
+    //
+    // TODO: look into some unrolled SIMD binary search?
+    #[test]
+    fn lut_hack() {
+        use SeedableRng;;
+
+        #[inline]
+        fn lut(x: u16x4) -> u16x4 {
+            let mut indices = u16x4::splat(0);
+            for &upper_bound in &[1, 3, 7, /*15,*/ /*31,*/ /*63,*/ /*127*/] {
+                let cmp = x.gt(u16x4::splat(upper_bound));
+                indices -= u16x4::from_bits(cmp);
+            }
+            indices
+        }
+
+        let mut rng = ::prng::SfcAltSplit64x2a::from_rng(::thread_rng()).unwrap();
+
+        let range = ::distributions::Uniform::new_inclusive(u16x4::splat(1), u16x4::splat(!0));
+
+        for _ in 0..1 << 10 {
+            let data = rng.sample(range);
+
+            let mut expected = u16x4::default();
+            for i in 0..u16x4::lanes() {
+                expected = expected.replace(i, data.extract(i).leading_zeros() as u16);
+            }
+
+            const BITS: u16 = 16;
+
+            let tt = data >> BITS/2;
+
+            let t = tt >> BITS/4;
+            let lut1 = lut(t);
+            let lut2 = lut(tt);
+            let mask = t.ne(u16x4::splat(0));
+            let r1 = mask.select(BITS*3/4 + lut1, BITS/2 + lut2);
+
+            let t = data >> BITS/4;
+            let lut1 = lut(t);
+            let lut2 = lut(data);
+            let mask = t.ne(u16x4::splat(0));
+            let r2 = mask.select(BITS/4 + lut1, lut2);
+
+            let mask = tt.ne(u16x4::splat(0));
+            let actual = mask.select(r1, r2);
+
+            assert_eq!(expected, BITS - 1 - actual, "{:?}", data);
+        }
+    }
+
+    #[test]
+    fn lut_hack2() {
+        use SeedableRng;;
+
+        #[inline]
+        fn lut(x: u16x4) -> u16x4 {
+            let mut indices = u16x4::splat(0);
+            for &upper_bound in &[1, 3, 7, /*15,*/ /*31,*/ /*63,*/ /*127*/] {
+                let cmp = x.gt(u16x4::splat(upper_bound));
+                indices -= u16x4::from_bits(cmp);
+            }
+            indices
+        }
+
+        let mut rng = ::prng::SfcAltSplit64x2a::from_rng(::thread_rng()).unwrap();
+
+        let range = ::distributions::Uniform::new_inclusive(u16x4::splat(1), u16x4::splat(!0));
+
+        for _ in 0..1 << 10 {
+            let data = rng.sample(range);
+
+            let mut expected = u16x4::default();
+            for i in 0..u16x4::lanes() {
+                expected = expected.replace(i, data.extract(i).leading_zeros() as u16);
+            }
+
+            const BITS: u16 = 16;
+
+            // if (tt = v >> 24) 24 + LogTable256[tt]
+            let tt1 = data >> BITS*3/4;
+            let r1 = BITS*3/4 + lut(tt1);
+            println!("{:?}", r1);
+
+            // else if (tt = v >> 16) 16 + LogTable256[tt]
+            let tt2 = data >> BITS/2;
+            let r2 = BITS/2 + lut(tt2);
+            println!("{:?}", r2);
+
+            // if tt1 else tt2
+            let cmp1 = tt1.ne(u16x4::splat(0));
+            let mut r = cmp1.select(r1, r2);
+
+            // else if (tt = v >> 8) 8 + LogTable256[tt]
+            let tt3 = data >> BITS/4;
+            let r3 = BITS/4 + lut(tt3);
+            println!("{:?}", r3);
+            // if !tt1 && !tt2
+            let cmp2 = tt2.ne(u16x4::splat(0));
+            r = (!cmp1 & !cmp2).select(r3, r);
+
+            // else LogTable256[v]
+            let r4 = lut(data);
+            println!("{:?}", r4);
+            // if !tt1 && !tt2 && !tt3
+            let cmp3 = tt3.ne(u16x4::splat(0));
+            let actual = (!cmp1 & !cmp2 & !cmp3).select(r4, r);
+
+            assert_eq!(expected, BITS - 1 - actual, "{:?}", data);
+        }
+    }
+
+    // seems slower than the below branchless variant. Not sure why. The
+    // difference doesn't mean much though because I'm not benching on an AVX2
+    // machine.
+    #[test]
+    fn shift_or_hack() {
+        use SeedableRng;;
+        let mut rng = ::prng::SfcAltSplit64x2a::from_rng(::thread_rng()).unwrap();
+
+        let range = ::distributions::Uniform::new_inclusive(u8x16::splat(1), u8x16::splat(!0));
+
+        #[allow(overflowing_literals)]
+        for _ in 0..1 << 5 {
+            let mut data = rng.sample(range);
+
+            let mut expected = u8x16::default();
+            for i in 0..u8x16::lanes() {
+                expected = expected.replace(i, data.extract(i).leading_zeros() as u8);
+            }
+
+            let mut actual = u8x16::splat(0); // result of log2(v) will go here
+
+            macro_rules! round {
+                ($B:expr, $S:expr) => {{
+                    let cmp = (data & $B).ne(u8x16::splat(0));
+                    // likely compiles to just `cmp & $S`
+                    let s = cmp.select(u8x16::splat($S), u8x16::splat(0));
+                    data >>= s;
+                    actual |= s;
+                }}
+            }
+
+            let size = size_of::<u8x16>() / u8x16::lanes();
+            if size >= 8 { round!(0xFFFF_FFFF_0000_0000, 32); }
+            if size >= 4 { round!(0xFFFF_0000, 16); }
+            if size >= 2 { round!(0xFF00, 8); }
+            round!(0xF0, 4);
+            round!(0xC, 2);
+            round!(0x2, 1);
+
+            assert_eq!(expected, 8 - 1 - actual, "{:?}", data);
+        }
+    }
+
+    // An attempt at the shift-or method from
+    // https://graphics.stanford.edu/~seander/bithacks.html#IntegerLog
+    //
+    // slow because of variable shifts. Likely fast enough with AVX2.
+    #[test]
+    fn branchless_hack() {
+        use SeedableRng;;
+        let mut rng = ::prng::SfcAltSplit64x2a::from_rng(::thread_rng()).unwrap();
+        let range = ::distributions::Uniform::new_inclusive(u64x8::splat(1), u64x8::splat(!0));
+
+        #[allow(overflowing_literals)]
+        for _ in 0..1 << 5 {
+            let data = rng.sample(range);
+
+            let mut expected = u64x8::default();
+            for i in 0..u64x8::lanes() {
+                expected = expected.replace(i, data.extract(i).leading_zeros() as u64);
+            }
+
+            const BITS: u64 = 64;
+
+            let mut v = data;
+            let mut shift: u64x8;
+            let mut r: u64x8;
+            r     = u64x8::from_bits(v.gt(u64x8::splat(0xFFFF_FFFF))) & (1 << 5); v >>= r;
+            shift = u64x8::from_bits(v.gt(u64x8::splat(0xFFFF)))      & (1 << 4); v >>= shift; r |= shift;
+            shift = u64x8::from_bits(v.gt(u64x8::splat(0xFF)))        & (1 << 3); v >>= shift; r |= shift;
+            shift = u64x8::from_bits(v.gt(u64x8::splat(0xF)))         & (1 << 2); v >>= shift; r |= shift;
+            shift = u64x8::from_bits(v.gt(u64x8::splat(0x3)))         & (1 << 1); v >>= shift; r |= shift;
+            let actual = r | (v >> 1);
+
+            assert_eq!(expected, BITS - 1 - actual, "{:?}", data);
+        }
+    }
+
+    // An attempt at the mul-lookup method from
+    // https://graphics.stanford.edu/~seander/bithacks.html#IntegerLogDeBruijn
+    //
+    // Slow without AVX2 (for the shuffle). (The portable shuffle impl here might
+    // not actually produce `vpshufb`)
+    #[test]
+    fn mul_lut_hack() {
+        use SeedableRng;;
+        let mut rng = ::prng::SfcAltSplit64x2a::from_rng(::thread_rng()).unwrap();
+
+        let range = ::distributions::Uniform::new_inclusive(u32x16::splat(1), u32x16::splat(!0));
+
+        for _ in 0..1 << 5 {
+            let data = rng.sample(range);
+
+            let mut expected = u32x16::default();
+            for i in 0..u32x16::lanes() {
+                expected = expected.replace(i, data.extract(i).leading_zeros() as u32);
+            }
+
+            const BITS: u32 = 32;
+            const LUT: u8x32 = u8x32::new(
+                0, 9,  1,  10, 13, 21, 2,  29, 11, 14, 16, 18, 22, 25, 3, 30,
+                8, 12, 20, 28, 15, 17, 24, 7,  19, 27, 23, 6,  26, 5,  4, 31,
+            );
+
+            let mut v = data;
+            v |= v >> 1; // first round down to one less than a power of 2
+            v |= v >> 2;
+            v |= v >> 4;
+            v |= v >> 8;
+            v |= v >> 16;
+
+            // this is doing more work than necessary, only 8 numbers are
+            // needed. The other 24 lanes should all be zero.
+            let actual = unsafe { simd_shuffle16(LUT, v, )}
+            let indices = u8x16::from((v * 0x07c4acdd) >> 27);
+            let actual = u32x16::from(u8x16::new(
+                LUT.extract(indices.extract(0) as usize),
+                LUT.extract(indices.extract(1) as usize),
+                LUT.extract(indices.extract(2) as usize),
+                LUT.extract(indices.extract(3) as usize),
+                LUT.extract(indices.extract(4) as usize),
+                LUT.extract(indices.extract(5) as usize),
+                LUT.extract(indices.extract(6) as usize),
+                LUT.extract(indices.extract(7) as usize),
+                LUT.extract(indices.extract(8) as usize),
+                LUT.extract(indices.extract(9) as usize),
+                LUT.extract(indices.extract(10) as usize),
+                LUT.extract(indices.extract(11) as usize),
+                LUT.extract(indices.extract(12) as usize),
+                LUT.extract(indices.extract(13) as usize),
+                LUT.extract(indices.extract(14) as usize),
+                LUT.extract(indices.extract(15) as usize),
+                // LUT.extract(indices.extract(16) as usize),
+                // LUT.extract(indices.extract(17) as usize),
+                // LUT.extract(indices.extract(18) as usize),
+                // LUT.extract(indices.extract(19) as usize),
+                // LUT.extract(indices.extract(20) as usize),
+                // LUT.extract(indices.extract(21) as usize),
+                // LUT.extract(indices.extract(22) as usize),
+                // LUT.extract(indices.extract(23) as usize),
+                // LUT.extract(indices.extract(24) as usize),
+                // LUT.extract(indices.extract(25) as usize),
+                // LUT.extract(indices.extract(26) as usize),
+                // LUT.extract(indices.extract(27) as usize),
+                // LUT.extract(indices.extract(28) as usize),
+                // LUT.extract(indices.extract(29) as usize),
+                // LUT.extract(indices.extract(30) as usize),
+                // LUT.extract(indices.extract(31) as usize),
+            ));
+
+            assert_eq!(expected, BITS - 1 - actual, "{:?}", data);
+        }
+    }
+
+    #[test]
+    fn float_16() {
+        use SeedableRng;;
+        let mut rng = ::prng::SfcAltSplit64x2a::from_rng(::thread_rng()).unwrap();
+
+        let range = ::distributions::Uniform::new_inclusive(u16x8::splat(1), u16x8::splat(!0));
+
+        for _ in 0..1 << 5 {
+            let data = rng.sample(range);
+
+            let mut expected = u16x8::default();
+            for i in 0..u16x8::lanes() {
+                expected = expected.replace(i, data.extract(i).leading_zeros() as u16);
+            }
+
+            let power =
+                (1u32 << (::std::f32::MANTISSA_DIGITS - 1)) as f32;
+            let exponent: u32 = unsafe { transmute(power) };
+
+            let mut t = f32x8::from_bits(u32x8::from(data) | exponent);
+            t -= power;
+            let x = u16x8::from(u32x8::from_bits(t) >> 16);
+            let actual = 16u16 - 1 - ((x >> 7) - 127u16);
+
+            assert_eq!(expected, actual, "{:?}", data);
+        }
+    }*/
+}
 
 #[cfg(feature="simd_support")]
 macro_rules! impl_simd_math {
