@@ -20,14 +20,14 @@ use distributions::{Distribution, Standard, Uniform};
 
 /// Sample a `char`, uniformly distributed over ASCII letters and numbers:
 /// a-z, A-Z and 0-9.
-/// 
+///
 /// # Example
 ///
 /// ```
 /// use std::iter;
 /// use rand::{Rng, thread_rng};
 /// use rand::distributions::Alphanumeric;
-/// 
+///
 /// let mut rng = thread_rng();
 /// let chars: String = iter::repeat(())
 ///         .map(|()| rng.sample(Alphanumeric))
@@ -169,6 +169,164 @@ impl<T> Distribution<Wrapping<T>> for Standard where Standard: Distribution<T> {
     }
 }
 
+#[cfg(feature = "simd_support")]
+mod simd {
+    extern crate stdsimd;
+
+    use super::*;
+
+    use stdsimd::simd::*;
+
+    /// Sample chars as SIMD integer vectors.
+    ///
+    /// Because there are no `char` vectors, these can only return an integer
+    /// vector where each integer is a valid value for a char.
+    /// `char::from_u32_unchecked` or `from_utf8_unchecked` will safely turn
+    /// those integers into chars.
+    #[derive(Debug)]
+    pub struct SimdCharDistribution;
+
+    macro_rules! impl_simd_char_sampling {
+        ($ty:ident, $scalar:ty) => {
+            impl Distribution<$ty> for SimdCharDistribution {
+                #[inline]
+                fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> $ty {
+                    // A valid `char` is either in the interval `[0, 0xD800)` or
+                    // `(0xDFFF, 0x11_0000)`. All `char`s must therefore be in
+                    // `[0, 0x11_0000)` but not in the "gap" `[0xD800, 0xDFFF]` which is
+                    // reserved for surrogates. This is the size of that gap.
+                    const GAP_SIZE: $ty = $ty::splat(0xDFFF - 0xD800 + 1);
+
+                    // Uniform::new(0, 0x11_0000 - GAP_SIZE) can also be used but it
+                    // seemed slower. TODO: benchmark (sample_below perhaps?)
+                    let range = Uniform::new(GAP_SIZE, $ty::splat(char::MAX as $scalar));
+
+                    let mut n = range.sample(rng);
+                    let cmp = n.le($ty::splat(0xDFFF));
+                    n -= cmp.select(GAP_SIZE, $ty::splat(0));
+
+                    #[cfg(any(test, debug_assertions))]
+                    for j in 0..$ty::lanes() {
+                        let i = n.extract(j) as u32;
+                        let expected = char::from_u32(i);
+                        let actual = unsafe { char::from_u32_unchecked(i) };
+                        debug_assert_eq!(expected, Some(actual));
+                    }
+
+                    n
+                }
+            }
+        };
+    }
+
+    impl_simd_char_sampling!(u32x2, u32);
+    impl_simd_char_sampling!(u32x4, u32);
+    impl_simd_char_sampling!(u32x8, u32);
+    impl_simd_char_sampling!(u32x16, u32);
+
+    impl_simd_char_sampling!(u64x2, u64);
+    impl_simd_char_sampling!(u64x4, u64);
+    impl_simd_char_sampling!(u64x8, u64);
+
+    /// Sample chars as SIMD integer vectors, uniformly distributed over ASCII
+    /// letters and numbers: a-z, A-Z and 0-9.
+    ///
+    /// `char::from_u32_unchecked` or `from_utf8_unchecked` will safely turn
+    /// the integers into chars.
+    ///
+    /// This selects bit directly for rejection sampling, so the size of the
+    /// integer does not effect the rate of sampling misses.  This means that
+    /// vectors with many lanes will likely produce chars more quickly.
+    #[derive(Debug)]
+    pub struct AlphanumericSimd;
+
+    macro_rules! impl_simd_alnum_sampling {
+        ($($ty:ident,)+, $scalar:ident, $bits:expr) => (
+            $(impl Distribution<$ty> for AlphanumericSimd {
+                #[cfg_attr(feature="cargo-clippy", allow(unnecessary_cast))]
+                fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> $ty {
+                    // A bitshift is less useful here because using
+                    // `u8x16::from_bits(u32x4)`, the low quality bits are
+                    // only in a quarter of the lanes. Shifting is also slower
+                    // in SIMD than in scalar.
+                    let mut bytes: $ty = rng.gen::<$ty>() % 64;
+
+                    let var = loop {
+                        let mask = bytes.lt($ty::splat(62));
+                        if mask.all() {
+                            break bytes;
+                        }
+                        bytes = mask.select(bytes, rng.gen::<$ty>() % 64);
+                    };
+
+                    let mut shift = $ty::splat(b'0' as $scalar);
+
+                    shift ^= $ty::from_bits(var.ge($ty::splat(10))) & 7;
+                    shift ^= $ty::from_bits(var.ge($ty::splat(36))) & 10;
+
+                    let chars = shift + var;
+
+                    #[cfg(any(test, debug_assertions))]
+                    for i in 0..$ty::lanes() {
+                        let ch = chars.extract(i);
+                        match char::from_u32(ch as u32) {
+                            Some(c) => match c {
+                                'a'...'z' | 'A'...'Z' | '0'...'9' => (),
+                                _ => debug_assert!(false, "not an alphanumeric character"),
+                            },
+                            None => debug_assert!(false, "not a character"),
+                        }
+                    }
+
+                    chars
+                }
+            })+
+        )
+    }
+
+    impl_simd_alnum_sampling!(u8x2, u8x4, u8x8, u8x16, u8x32, u8x64,, u8, 8);
+    impl_simd_alnum_sampling!(u16x2, u16x4, u16x8, u16x16, u16x32,, u16, 16);
+    impl_simd_alnum_sampling!(u32x2, u32x4, u32x8, u32x16,, u32, 32);
+    impl_simd_alnum_sampling!(u64x2, u64x4, u64x8,, u64, 64);
+
+    macro_rules! impl_boolean_vector {
+        ($($ty:ty, $signed:ident,)+) => (
+            $(impl Distribution<$ty> for Standard {
+                #[inline]
+                fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> $ty {
+                    // TODO: compare speed with other bit selections
+                    rng.gen::<$signed>().lt($signed::splat(0))
+                }
+            })+
+        )
+    }
+
+    impl_boolean_vector! {
+        m8x2, i8x2,
+        m8x4, i8x4,
+        m8x8, i8x8,
+        m8x16, i8x16,
+        m8x32, i8x32,
+        m1x64, i8x64, // 512-bit mask types have strange names
+
+        m16x2, i16x2,
+        m16x4, i16x4,
+        m16x8, i16x8,
+        m16x16, i16x16,
+        m1x32, i16x32,
+
+        m32x2, i32x2,
+        m32x4, i32x4,
+        m32x8, i32x8,
+        m1x16, i32x16,
+
+        m64x2, i64x2,
+        m64x4, i64x4,
+        m1x8, i64x8,
+    }
+}
+#[cfg(feature = "simd_support")]
+pub use self::simd::*;
 
 #[cfg(test)]
 mod tests {
@@ -179,11 +337,11 @@ mod tests {
     #[test]
     fn test_misc() {
         let rng: &mut RngCore = &mut ::test::rng(820);
-        
+
         rng.sample::<char, _>(Standard);
         rng.sample::<bool, _>(Standard);
     }
-    
+
     #[cfg(feature="alloc")]
     #[test]
     fn test_chars() {
@@ -211,5 +369,40 @@ mod tests {
                            (c >= 'a' && c <= 'z') );
         }
         assert!(incorrect == false);
+    }
+
+    #[cfg(feature = "simd_support")]
+    mod simd {
+        extern crate stdsimd;
+
+        use stdsimd::simd::*;
+
+        use distributions::other::*;
+
+        // Correctness is verified within the distribution code.
+        //
+        // NOTE: the checks will not run with `cargo test --release`
+
+        #[test]
+        fn test_simd_alphanumeric() {
+            let mut rng = ::test::rng(806);
+
+            // Test by generating a relatively large number of chars, so we also
+            // take the rejection sampling path.
+            for _ in 0..100 {
+                let _c: u8x16 = rng.sample(AlphanumericSimd);
+            }
+        }
+
+        #[test]
+        fn test_simd_chars() {
+            let mut rng = ::test::rng(805);
+
+            // Test by generating a relatively large number of chars, so we also
+            // take the rejection sampling path.
+            for _ in 0..1000 {
+                let _c: u32x4 = rng.sample(SimdCharDistribution);
+            }
+        }
     }
 }
