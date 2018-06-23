@@ -103,6 +103,8 @@ use std::time::Duration;
 use stdsimd::simd::*;
 #[cfg(feature = "simd_support")]
 use stdsimd::arch::x86_64::*;
+#[cfg(feature = "simd_support")]
+use std::mem;
 
 use Rng;
 use distributions::Distribution;
@@ -517,7 +519,7 @@ macro_rules! uniform_simd_int_impl {
                         "Uniform::sample_single called with low >= high");
                 let range = $unsigned::from(high - low);
                 let zone =
-                    if size_of::<$u_scalar>() <= 2 {
+                    if mem::size_of::<$u_scalar>() <= 2 {
                         let unsigned_max = ::core::$u_scalar::MAX;
                         let ints_to_reject = (unsigned_max - range + 1) % range;
                         unsigned_max - ints_to_reject
@@ -545,7 +547,7 @@ macro_rules! uniform_simd_int_impl {
                         "Uniform::sample_single_below called with 0 >= high");
                 let range = $unsigned::from(high);
                 let zone =
-                    if size_of::<$u_scalar>() <= 2 {
+                    if mem::size_of::<$u_scalar>() <= 2 {
                         let unsigned_max = ::core::$u_scalar::MAX;
                         let ints_to_reject = (unsigned_max - range + 1) % range;
                         unsigned_max - ints_to_reject
