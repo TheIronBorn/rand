@@ -170,6 +170,9 @@ mod simd {
 
     use rand::prng::*;
 
+    distr_int!(distr_standard_codepoint_x4, u32x4, Sfc32x4Rng, SimdCharDistribution);
+    distr_int!(distr_standard_alphanumeric_x16, u8x16, Sfc32x4Rng, AlphanumericSimd);
+
     macro_rules! many_int_distr {
         ($(($fnn:ident, $rng:ident, $ty:ident),)+, $low:expr, $high:expr) => ($(
             distr_int!($fnn, $ty, $rng, Uniform::new($ty::splat($low), $ty::splat($high)));

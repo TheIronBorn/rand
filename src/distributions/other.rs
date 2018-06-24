@@ -187,7 +187,7 @@ mod simd {
     pub struct SimdCharDistribution;
 
     macro_rules! impl_simd_char_sampling {
-        ($ty:ident, $scalar:ty) => {
+        ($ty:ident) => {
             impl Distribution<$ty> for SimdCharDistribution {
                 #[inline]
                 fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> $ty {
@@ -199,18 +199,18 @@ mod simd {
 
                     // Uniform::new(0, 0x11_0000 - GAP_SIZE) can also be used but it
                     // seemed slower. TODO: benchmark (sample_below perhaps?)
-                    let range = Uniform::new(GAP_SIZE, $ty::splat(char::MAX as $scalar));
+                    let range = Uniform::new(GAP_SIZE, $ty::splat(0x11_0000));
 
                     let mut n = range.sample(rng);
                     let cmp = n.le($ty::splat(0xDFFF));
                     n -= cmp.select(GAP_SIZE, $ty::splat(0));
 
                     #[cfg(any(test, debug_assertions))]
-                    for j in 0..$ty::lanes() {
-                        let i = n.extract(j) as u32;
-                        let expected = char::from_u32(i);
-                        let actual = unsafe { char::from_u32_unchecked(i) };
-                        debug_assert_eq!(expected, Some(actual));
+                    for i in 0..$ty::lanes() {
+                        let c = n.extract(i) as u32;
+                        let expected = char::from_u32(c);
+                        let actual = unsafe { char::from_u32_unchecked(c) };
+                        assert_eq!(expected, Some(actual));
                     }
 
                     n
@@ -219,14 +219,14 @@ mod simd {
         };
     }
 
-    impl_simd_char_sampling!(u32x2, u32);
-    impl_simd_char_sampling!(u32x4, u32);
-    impl_simd_char_sampling!(u32x8, u32);
-    impl_simd_char_sampling!(u32x16, u32);
+    impl_simd_char_sampling!(u32x2);
+    impl_simd_char_sampling!(u32x4);
+    impl_simd_char_sampling!(u32x8);
+    impl_simd_char_sampling!(u32x16);
 
-    impl_simd_char_sampling!(u64x2, u64);
-    impl_simd_char_sampling!(u64x4, u64);
-    impl_simd_char_sampling!(u64x8, u64);
+    impl_simd_char_sampling!(u64x2);
+    impl_simd_char_sampling!(u64x4);
+    impl_simd_char_sampling!(u64x8);
 
     /// Sample chars as SIMD integer vectors, uniformly distributed over ASCII
     /// letters and numbers: a-z, A-Z and 0-9.
@@ -249,7 +249,7 @@ mod simd {
                     // `u8x16::from_bits(u32x4)`, the low quality bits are
                     // only in a quarter of the lanes. Shifting is also slower
                     // in SIMD than in scalar.
-                    let mut bytes: $ty = rng.gen::<$ty>() % 64;
+                    let mut bytes = rng.gen::<$ty>() % 64;
 
                     let var = loop {
                         let mask = bytes.lt($ty::splat(62));
@@ -259,12 +259,14 @@ mod simd {
                         bytes = mask.select(bytes, rng.gen::<$ty>() % 64);
                     };
 
-                    let mut shift = $ty::splat(b'0' as $scalar);
+                    let mut adjust = $ty::splat(b'0' as $scalar);
 
-                    shift ^= $ty::from_bits(var.ge($ty::splat(10))) & 7;
-                    shift ^= $ty::from_bits(var.ge($ty::splat(36))) & 10;
+                    // compare and adjust the index (bitwise ops are faster
+                    // than arithmetic)
+                    adjust ^= $ty::from_bits(var.ge($ty::splat(10))) & 7;
+                    adjust ^= $ty::from_bits(var.ge($ty::splat(36))) & 10;
 
-                    let chars = shift + var;
+                    let chars = adjust + var;
 
                     #[cfg(any(test, debug_assertions))]
                     for i in 0..$ty::lanes() {
@@ -272,9 +274,9 @@ mod simd {
                         match char::from_u32(ch as u32) {
                             Some(c) => match c {
                                 'a'...'z' | 'A'...'Z' | '0'...'9' => (),
-                                _ => debug_assert!(false, "not an alphanumeric character"),
+                                _ => panic!("not an alphanumeric character"),
                             },
-                            None => debug_assert!(false, "not a character"),
+                            None => panic!("not a character"),
                         }
                     }
 
