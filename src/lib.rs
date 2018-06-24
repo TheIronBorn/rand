@@ -573,7 +573,7 @@ pub trait Rng: RngCore {
     /// [`distributions::Bernoulli`]: distributions/bernoulli/struct.Bernoulli.html
     #[inline]
     fn gen_bool(&mut self, p: f64) -> bool {
-        let d = distributions::Bernoulli::new(p);
+        let d = distributions::Bernoulli::<u64>::new(p);
         self.sample(d)
     }
 

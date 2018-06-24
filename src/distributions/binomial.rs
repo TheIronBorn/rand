@@ -56,19 +56,19 @@ impl Distribution<u64> for Binomial {
         } else if self.p == 1.0 {
             return self.n;
         }
-        
+
         // For low n, it is faster to sample directly. For both methods,
         // performance is independent of p. On Intel Haswell CPU this method
         // appears to be faster for approx n < 300.
         if self.n < 300 {
             let mut result = 0;
-            let d = Bernoulli::new(self.p);
+            let d = Bernoulli::<u64>::new(self.p);
             for _ in 0 .. self.n {
                 result += rng.sample(d) as u32;
             }
             return result as u64;
         }
-        
+
         // binomial distribution is symmetrical with respect to p -> 1-p, k -> n-k
         // switch p so that it is less than 0.5 - this allows for lower expected values
         // we will just invert the result at the end

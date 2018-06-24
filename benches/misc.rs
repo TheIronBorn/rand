@@ -43,7 +43,7 @@ fn misc_gen_bool_var(b: &mut Bencher) {
 #[bench]
 fn misc_bernoulli_const(b: &mut Bencher) {
     let mut rng = StdRng::from_rng(&mut thread_rng()).unwrap();
-    let d = rand::distributions::Bernoulli::new(0.18);
+    let d = rand::distributions::Bernoulli::<u64>::new(0.18);
     b.iter(|| {
         // Can be evaluated at compile time.
         let mut accum = true;
@@ -61,7 +61,7 @@ fn misc_bernoulli_var(b: &mut Bencher) {
         let mut accum = true;
         let mut p = 0.18;
         for _ in 0..::RAND_BENCH_N {
-            let d = rand::distributions::Bernoulli::new(p);
+            let d = rand::distributions::Bernoulli::<u64>::new(p);
             accum ^= rng.sample(d);
             p += 0.0001;
         }

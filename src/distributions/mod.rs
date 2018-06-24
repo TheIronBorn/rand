@@ -166,7 +166,9 @@
 
 use Rng;
 
-#[doc(inline)] pub use self::other::{Alphanumeric, AlphanumericSimd, SimdCharDistribution};
+#[doc(inline)] pub use self::other::Alphanumeric;
+#[cfg(feature="simd_support")]
+#[doc(inline)] pub use self::other::{AlphanumericSimd, SimdCharDistribution};
 #[doc(inline)] pub use self::uniform::Uniform;
 #[doc(inline)] pub use self::float::{OpenClosed01, Open01};
 #[deprecated(since="0.5.0", note="use Uniform instead")]

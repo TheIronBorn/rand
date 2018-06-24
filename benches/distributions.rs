@@ -112,7 +112,7 @@ distr_float!(distr_gamma_small_shape, f64, XorShiftRng, Gamma::new(0.1, 1.0));
 distr_float!(distr_cauchy, f64, XorShiftRng, Cauchy::new(4.2, 6.9));
 distr_int!(distr_binomial, u64, XorShiftRng, Binomial::new(20, 0.7));
 distr_int!(distr_poisson, u64, XorShiftRng, Poisson::new(4.0));
-distr!(distr_bernoulli, bool, XorShiftRng, Bernoulli::new(0.18));
+distr!(distr_bernoulli, bool, XorShiftRng, Bernoulli::<u64>::new(0.18));
 
 
 // construct and sample from a range
@@ -171,7 +171,23 @@ mod simd {
     use rand::prng::*;
 
     distr_int!(distr_standard_codepoint_x4, u32x4, Sfc32x4Rng, SimdCharDistribution);
-    distr_int!(distr_standard_alphanumeric_x16, u8x16, Sfc32x4Rng, AlphanumericSimd);
+    distr_int!(distr_standard_alphanumeric_x8, u32x8, Sfc32x4Rng, AlphanumericSimd);
+
+    #[bench]
+    fn distr_bernoulli_x2(b: &mut Bencher) {
+        let mut rng = Sfc32x4Rng::from_entropy();
+        let distr = Bernoulli::<u64x2>::new(f64x2::splat(0.18));
+
+        b.iter(|| {
+            let mut accum = u64x2::splat(0);
+            for _ in 0..::RAND_BENCH_N {
+                let x = distr.sample(&mut rng);
+                accum += u64x2::from_bits(x);
+            }
+            accum
+        });
+        b.bytes = size_of::<m64x2>() as u64 * ::RAND_BENCH_N;
+    }
 
     macro_rules! many_int_distr {
         ($(($fnn:ident, $rng:ident, $ty:ident),)+, $low:expr, $high:expr) => ($(

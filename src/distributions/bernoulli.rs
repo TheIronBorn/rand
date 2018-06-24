@@ -32,12 +32,12 @@ use distributions::Distribution;
 /// so only probabilities that are multiples of 2<sup>-64</sup> can be
 /// represented.
 #[derive(Clone, Copy, Debug)]
-pub struct Bernoulli {
+pub struct Bernoulli<U> {
     /// Probability of success, relative to the maximal integer.
-    p_int: u64,
+    p_int: U,
 }
 
-impl Bernoulli {
+impl Bernoulli<u64> {
     /// Construct a new `Bernoulli` with the given probability of success `p`.
     ///
     /// # Panics
@@ -53,7 +53,7 @@ impl Bernoulli {
     /// a multiple of 2<sup>-64</sup>. (Note that not all multiples of
     /// 2<sup>-64</sup> in `[0, 1]` can be represented as a `f64`.)
     #[inline]
-    pub fn new(p: f64) -> Bernoulli {
+    pub fn new(p: f64) -> Bernoulli<u64> {
         assert!((p >= 0.0) & (p <= 1.0), "Bernoulli::new not called with 0 <= p <= 0");
         // Technically, this should be 2^64 or `u64::MAX + 1` because we compare
         // using `<` when sampling. However, `u64::MAX` rounds to an `f64`
@@ -69,7 +69,7 @@ impl Bernoulli {
     }
 }
 
-impl Distribution<bool> for Bernoulli {
+impl Distribution<bool> for Bernoulli<u64> {
     #[inline]
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> bool {
         // Make sure to always return true for p = 1.0.
@@ -81,6 +81,52 @@ impl Distribution<bool> for Bernoulli {
     }
 }
 
+#[cfg(feature = "simd_support")]
+mod simd {
+    extern crate stdsimd;
+
+    use super::*;
+
+    use stdsimd::simd::*;
+
+    macro_rules! impl_boolean_vector {
+        ($fty:ident, $uty:ident, $mty:ident) => (
+            impl Bernoulli<$uty> {
+                #[inline]
+                pub fn new(p: $fty) -> Bernoulli<$uty> {
+                    assert!((p.ge($fty::splat(0.0)) & p.le($fty::splat(1.0))).all(),
+                        "Bernoulli::new not called with 0 <= p <= 0");
+                    // Technically, this should be 2^64 or `u64::MAX + 1` because we compare
+                    // using `<` when sampling. However, `u64::MAX` rounds to an `f64`
+                    // larger than `u64::MAX` anyway.
+                    const MAX_P_INT: f64 = ::core::u64::MAX as f64;
+
+                    let cmp = p.lt($fty::splat(1.0));
+                    let p_int = cmp.select($uty::from(p * MAX_P_INT), $uty::splat(::core::u64::MAX));
+
+                    Bernoulli::<$uty> { p_int }
+                }
+            }
+
+            impl Distribution<$mty> for Bernoulli<$uty> {
+                #[inline]
+                fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> $mty {
+                    // Make sure to always return true for p = 1.0.
+                    let cmp = self.p_int.eq($uty::splat(::core::u64::MAX));
+                    let r: $uty = rng.gen();
+                    cmp | r.lt(self.p_int)
+                }
+            }
+        )
+    }
+
+    impl_boolean_vector! { f64x2, u64x2, m64x2 }
+    impl_boolean_vector! { f64x4, u64x4, m64x4 }
+    impl_boolean_vector! { f64x8, u64x8, m1x8 } // // 512-bit mask types have strange names
+}
+#[cfg(feature = "simd_support")]
+pub use self::simd::*;
+
 #[cfg(test)]
 mod test {
     use Rng;
@@ -90,8 +136,8 @@ mod test {
     #[test]
     fn test_trivial() {
         let mut r = ::test::rng(1);
-        let always_false = Bernoulli::new(0.0);
-        let always_true = Bernoulli::new(1.0);
+        let always_false = Bernoulli::<u64>::new(0.0);
+        let always_true = Bernoulli::<u64>::new(1.0);
         for _ in 0..5 {
             assert_eq!(r.sample::<bool, _>(&always_false), false);
             assert_eq!(r.sample::<bool, _>(&always_true), true);
@@ -103,7 +149,7 @@ mod test {
     #[test]
     fn test_average() {
         const P: f64 = 0.3;
-        let d = Bernoulli::new(P);
+        let d = Bernoulli::<u64>::new(P);
         const N: u32 = 10_000_000;
 
         let mut sum: u32 = 0;
