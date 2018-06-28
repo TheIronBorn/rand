@@ -658,7 +658,7 @@ macro_rules! impl_ctlz_w_scalar {
             fn leading_zeros(self) -> Self {
                 let mut ctlz = $ty::default();
                 for i in 0..$ty::lanes() {
-                    ctlz = ctlz.replace(i, self.extract(i) as $scalar);
+                    ctlz = ctlz.replace(i, self.extract(i).leading_zeros() as $scalar);
                 }
                 ctlz
             }

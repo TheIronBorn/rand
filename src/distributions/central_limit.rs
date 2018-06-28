@@ -3,8 +3,8 @@
 use core::marker::PhantomData;
 use stdsimd::simd::*;
 
-use Rng;
 use distributions::Distribution;
+use Rng;
 
 ///
 pub trait CentralLimit<T> {
@@ -33,9 +33,8 @@ pub struct CentralLimitVector<T> {
     std_dev: T,
 }
 
-
 macro_rules! impl_clt_vector {
-    ($ty:ident, $scalar:ty, $num:expr) => (
+    ($ty:ident, $scalar:ty, $num:expr) => {
         impl CentralLimit<$ty> for CentralLimitVector<$ty> {
             /// Construct a new `CentralLimitVector` distribution with the given mean and
             /// standard deviation.
@@ -45,7 +44,10 @@ macro_rules! impl_clt_vector {
             /// Panics if `std_dev < 0`.
             #[inline]
             fn new(mean: $ty, std_dev: $ty) -> Self {
-                assert!(std_dev.ge($ty::splat(0.0)).all(), "CentralLimitVector::new called with `std_dev` < 0");
+                assert!(
+                    std_dev.ge($ty::splat(0.0)).all(),
+                    "CentralLimitVector::new called with `std_dev` < 0"
+                );
                 Self { mean, std_dev }
             }
         }
@@ -73,7 +75,7 @@ macro_rules! impl_clt_vector {
                 mean + std_dev * sum
             }
         }
-    )
+    };
 }
 
 // TODO: tune for better number of samples?
@@ -107,9 +109,8 @@ pub struct CentralLimitScalar<T, V> {
     phantom: PhantomData<V>,
 }
 
-
 macro_rules! impl_clt_scalar {
-    ($ty:ident, $scalar:ty) => (
+    ($ty:ident, $scalar:ty) => {
         impl CentralLimit<$scalar> for CentralLimitScalar<$scalar, $ty> {
             /// Construct a new `CentralLimitScalar` distribution with the given mean and
             /// standard deviation.
@@ -119,8 +120,15 @@ macro_rules! impl_clt_scalar {
             /// Panics if `std_dev < 0`.
             #[inline]
             fn new(mean: $scalar, std_dev: $scalar) -> Self {
-                assert!(std_dev >= 0.0, "CentralLimitScalar::new called with `std_dev` < 0");
-                Self { mean, std_dev, phantom: PhantomData }
+                assert!(
+                    std_dev >= 0.0,
+                    "CentralLimitScalar::new called with `std_dev` < 0"
+                );
+                Self {
+                    mean,
+                    std_dev,
+                    phantom: PhantomData,
+                }
             }
         }
 
@@ -140,7 +148,7 @@ macro_rules! impl_clt_scalar {
                 mean + std_dev * sum
             }
         }
-    )
+    };
 }
 
 impl_clt_scalar! { f32x2, f32 }
@@ -153,8 +161,8 @@ impl_clt_scalar! { f64x8, f64 }
 
 #[cfg(test)]
 mod tests {
-    use stdsimd::simd::*;
     use super::*;
+    use stdsimd::simd::*;
 
     #[test]
     fn test_clt_vector() {

@@ -5,7 +5,7 @@
 use core::mem;
 use stdsimd::simd::*;
 
-use math_helpers::ToLittleEndian;
+use utils::ToLittleEndian;
 
 /// Enables an RNG to use [`SimdRngImpls`].
 ///

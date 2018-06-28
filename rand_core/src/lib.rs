@@ -66,7 +66,7 @@ mod error;
 pub mod block;
 pub mod impls;
 pub mod le;
-pub mod math_helpers;
+pub mod utils;
 #[cfg(feature="simd_support")]
 pub mod simd_impls;
 

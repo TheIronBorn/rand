@@ -328,7 +328,7 @@ use distributions::{Distribution, Standard};
 use distributions::uniform::{SampleUniform, UniformSampler};
 
 #[cfg(feature="simd_support")]
-use rand_core::math_helpers::ToLittleEndian;
+use rand_core::utils::ToLittleEndian;
 
 
 /// A type that can be randomly generated using an [`Rng`].

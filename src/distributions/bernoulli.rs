@@ -112,6 +112,8 @@ mod simd {
                 #[inline]
                 fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> $mty {
                     // Make sure to always return true for p = 1.0.
+                    // Ensure no random numbers generated when all lanes of
+                    // `cmp` are true? Seems low priority.
                     let cmp = self.p_int.eq($uty::splat(::core::u64::MAX));
                     let r: $uty = rng.gen();
                     cmp | r.lt(self.p_int)
@@ -122,7 +124,7 @@ mod simd {
 
     impl_boolean_vector! { f64x2, u64x2, m64x2 }
     impl_boolean_vector! { f64x4, u64x4, m64x4 }
-    impl_boolean_vector! { f64x8, u64x8, m1x8 } // // 512-bit mask types have strange names
+    impl_boolean_vector! { f64x8, u64x8, m1x8 } // 512-bit mask types have strange names
 }
 #[cfg(feature = "simd_support")]
 pub use self::simd::*;
@@ -131,6 +133,12 @@ pub use self::simd::*;
 mod test {
     use Rng;
     use distributions::Distribution;
+    #[cfg(feature = "simd_support")]
+    extern crate stdsimd;
+
+    #[cfg(feature = "simd_support")]
+    use stdsimd::simd::*;
+
     use super::Bernoulli;
 
     #[test]
@@ -143,6 +151,26 @@ mod test {
             assert_eq!(r.sample::<bool, _>(&always_true), true);
             assert_eq!(Distribution::<bool>::sample(&always_false, &mut r), false);
             assert_eq!(Distribution::<bool>::sample(&always_true, &mut r), true);
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "simd_support")]
+    fn test_trivial_simd() {
+        let mut r = ::test::rng(1);
+        let always_false = Bernoulli::<u64x2>::new(f64x2::splat(0.0));
+        let always_true = Bernoulli::<u64x2>::new(f64x2::splat(1.0));
+        for _ in 0..5 {
+            assert_eq!(r.sample::<m64x2, _>(&always_false), m64x2::splat(false));
+            assert_eq!(r.sample::<m64x2, _>(&always_true), m64x2::splat(true));
+            assert_eq!(
+                Distribution::<m64x2>::sample(&always_false, &mut r),
+                m64x2::splat(false)
+            );
+            assert_eq!(
+                Distribution::<m64x2>::sample(&always_true, &mut r),
+                m64x2::splat(true)
+            );
         }
     }
 
@@ -162,5 +190,22 @@ mod test {
         let avg = (sum as f64) / (N as f64);
 
         assert!((avg - P).abs() < 1e-3);
+    }
+
+    #[test]
+    #[cfg(feature = "simd_support")]
+    fn test_average_simd() {
+        const P: f64 = 0.3;
+        let d = Bernoulli::<u64x2>::new(f64x2::splat(P));
+        const N: u32 = 10_000_000;
+
+        let mut sum = u64x2::splat(0);
+        let mut rng = ::test::rng(2);
+        for _ in 0..N {
+            sum += u64x2::from_bits(d.sample(&mut rng)) & 1;
+        }
+        let avg = f64x2::from(sum) / (N as f64);
+
+        assert!((avg - P).abs().lt(f64x2::splat(1e-3)).all());
     }
 }
