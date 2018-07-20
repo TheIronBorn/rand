@@ -18,7 +18,7 @@ travis-ci = { repository = "rust-lang-nursery/rand" }
 appveyor = { repository = "alexcrichton/rand" }
 
 [features]
-default = ["std" ] # without "std" rand uses libcore
+default = ["std", "nightly" ] # without "std" rand uses libcore
 nightly = ["i128_support", "simd_support"] # enables all features requiring nightly rust
 std = ["rand_core/std", "alloc", "libc", "winapi", "cloudabi", "fuchsia-zircon"]
 alloc = ["rand_core/alloc"]  # enables Vec and Box support (without std)
@@ -34,7 +34,7 @@ rand_core = { path = "rand_core", version = "0.2", default-features = false }
 log = { version = "0.4", optional = true }
 serde = { version = "1", optional = true }
 serde_derive = { version = "1", optional = true }
-stdsimd = { git = "https://github.com/rust-lang-nursery/stdsimd" }
+# stdsimd = { git = "https://github.com/rust-lang-nursery/stdsimd" }
 
 [target.'cfg(unix)'.dependencies]
 libc = { version = "0.2", optional = true }

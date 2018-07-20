@@ -5,9 +5,9 @@
 // TODO: look into more accurate math
 
 #[cfg(feature="simd_support")]
-use stdsimd::arch::x86_64::*;
+use core::arch::x86_64::*;
 #[cfg(feature="simd_support")]
-use stdsimd::simd::*;
+use core::simd::*;
 #[cfg(feature="simd_support")]
 use core::f32::consts::PI as PI_32;
 #[cfg(feature="simd_support")]

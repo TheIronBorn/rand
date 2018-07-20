@@ -83,11 +83,11 @@ impl Distribution<bool> for Bernoulli<u64> {
 
 #[cfg(feature = "simd_support")]
 mod simd {
-    extern crate stdsimd;
+    // extern crate stdsimd;
 
     use super::*;
 
-    use stdsimd::simd::*;
+    use core::simd::*;
 
     macro_rules! impl_boolean_vector {
         ($fty:ident, $uty:ident, $mty:ident) => (
@@ -133,11 +133,11 @@ pub use self::simd::*;
 mod test {
     use Rng;
     use distributions::Distribution;
-    #[cfg(feature = "simd_support")]
-    extern crate stdsimd;
+    /*#[cfg(feature = "simd_support")]
+    extern crate stdsimd;*/
 
     #[cfg(feature = "simd_support")]
-    use stdsimd::simd::*;
+    use core::simd::*;
 
     use super::Bernoulli;
 

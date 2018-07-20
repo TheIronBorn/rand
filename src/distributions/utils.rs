@@ -1,7 +1,7 @@
 //! Math helper functions
 
 #[cfg(feature = "simd_support")]
-use stdsimd::simd::*;
+use core::simd::*;
 
 // Until portable shuffles land in stdsimd, we expose and use the shuffle intrinsics directly.
 #[cfg(feature = "simd_support")]

@@ -8,7 +8,7 @@ extern crate stdsimd;
 
 use std::f64;
 use std::mem::{size_of, transmute};
-use stdsimd::simd::*;
+use core::simd::*;
 
 use rand::{Rng, thread_rng, SeedableRng, FromEntropy};
 use rand::rngs::SmallRng;

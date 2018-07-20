@@ -171,11 +171,11 @@ impl<T> Distribution<Wrapping<T>> for Standard where Standard: Distribution<T> {
 
 #[cfg(feature = "simd_support")]
 mod simd {
-    extern crate stdsimd;
+    // extern crate stdsimd;
 
     use super::*;
 
-    use stdsimd::simd::*;
+    use core::simd::*;
 
     /// Sample chars as SIMD integer vectors.
     ///
@@ -375,9 +375,9 @@ mod tests {
 
     #[cfg(feature = "simd_support")]
     mod simd {
-        extern crate stdsimd;
+        // extern crate stdsimd;
 
-        use stdsimd::simd::*;
+        use core::simd::*;
 
         use distributions::other::*;
 

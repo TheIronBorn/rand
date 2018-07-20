@@ -1,30 +1,30 @@
-#![feature(test)]
+/*#![feature(test)]
 #![cfg(feature = "simd_support")]
 #![feature(stdsimd)]
 
 extern crate rand;
-extern crate stdsimd;
+// extern crate stdsimd;
 extern crate test;
 
 const RAND_BENCH_N: usize = 1 << 10;
 
 use std::mem::*;
-use stdsimd::simd::*;
+use std::simd::*;
 use test::Bencher;
 
 use rand::distributions::Uniform;
 use rand::distributions::box_muller::LeadingZeros;
 use rand::prelude::*;
-use rand::prng::SfcAltSplit64x2a;
+use rand::prng::SfcAlt64x2k;
 
-/*mod gen_range {
+mod gen_range {
     use super::*;
 
     macro_rules! gen_range_int {
         ($fnn:ident, $ty:ident, $scalar:ident, $low:expr, $high:expr) => {
             #[bench]
             fn $fnn(b: &mut Bencher) {
-                let mut rng = SfcAltSplit64x2a::from_rng(thread_rng()).unwrap();
+                let mut rng = SfcAlt64x2k::from_rng(thread_rng()).unwrap();
 
                 b.iter(|| {
                     let low = $ty::splat($low);
@@ -77,7 +77,7 @@ mod flat {
         ($fnn:ident, $ty:ident, $scalar:ident, $low:expr, $high:expr) => {
             #[bench]
             fn $fnn(b: &mut Bencher) {
-                let mut rng = SfcAltSplit64x2a::from_rng(thread_rng()).unwrap();
+                let mut rng = SfcAlt64x2k::from_rng(thread_rng()).unwrap();
 
                 b.iter(|| {
                     let low = $ty::splat($low);
@@ -127,7 +127,7 @@ mod uni_sample {
         ($fnn:ident, $ty:ident, $scalar:ident, $low:expr, $high:expr) => {
             #[bench]
             fn $fnn(b: &mut Bencher) {
-                let mut rng = SfcAltSplit64x2a::from_rng(thread_rng()).unwrap();
+                let mut rng = SfcAlt64x2k::from_rng(thread_rng()).unwrap();
 
                 b.iter(|| {
                     let low = $ty::splat($low);
@@ -180,7 +180,7 @@ mod modulo {
         ($fnn:ident, $vec:ident, $scalar:ident) => {
             #[bench]
             fn $fnn(b: &mut Bencher) {
-                let mut rng = SfcAltSplit64x2a::from_rng(thread_rng()).unwrap();
+                let mut rng = SfcAlt64x2k::from_rng(thread_rng()).unwrap();
                 let mut data = [$vec::default(); RAND_BENCH_N];
                 let range = Uniform::new_inclusive($vec::splat(1), $vec::splat(!0));
                 for x in data.iter_mut() {
@@ -231,7 +231,7 @@ mod ctlz {
         ($fnn:ident, $vec:ident, $scalar:ident) => {
             #[bench]
             fn $fnn(b: &mut Bencher) {
-                let mut rng = SfcAltSplit64x2a::from_rng(thread_rng()).unwrap();
+                let mut rng = SfcAlt64x2k::from_rng(thread_rng()).unwrap();
                 let mut data = [$vec::default(); RAND_BENCH_N];
                 let range = Uniform::new_inclusive($vec::splat(1), $vec::splat(!0));
                 for x in data.iter_mut() {
@@ -284,7 +284,7 @@ mod float_hack {
         ($fnn:ident, $vec:ident) => {
             #[bench]
             fn $fnn(b: &mut Bencher) {
-                let mut rng = SfcAltSplit64x2a::from_rng(thread_rng()).unwrap();
+                let mut rng = SfcAlt64x2k::from_rng(thread_rng()).unwrap();
                 let mut data = [$vec::default(); RAND_BENCH_N];
                 let range = Uniform::new_inclusive($vec::splat(1), $vec::splat(!0));
                 for x in data.iter_mut() {
@@ -323,7 +323,7 @@ mod float_hack_32 {
         ($fnn:ident, $vec:ident, $large:ident, $bits:expr) => {
             #[bench]
             fn $fnn(b: &mut Bencher) {
-                let mut rng = SfcAltSplit64x2a::from_rng(thread_rng()).unwrap();
+                let mut rng = SfcAlt64x2k::from_rng(thread_rng()).unwrap();
                 let mut data = [$vec::default(); RAND_BENCH_N];
                 let range = Uniform::new_inclusive($vec::splat(1), $vec::splat(!0));
                 for x in data.iter_mut() {
@@ -358,7 +358,7 @@ mod lut_hack {
         ($fnn:ident, $vec:ident, $table:expr, $bits:expr) => {
             #[bench]
             fn $fnn(b: &mut Bencher) {
-                let mut rng = SfcAltSplit64x2a::from_rng(thread_rng()).unwrap();
+                let mut rng = SfcAlt64x2k::from_rng(thread_rng()).unwrap();
                 let mut data = [$vec::default(); RAND_BENCH_N];
                 let range = Uniform::new_inclusive($vec::splat(1), $vec::splat(!0));
                 for x in data.iter_mut() {
@@ -429,7 +429,7 @@ mod lut_hack2 {
         ($fnn:ident, $vec:ident, $table:expr, $bits:expr) => {
             #[bench]
             fn $fnn(b: &mut Bencher) {
-                let mut rng = SfcAltSplit64x2a::from_rng(thread_rng()).unwrap();
+                let mut rng = SfcAlt64x2k::from_rng(thread_rng()).unwrap();
                 let mut data = [$vec::default(); RAND_BENCH_N];
                 let range = Uniform::new_inclusive($vec::splat(1), $vec::splat(!0));
                 for x in data.iter_mut() {
@@ -509,7 +509,7 @@ mod shift_or_hack {
         ($fnn:ident, $vec:ident) => {
             #[bench]
             fn $fnn(b: &mut Bencher) {
-                let mut rng = SfcAltSplit64x2a::from_rng(thread_rng()).unwrap();
+                let mut rng = SfcAlt64x2k::from_rng(thread_rng()).unwrap();
                 let mut data = [$vec::default(); RAND_BENCH_N];
                 let range = Uniform::new_inclusive($vec::splat(1), $vec::splat(!0));
                 for x in data.iter_mut() {
@@ -567,7 +567,7 @@ mod two_shift_or_hack {
         ($fnn:ident, $vec:ident) => {
             #[bench]
             fn $fnn(b: &mut Bencher) {
-                let mut rng = SfcAltSplit64x2a::from_rng(thread_rng()).unwrap();
+                let mut rng = SfcAlt64x2k::from_rng(thread_rng()).unwrap();
                 let mut data = [$vec::default(); RAND_BENCH_N];
                 let range = Uniform::new_inclusive($vec::splat(1), $vec::splat(!0));
                 for x in data.iter_mut() {
@@ -637,7 +637,7 @@ mod mul_lut_hack {
         ($fnn:ident, $vec:ident, $vec8:ident) => {
             #[bench]
             fn $fnn(b: &mut Bencher) {
-                let mut rng = SfcAltSplit64x2a::from_rng(thread_rng()).unwrap();
+                let mut rng = SfcAlt64x2k::from_rng(thread_rng()).unwrap();
                 let mut data = [$vec::default(); RAND_BENCH_N];
                 let range = Uniform::new_inclusive($vec::splat(1), $vec::splat(!0));
                 for x in data.iter_mut() {
@@ -687,4 +687,5 @@ mod mul_lut_hack {
     }
 
     uniform_create! { create_u32x16, u32x16, u8x16 }
-}*/
+}
+*/

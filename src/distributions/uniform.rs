@@ -100,9 +100,9 @@
 #[cfg(feature = "std")]
 use std::time::Duration;
 #[cfg(feature = "simd_support")]
-use stdsimd::simd::*;
+use core::simd::*;
 #[cfg(feature = "simd_support")]
-use stdsimd::arch::x86_64::*;
+use core::arch::x86_64::*;
 #[cfg(feature = "simd_support")]
 use std::mem;
 
@@ -511,6 +511,7 @@ macro_rules! uniform_simd_int_impl {
                 self.low + $ty::from(hi)
             }
 
+            #[inline(always)]
             fn sample_single<R: Rng + ?Sized>(low: Self::X,
                                               high: Self::X,
                                               rng: &mut R) -> Self::X
@@ -530,14 +531,25 @@ macro_rules! uniform_simd_int_impl {
                         range << range.leading_zeros()
                     };
 
-                let cmp = |v: $unsigned| {
+                /*let cmp = |v: $unsigned| {
                     let (_, lo) = v.wmul(range);
                     lo.le(zone)
                 };
 
                 let v = SimdRejectionSampling::sample(rng, &Standard, cmp);
                 let (hi, _) = v.wmul(range);
-                low + $ty::from(hi)
+                low + $ty::from(hi)*/
+
+                let mut v: $unsigned = rng.gen();
+                loop {
+                    let (hi, lo) = v.wmul(range);
+                    let mask = lo.le(zone);
+                    if mask.all() {
+                        return low + $ty::from(hi);
+                    }
+                    // Replace only the failing lanes
+                    v = mask.select(v, rng.gen());
+                }
             }
 
             fn sample_single_below<R: Rng + ?Sized>(high: Self::X,
@@ -618,9 +630,12 @@ uniform_simd_int_impl! {
 }
 
 
-pub (crate) trait WideningMultiply<RHS = Self> {
+///
+pub trait WideningMultiply<RHS = Self> {
+    ///
     type Output;
 
+    ///
     fn wmul(self, x: RHS) -> Self::Output;
 }
 

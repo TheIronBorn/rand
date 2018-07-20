@@ -3,7 +3,7 @@
 // Some slight complexity in this module because we can't use `gen::<vector>()`
 
 use core::mem;
-use stdsimd::simd::*;
+use core::simd::*;
 
 use utils::ToLittleEndian;
 
@@ -17,7 +17,7 @@ use utils::ToLittleEndian;
 /// #![feature(stdsimd)]
 /// extern crate stdsimd;
 /// extern crate rand_core;
-/// use stdsimd::simd::u32x4;
+/// use core::simd::u32x4;
 /// use rand_core::simd_impls::SimdRng;
 ///
 /// #[allow(dead_code)]
@@ -48,7 +48,7 @@ pub trait SimdRng<Vector> {
 /// #![feature(stdsimd)]
 /// extern crate stdsimd;
 /// extern crate rand_core;
-/// use stdsimd::simd::u32x4;
+/// use core::simd::u32x4;
 /// use rand_core::{RngCore, Error};
 /// use rand_core::simd_impls::{SimdRng, SimdRngImpls};
 ///

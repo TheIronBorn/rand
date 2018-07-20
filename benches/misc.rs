@@ -3,8 +3,8 @@
 
 extern crate test;
 extern crate rand;
-#[cfg(feature="simd_support")]
-extern crate stdsimd;
+/*#[cfg(feature="simd_support")]
+extern crate stdsimd;*/
 
 const RAND_BENCH_N: u64 = 1000;
 const SHUF_SIZE: usize = 1000;
@@ -201,10 +201,10 @@ fn gen_1k_fill(b: &mut Bencher) {
 mod simd_benches {
     use super::*;
 
-    use stdsimd::simd::*;
+    use std::simd::*;
 
     use rand::SimdShuf;
-    use rand::prng::SfcAltSplit64x2a;
+    use rand::prng::SfcAlt64x2a;
 
     const SHUF_BENCH: usize = 1 << 0;
 
@@ -243,7 +243,7 @@ mod simd_benches {
         )
     }
 
-    simd_shuffle!(simd_shuffle_sfc32x4, SfcAltSplit64x2a, u16x8);
+    simd_shuffle!(simd_shuffle_sfc32x4, SfcAlt64x2a, u16x8);
     simd_shuffle!(simd_shuffle_smallrng, SmallRng, u16x8);
     shuffle!(shuffle_smallrng, SmallRng);
     simd_shuffle!(simd_shuffle_stdrng, StdRng, u16x8);
@@ -256,10 +256,10 @@ mod simd_benches {
 mod shuf_below {
     use super::*;
 
-    use stdsimd::simd::*;
+    use core::simd::*;
 
     use rand::SimdShuf;
-    use rand::prng::SfcAltSplit64x2a;
+    use rand::prng::SfcAlt64x2a;
 
     macro_rules! simd_shuffle {
         ($fnn:ident, $rng:ident, $vec:ident) => (
@@ -279,7 +279,7 @@ mod shuf_below {
         )
     }
 
-    simd_shuffle!(simd_shuffle_sfc32x4, SfcAltSplit64x2a, u16x8);
+    simd_shuffle!(simd_shuffle_sfc32x4, SfcAlt64x2a, u16x8);
     simd_shuffle!(simd_shuffle_smallrng, SmallRng, u16x8);
     // shuffle!(shuffle_smallrng, SmallRng);
     simd_shuffle!(simd_shuffle_stdrng, StdRng, u16x8);

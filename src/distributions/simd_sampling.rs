@@ -1,4 +1,4 @@
-use stdsimd::simd::*;
+use core::simd::*;
 
 use distributions::Distribution;
 use Rng;

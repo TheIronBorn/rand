@@ -162,11 +162,11 @@ fn dist_iter(b: &mut Bencher) {
 
 #[cfg(feature = "simd_support")]
 mod simd {
-    extern crate stdsimd;
+    // extern crate stdsimd;
 
     use super::*;
 
-    use self::stdsimd::simd::*;
+    use std::simd::*;
 
     use rand::prng::*;
 

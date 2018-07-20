@@ -267,8 +267,8 @@ extern crate rand_core;
 #[cfg(not(feature = "log"))] macro_rules! warn { ($($x:tt)*) => () }
 #[cfg(all(feature="std", not(feature = "log")))] macro_rules! error { ($($x:tt)*) => () }
 
-#[cfg(feature="simd_support")]
-extern crate stdsimd;
+/*#[cfg(feature="simd_support")]
+extern crate stdsimd;*/
 
 #[cfg(feature="simd_support")]
 mod simd_shuffle;
@@ -322,7 +322,7 @@ pub mod isaac {
 
 
 #[cfg(feature="simd_support")]
-use stdsimd::simd::*;
+use core::simd::*;
 use core::{marker, mem, slice, ptr};
 use distributions::{Distribution, Standard};
 use distributions::uniform::{SampleUniform, UniformSampler};
@@ -428,6 +428,7 @@ pub trait Rng: RngCore {
     /// ```
     ///
     /// [`Uniform`]: distributions/uniform/struct.Uniform.html
+    #[inline(always)]
     fn gen_range<T: PartialOrd + SampleUniform>(&mut self, low: T, high: T) -> T {
         T::Sampler::sample_single(low, high, self)
     }

@@ -12,7 +12,7 @@
 
 use core::fmt;
 #[cfg(feature = "simd_support")]
-use stdsimd::simd::*;
+use core::simd::*;
 
 #[cfg(feature = "simd_support")]
 use distributions::box_muller::SimdIntegerMath;

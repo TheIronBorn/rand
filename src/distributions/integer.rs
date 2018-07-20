@@ -13,7 +13,7 @@
 use {Rng};
 use distributions::{Distribution, Standard};
 #[cfg(feature="simd_support")]
-use stdsimd::simd::*;
+use core::simd::*;
 #[cfg(feature="simd_support")]
 use std::mem;
 #[cfg(feature="simd_support")]

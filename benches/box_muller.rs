@@ -4,16 +4,16 @@
 
 extern crate test;
 extern crate rand;
-extern crate stdsimd;
+// extern crate stdsimd;
 
 const RAND_BENCH_N: u64 = 1 << 14;
 
 use std::mem::{size_of, transmute};
-use stdsimd::simd::*;
+use std::simd::*;
 use test::Bencher;
 
 use rand::{Rng, RngCore, FromEntropy};
-use rand::prng::{SfcAltSplit64x2a, XorShiftRng};
+use rand::prng::{SfcAlt64x2a, XorShiftRng};
 use rand::prng::hc128::Hc128Rng;
 use rand::distributions::box_muller::{BoxMuller, BoxMullerCore};
 use rand::distributions::box_muller::SimdMath;
@@ -23,7 +23,7 @@ macro_rules! distr_bm {
     ($fnn:ident, $ty:ident, $sample:ident) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
-            let mut rng = SfcAltSplit64x2a::from_entropy();
+            let mut rng = SfcAlt64x2a::from_entropy();
 
             b.iter(|| {
                 let mut accum = $ty::default();
@@ -148,21 +148,21 @@ mod polar_no_rejection {
 
 mod sfc64x2 {
     use super::*;
-    distr_f! { norm_clt_f32x2_f32, f32x2, f32, SfcAltSplit64x2a }
-    distr_f! { norm_clt_f32x4_f32, f32x4, f32, SfcAltSplit64x2a }
-    distr_f! { norm_clt_f32x8_f32, f32x8, f32, SfcAltSplit64x2a }
-    distr_f! { norm_clt_f32x16_f32, f32x16, f32, SfcAltSplit64x2a }
-    distr_f! { norm_clt_f64x2_f64, f64x2, f64, SfcAltSplit64x2a }
-    distr_f! { norm_clt_f64x4_f64, f64x4, f64, SfcAltSplit64x2a }
-    distr_f! { norm_clt_f64x8_f64, f64x8, f64, SfcAltSplit64x2a }
+    distr_f! { norm_clt_f32x2_f32, f32x2, f32, SfcAlt64x2a }
+    distr_f! { norm_clt_f32x4_f32, f32x4, f32, SfcAlt64x2a }
+    distr_f! { norm_clt_f32x8_f32, f32x8, f32, SfcAlt64x2a }
+    distr_f! { norm_clt_f32x16_f32, f32x16, f32, SfcAlt64x2a }
+    distr_f! { norm_clt_f64x2_f64, f64x2, f64, SfcAlt64x2a }
+    distr_f! { norm_clt_f64x4_f64, f64x4, f64, SfcAlt64x2a }
+    distr_f! { norm_clt_f64x8_f64, f64x8, f64, SfcAlt64x2a }
 
-    distr_fx! { norm_clt_f32x2_fx, 4, f32x2, f32, SfcAltSplit64x2a }
-    distr_fx! { norm_clt_f32x4_fx, 4, f32x4, f32, SfcAltSplit64x2a }
-    distr_fx! { norm_clt_f32x8_fx, 4, f32x8, f32, SfcAltSplit64x2a }
-    distr_fx! { norm_clt_f32x16_fx, 4, f32x16, f32, SfcAltSplit64x2a }
-    distr_fx! { norm_clt_f64x2_fx, 4, f64x2, f64, SfcAltSplit64x2a }
-    distr_fx! { norm_clt_f64x4_fx, 4, f64x4, f64, SfcAltSplit64x2a }
-    distr_fx! { norm_clt_f64x8_fx, 4, f64x8, f64, SfcAltSplit64x2a }
+    distr_fx! { norm_clt_f32x2_fx, 4, f32x2, f32, SfcAlt64x2a }
+    distr_fx! { norm_clt_f32x4_fx, 4, f32x4, f32, SfcAlt64x2a }
+    distr_fx! { norm_clt_f32x8_fx, 4, f32x8, f32, SfcAlt64x2a }
+    distr_fx! { norm_clt_f32x16_fx, 4, f32x16, f32, SfcAlt64x2a }
+    distr_fx! { norm_clt_f64x2_fx, 4, f64x2, f64, SfcAlt64x2a }
+    distr_fx! { norm_clt_f64x4_fx, 4, f64x4, f64, SfcAlt64x2a }
+    distr_fx! { norm_clt_f64x8_fx, 4, f64x8, f64, SfcAlt64x2a }
 }
 
 mod hc128 {

@@ -1,12 +1,45 @@
-//!
+// Copyright 2018 The Rust Project Developers. See the COPYRIGHT
+// file at the top-level directory of this distribution and at
+// https://rust-lang.org/COPYRIGHT.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
 
-use core::{mem, slice};
-use stdsimd::simd::*;
+//! SFC Alternate generators.
 
-use distributions::box_muller::*;
+use core::simd::*;
+use core::fmt;
+
+use {SeedableRng, RngCore, Rng, Error};
 use rand_core::simd_impls::{SimdRng, SimdRngImpls};
-use rand_core::{Error, RngCore, SeedableRng};
-use Rng;
+use distributions::box_muller::SimdIntegerMath;
+
+macro_rules! rotate_left {
+    ($x:expr, 48, u64x2) => {{
+        let vec8 = u8x16::from_bits($x);
+        const ROTL_48: [u32; 16] = [6, 7, 0, 5, 4, 3, 1, 2, 15, 14, 9, 13, 11, 10, 12, 8];
+        let rotated: u8x16 = unsafe { simd_shuffle16(vec8, vec8, ROTL_48) };
+        u64x2::from_bits(rotated)
+    }};
+    ($x:expr, 48, u64x4) => {{
+        let vec8 = u8x32::from_bits($x);
+        const ROTL_48: [u32; 32] = [6, 7, 3, 2, 1, 5, 4, 0, 15, 14, 10, 9, 11, 8, 12, 13, 23, 22, 19, 18, 16, 17, 20, 21, 31, 30, 29, 26, 24, 25, 28, 27];
+        let rotated: u8x32 = unsafe { simd_shuffle32(vec8, vec8, ROTL_48) };
+        u64x4::from_bits(rotated)
+    }};
+    ($x:expr, 48, u64x8) => {{
+        let vec8 = u8x64::from_bits($x);
+        const ROTL_48: [u32; 64] = [7, 6, 2, 3, 5, 1, 0, 4, 14, 15, 10, 12, 13, 9, 8, 11, 23, 22, 18, 21, 19, 16, 17, 20, 30, 31, 27, 24, 26, 29, 28, 25, 38, 39, 32, 35, 34, 36, 37, 33, 47, 46, 41, 42, 44, 45, 40, 43, 54, 55, 49, 48, 50, 51, 53, 52, 63, 62, 61, 59, 57, 56, 58, 60];
+        let rotated: u8x64 = unsafe { simd_shuffle64(vec8, vec8, ROTL_48) };
+        u64x8::from_bits(rotated)
+    }};
+    ($x:expr, $rot:expr, $y:ident) => {{
+        $x.rotate_left($rot)
+    }};
+}
 
 macro_rules! sfc_alt_a {
     (
@@ -25,8 +58,8 @@ macro_rules! sfc_alt_a {
                 //experiment with larger pseudo-counter
                 self.counter += 1;
                 // counter2 += counter + (counter ? 0 : 1);//2-word LCG
-                let mask = self.counter.ne($vector::splat(0));
-                self.counter2 += self.counter + mask.select($vector::splat(0), $vector::splat(1));
+                let cmp = self.counter.eq($vector::splat(0));
+                self.counter2 += self.counter - $vector::from_bits(cmp);
                 let tmp = self.a + self.b; //counter2;
                 //a = b ^ (b >> $sh2);
                 //a = b + (b << $sh3);
@@ -168,7 +201,16 @@ macro_rules! sfc_alt_f {
 }
 
 macro_rules! sfc_alt_g {
-    ($rng_name:ident, $vector:ident, constants: $sh1:expr, $sh2:expr, $sh3:expr, e1: $e_sh:expr, e2: $e_sh1:expr, $e_sh2:expr) => (
+    (
+        $rng_name:ident,
+        $vector:ident,
+        constants: $sh1:expr,
+        $sh2:expr,
+        $sh3:expr,
+        e1: $e_sh:expr,
+        e2: $e_sh1:expr,
+        $e_sh2:expr
+    ) => {
         impl SimdRng<$vector> for $rng_name {
             #[inline(always)]
             fn generate(&mut self) -> $vector {
@@ -181,11 +223,20 @@ macro_rules! sfc_alt_g {
                 old
             }
         }
-    )
+    };
 }
 
 macro_rules! sfc_alt_h {
-    ($rng_name:ident, $vector:ident, constants: $sh1:expr, $sh2:expr, $sh3:expr, e1: $e_sh:expr, e2: $e_sh1:expr, $e_sh2:expr) => (
+    (
+        $rng_name:ident,
+        $vector:ident,
+        constants: $sh1:expr,
+        $sh2:expr,
+        $sh3:expr,
+        e1: $e_sh:expr,
+        e2: $e_sh1:expr,
+        $e_sh2:expr
+    ) => {
         impl SimdRng<$vector> for $rng_name {
             #[inline(always)]
             fn generate(&mut self) -> $vector {
@@ -198,18 +249,18 @@ macro_rules! sfc_alt_h {
                 old
             }
         }
-    )
+    };
 }
 
 macro_rules! sfc_alt_i {
     (
         $rng_name:ident,
-        $vector:ident,constants:
-        $sh1:expr,
+        $vector:ident,
+        constants: $sh1:expr,
         $sh2:expr,
-        $sh3:expr,e1:
-        $e_sh:expr,e2:
-        $e_sh1:expr,
+        $sh3:expr,
+        e1: $e_sh:expr,
+        e2: $e_sh1:expr,
         $e_sh2:expr
     ) => {
         impl SimdRng<$vector> for $rng_name {
@@ -230,12 +281,12 @@ macro_rules! sfc_alt_i {
 macro_rules! sfc_alt_j {
     (
         $rng_name:ident,
-        $vector:ident,constants:
-        $sh1:expr,
+        $vector:ident,
+        constants: $sh1:expr,
         $sh2:expr,
-        $sh3:expr,e1:
-        $e_sh:expr,e2:
-        $e_sh1:expr,
+        $sh3:expr,
+        e1: $e_sh:expr,
+        e2: $e_sh1:expr,
         $e_sh2:expr
     ) => {
         impl SimdRng<$vector> for $rng_name {
@@ -253,22 +304,37 @@ macro_rules! sfc_alt_j {
 }
 
 macro_rules! sfc_alt_k {
-    ($rng_name:ident, $vector:ident, constants: $sh1:expr, $sh2:expr, $sh3:expr, e1: $e_sh:expr, e2: $e_sh1:expr, $e_sh2:expr) => (
+    (
+        $rng_name:ident,
+        $vector:ident,
+        constants: $sh1:expr,
+        $sh2:expr,
+        $sh3:expr,
+        e1: $e_sh:expr,
+        e2: $e_sh1:expr,
+        $e_sh2:expr
+    ) => {
         impl SimdRng<$vector> for $rng_name {
             #[inline(always)]
             fn generate(&mut self) -> $vector {
+                // My testing puts it at >512GB (64-bit version)
+
                 //VERY good speed, 16 bit version failed @ 256 GB (2 GB w/o counter), 32 bit @ ?
                 // enum { SHIFT = (OUTPUT_BITS == 64) ? 43 : ((OUTPUT_BITS == 32) ? 23 : ((OUTPUT_BITS == 16) ? 11 : -1)) };//43, 11, 9
                 self.a += self.b; self.b -= self.c;
                 self.c += self.a; self.a ^= self.counter;
                 self.counter += 1;
                 self.c = self.c.rotate_left($e_sh);
+
+                // This variant seems to be missing a line like the `l` variant:
+                // `self.b += self.b << $e_sh2;`
+
                 //w/ counter    32:29->24, 28->37?, 27->36      16:14->22, 13->23, 12->32, 11->37, 10->37, 9->30, 8->19, 7->30, 6->38, 5->38, 4->29, 3->19, 2->18
                 //w/o counter   32:29->  , 28->  , 27->         16:14->17, 13->19, 12->26, 11->30, 10->31, 9->31, 8->17, 7->31, 6->31, 5->31, 4->30, 3->19, 2->17
                 self.a
             }
         }
-    )
+    };
 }
 
 macro_rules! sfc_alt_l {
@@ -282,7 +348,10 @@ macro_rules! sfc_alt_l {
                 self.a += self.b; self.b -= self.c;
                 self.c += self.a; self.a ^= self.counter;
                 self.counter += 1;
-                self.c = self.c.rotate_left($e_sh1);//cb  with count: ?, 14, 9, ?  ; w/o count: 16, 8, 9, ?
+                // with 64-bit, `$e_sh1` is 48 which is divisible by 8. We could
+                // then implement this rotate with a vector shuffle (might be
+                // faster on older hardware)
+                self.c = rotate_left!(self.c, $e_sh1, $vector);//cb  with count: ?, 14, 9, ?  ; w/o count: 16, 8, 9, ?
                 self.b += self.b << $e_sh2;//ba
                 self.a
             }
@@ -290,10 +359,9 @@ macro_rules! sfc_alt_l {
     )
 }
 
-macro_rules! make_sfc_alt_simd {
-    ($rng_name:ident, $version:ident, $vector:ident, $scalar:ident, $output_bits:expr, constants: $sh1:expr, $sh2:expr, $sh3:expr, e1: $e_sh:expr, e2: $e_sh1:expr, $e_sh2:expr, $offset:expr) => (
-        ///
-        #[derive(Debug)]
+macro_rules! make_sfc {
+    ($rng_name:ident, $version:ident, $vector:ident, constants: $sh1:expr, $sh2:expr, $sh3:expr, e1: $e_sh:expr, e2: $e_sh1:expr, $e_sh2:expr) => {
+        /// SFC alternate
         pub struct $rng_name {
             a: $vector,
             b: $vector,
@@ -303,6 +371,13 @@ macro_rules! make_sfc_alt_simd {
             counter: $vector,
             #[allow(dead_code)]
             counter2: $vector,
+        }
+
+        // Custom Debug implementation that does not expose the internal state
+        impl fmt::Debug for $rng_name {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write!(f, "Sfc Alternate")
+            }
         }
 
         $version!($rng_name, $vector, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2);
@@ -323,6 +398,7 @@ macro_rules! make_sfc_alt_simd {
                 $vector::fill_bytes_via_simd(self, dest)
             }
 
+            #[inline(always)]
             fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
                 self.fill_bytes(dest);
                 Ok(())
@@ -330,188 +406,81 @@ macro_rules! make_sfc_alt_simd {
         }
 
         impl SeedableRng for $rng_name {
-            type Seed=[u8;0];
+            type Seed = [u8; 0];
 
             fn from_seed(_seed: Self::Seed) -> Self {
-                unimplemented!()
+                unimplemented!();
             }
 
-            fn from_rng<R: Rng>(mut rng: R) -> Result<Self, Error> {
-                let mut seed_vec = [$vector::default(); 3];
-                let bytes = unsafe {
-                    let ptr = seed_vec.as_mut_ptr() as *mut u8;
-                    slice::from_raw_parts_mut(ptr, 3 * mem::size_of::<$vector>())
-                };
-                rng.try_fill_bytes(bytes)?;
+            fn from_rng<R: RngCore>(mut rng: R) -> Result<Self, Error> {
+                let mut seed = [$vector::default(); 3];
+                rng.try_fill(&mut seed)?;
 
-                // let offset = $scalar::max_value() / $vector::lanes() as $scalar;
-
-                let counter = match $output_bits {
-                    64 | 32 => {
-                        // (0, 0 + offset, 0 + offset + offset, ...)
-                        let mut counter = $vector::default();
-                        for i in 0..$vector::lanes() {
-                            counter = counter.replace(i, i as $scalar * $offset);
-                        }
-                        counter
-                    },
-                    16 | 8 => rng.gen(),
-                    _ => unreachable!(),
-                };
-
-                // (1, 1 + offset, 1 + offset + offset, ...)
-                let mut counter2 = $vector::default();
-                for i in 0..$vector::lanes() {
-                    counter2 = counter2.replace(i, 1 + i as $scalar * $offset);
-                }
-
-                let mut state = Self {
-                    a: seed_vec[0],
-                    b: seed_vec[1],
-                    c: seed_vec[2],
-
-                    counter,
-                    counter2
-                };
-
-                let rounds = match $output_bits {
-                    64 | 32 => 24,
-                    16 => 16,
-                    8 | _ => 12,
-                    // _ => unreachable!(),
-                };
-
-                for _ in 0..rounds {
-                    state.generate();
-                }
-
-                Ok(state)
+                Ok(Self {
+                    a: seed[0],
+                    b: seed[1],
+                    c: seed[2],
+                    counter: $vector::splat(0),
+                    counter2: $vector::splat(1),
+                })
             }
         }
-    )
+    };
+
+
+    ( versions: $vector:ident, constants: $sh1:expr, $sh2:expr, $sh3:expr, e1: $e_sh:expr, e2: $e_sh1:expr, $e_sh2:expr,
+        $name_a:ident, $name_b:ident, $name_c:ident, $name_d:ident, $name_e:ident, $name_f:ident,
+        $name_g:ident, $name_h:ident, $name_i:ident, $name_j:ident, $name_k:ident, $name_l:ident,
+    ) => {
+        make_sfc! { $name_a, sfc_alt_a, $vector, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2 }
+        make_sfc! { $name_b, sfc_alt_b, $vector, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2 }
+        make_sfc! { $name_c, sfc_alt_c, $vector, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2 }
+        make_sfc! { $name_d, sfc_alt_d, $vector, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2 }
+        make_sfc! { $name_e, sfc_alt_e, $vector, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2 }
+        make_sfc! { $name_f, sfc_alt_f, $vector, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2 }
+        make_sfc! { $name_g, sfc_alt_g, $vector, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2 }
+        make_sfc! { $name_h, sfc_alt_h, $vector, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2 }
+        make_sfc! { $name_i, sfc_alt_i, $vector, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2 }
+        make_sfc! { $name_j, sfc_alt_j, $vector, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2 }
+        make_sfc! { $name_k, sfc_alt_k, $vector, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2 }
+        make_sfc! { $name_l, sfc_alt_l, $vector, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2 }
+    };
+
+    ( 64bit: $vector:ident, $($rng_name:ident,)+) => {
+        make_sfc! { versions: $vector, constants: 25, 12, 3, e1: 43, e2: 48, 3, $($rng_name,)+ }
+    };
+    ( 32bit: $vector:ident, $($rng_name:ident,)+) => {
+        make_sfc! { versions: $vector, constants: 25, 8, 3, e1: 23, e2: 14, 3, $($rng_name,)+ }
+    };
+    ( 16bit: $vector:ident, $($rng_name:ident,)+) => {
+        make_sfc! { versions: $vector, constants: 7, 3, 2, e1: 11, e2: 9, 3, $($rng_name,)+ }
+    };
+    ( 8bit: $vector:ident, $($rng_name:ident,)+) => {
+        make_sfc! { versions: $vector, constants: 3, 2, 1, e1: 0, e2: 5, 2, $($rng_name,)+ }
+    };
 }
 
-macro_rules! foo {
-    ($($rng_name:ident,)+, {$($version:ident,)+}, $vector:ident, $scalar:ident, $output_bits:expr, constants: $sh1:expr, $sh2:expr, $sh3:expr, e1: $e_sh:expr, e2: $e_sh1:expr, $e_sh2:expr, $offset:expr) => (
-        $(
-            make_sfc_alt_simd!($rng_name, $version, $vector, $scalar, $output_bits, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2, $offset);
-        )+
-    )
-}
+// WARNING: must be in proper order
 
-macro_rules! make_sfc_alt_simd_versions {
-    ($($rng_name:ident,)+, $vector:ident, $scalar:ident, $output_bits:expr, constants: $sh1:expr, $sh2:expr, $sh3:expr, e1: $e_sh:expr, e2: $e_sh1:expr, $e_sh2:expr, offset: $offset:expr) => (
-        foo!($($rng_name,)+, {
-            sfc_alt_a,
-            sfc_alt_b,
-            sfc_alt_c,
-            sfc_alt_d,
-            sfc_alt_e,
-            sfc_alt_f,
-            sfc_alt_g,
-            sfc_alt_h,
-            sfc_alt_i,
-            sfc_alt_j,
-            sfc_alt_k,
-            sfc_alt_l,
-        }, $vector, $scalar, $output_bits, constants: $sh1, $sh2, $sh3, e1: $e_sh, e2: $e_sh1, $e_sh2, $offset);
-    )
-}
+make_sfc! { 64bit: u64x2, SfcAlt64x2a, SfcAlt64x2b, SfcAlt64x2c, SfcAlt64x2d, SfcAlt64x2e, SfcAlt64x2f, SfcAlt64x2g, SfcAlt64x2h, SfcAlt64x2i, SfcAlt64x2j, SfcAlt64x2k, SfcAlt64x2l, }
+make_sfc! { 64bit: u64x4, SfcAlt64x4a, SfcAlt64x4b, SfcAlt64x4c, SfcAlt64x4d, SfcAlt64x4e, SfcAlt64x4f, SfcAlt64x4g, SfcAlt64x4h, SfcAlt64x4i, SfcAlt64x4j, SfcAlt64x4k, SfcAlt64x4l, }
+make_sfc! { 64bit: u64x8, SfcAlt64x8a, SfcAlt64x8b, SfcAlt64x8c, SfcAlt64x8d, SfcAlt64x8e, SfcAlt64x8f, SfcAlt64x8g, SfcAlt64x8h, SfcAlt64x8i, SfcAlt64x8j, SfcAlt64x8k, SfcAlt64x8l, }
 
-// SHIFT = (OUTPUT_BITS == 64) ? 43 : ((OUTPUT_BITS == 32) ? 23 : ((OUTPUT_BITS == 16) ? 11 : -1)) };//43, 11, 9
-// enum { SH1 = (OUTPUT_BITS == 64) ? 48 : ((OUTPUT_BITS == 32) ? 14 : ((OUTPUT_BITS == 16) ? 9 : ((OUTPUT_BITS == 8) ? 5 : -1))) };
-// enum { SH2 = (OUTPUT_BITS == 64) ? 3 : ((OUTPUT_BITS == 32) ? 3 : ((OUTPUT_BITS == 16) ? 3 : ((OUTPUT_BITS == 8) ? 2 : -1))) };// using LEA on x86
+make_sfc! { 32bit: u32x2, SfcAlt32x2a, SfcAlt32x2b, SfcAlt32x2c, SfcAlt32x2d, SfcAlt32x2e, SfcAlt32x2f, SfcAlt32x2g, SfcAlt32x2h, SfcAlt32x2i, SfcAlt32x2j, SfcAlt32x2k, SfcAlt32x2l, }
+make_sfc! { 32bit: u32x4, SfcAlt32x4a, SfcAlt32x4b, SfcAlt32x4c, SfcAlt32x4d, SfcAlt32x4e, SfcAlt32x4f, SfcAlt32x4g, SfcAlt32x4h, SfcAlt32x4i, SfcAlt32x4j, SfcAlt32x4k, SfcAlt32x4l, }
+make_sfc! { 32bit: u32x8, SfcAlt32x8a, SfcAlt32x8b, SfcAlt32x8c, SfcAlt32x8d, SfcAlt32x8e, SfcAlt32x8f, SfcAlt32x8g, SfcAlt32x8h, SfcAlt32x8i, SfcAlt32x8j, SfcAlt32x8k, SfcAlt32x8l, }
+make_sfc! { 32bit: u32x16, SfcAlt32x16a, SfcAlt32x16b, SfcAlt32x16c, SfcAlt32x16d, SfcAlt32x16e, SfcAlt32x16f, SfcAlt32x16g, SfcAlt32x16h, SfcAlt32x16i, SfcAlt32x16j, SfcAlt32x16k, SfcAlt32x16l, }
 
-macro_rules! make_sfc_alt_64_simd {
-    ($($name:ident,)+, $vector:ident) => (
-        make_sfc_alt_simd_versions!($($name,)+, $vector, u64, 64, constants: 25, 12, 3, e1: 43, e2: 48, 3, offset: 1);
-    )
-}
+/*make_sfc! { 16bit: u16x2, SfcAlt16x2a, SfcAlt16x2b, SfcAlt16x2c, SfcAlt16x2d, SfcAlt16x2e, SfcAlt16x2f, SfcAlt16x2g, SfcAlt16x2h, SfcAlt16x2i, SfcAlt16x2j, SfcAlt16x2k, SfcAlt16x2l, }
+make_sfc! { 16bit: u16x4, SfcAlt16x4a, SfcAlt16x4b, SfcAlt16x4c, SfcAlt16x4d, SfcAlt16x4e, SfcAlt16x4f, SfcAlt16x4g, SfcAlt16x4h, SfcAlt16x4i, SfcAlt16x4j, SfcAlt16x4k, SfcAlt16x4l, }
+make_sfc! { 16bit: u16x8, SfcAlt16x8a, SfcAlt16x8b, SfcAlt16x8c, SfcAlt16x8d, SfcAlt16x8e, SfcAlt16x8f, SfcAlt16x8g, SfcAlt16x8h, SfcAlt16x8i, SfcAlt16x8j, SfcAlt16x8k, SfcAlt16x8l, }
+make_sfc! { 16bit: u16x16, SfcAlt16x16a, SfcAlt16x16b, SfcAlt16x16c, SfcAlt16x16d, SfcAlt16x16e, SfcAlt16x16f, SfcAlt16x16g, SfcAlt16x16h, SfcAlt16x16i, SfcAlt16x16j, SfcAlt16x16k, SfcAlt16x16l, }
+make_sfc! { 16bit: u16x32, SfcAlt16x32a, SfcAlt16x32b, SfcAlt16x32c, SfcAlt16x32d, SfcAlt16x32e, SfcAlt16x32f, SfcAlt16x32g, SfcAlt16x32h, SfcAlt16x32i, SfcAlt16x32j, SfcAlt16x32k, SfcAlt16x32l, }
 
-make_sfc_alt_64_simd!(SfcAlt64x2a, SfcAlt64x2b, SfcAlt64x2c, SfcAlt64x2d, SfcAlt64x2e, SfcAlt64x2f, SfcAlt64x2g, SfcAlt64x2h, SfcAlt64x2i, SfcAlt64x2j, SfcAlt64x2k, SfcAlt64x2l,, u64x2);
-make_sfc_alt_64_simd!(SfcAlt64x4a, SfcAlt64x4b, SfcAlt64x4c, SfcAlt64x4d, SfcAlt64x4e, SfcAlt64x4f, SfcAlt64x4g, SfcAlt64x4h, SfcAlt64x4i, SfcAlt64x4j, SfcAlt64x4k, SfcAlt64x4l,, u64x4);
-make_sfc_alt_64_simd!(SfcAlt64x8a, SfcAlt64x8b, SfcAlt64x8c, SfcAlt64x8d, SfcAlt64x8e, SfcAlt64x8f, SfcAlt64x8g, SfcAlt64x8h, SfcAlt64x8i, SfcAlt64x8j, SfcAlt64x8k, SfcAlt64x8l,, u64x8);
-
-macro_rules! make_sfc_alt_32_simd {
-    ($($name:ident,)+, $vector:ident) => (
-        make_sfc_alt_simd_versions!($($name,)+, $vector, u32, 32, constants: 25, 8, 3, e1: 23, e2: 14, 3, offset: 1);
-    )
-}
-
-make_sfc_alt_32_simd!(SfcAlt32x2a, SfcAlt32x2b, SfcAlt32x2c, SfcAlt32x2d, SfcAlt32x2e, SfcAlt32x2f, SfcAlt32x2g, SfcAlt32x2h, SfcAlt32x2i, SfcAlt32x2j, SfcAlt32x2k, SfcAlt32x2l,, u32x2);
-make_sfc_alt_32_simd!(SfcAlt32x4a, SfcAlt32x4b, SfcAlt32x4c, SfcAlt32x4d, SfcAlt32x4e, SfcAlt32x4f, SfcAlt32x4g, SfcAlt32x4h, SfcAlt32x4i, SfcAlt32x4j, SfcAlt32x4k, SfcAlt32x4l,, u32x4);
-make_sfc_alt_32_simd!(SfcAlt32x8a, SfcAlt32x8b, SfcAlt32x8c, SfcAlt32x8d, SfcAlt32x8e, SfcAlt32x8f, SfcAlt32x8g, SfcAlt32x8h, SfcAlt32x8i, SfcAlt32x8j, SfcAlt32x8k, SfcAlt32x8l,, u32x8);
-make_sfc_alt_32_simd!(SfcAlt32x16a, SfcAlt32x16b, SfcAlt32x16c, SfcAlt32x16d, SfcAlt32x16e, SfcAlt32x16f, SfcAlt32x16g, SfcAlt32x16h, SfcAlt32x16i, SfcAlt32x16j, SfcAlt32x16k, SfcAlt32x16l,, u32x16);
-
-macro_rules! make_sfc_alt_16_simd {
-    ($($name:ident,)+, $vector:ident) => (
-        make_sfc_alt_simd_versions!($($name,)+, $vector, u16, 16, constants: 7, 3, 2, e1: 11, e2: 9, 3, offset: 1);
-    )
-}
-
-make_sfc_alt_16_simd!(SfcAlt16x2a, SfcAlt16x2b, SfcAlt16x2c, SfcAlt16x2d, SfcAlt16x2e, SfcAlt16x2f, SfcAlt16x2g, SfcAlt16x2h, SfcAlt16x2i, SfcAlt16x2j, SfcAlt16x2k, SfcAlt16x2l,, u16x2);
-make_sfc_alt_16_simd!(SfcAlt16x4a, SfcAlt16x4b, SfcAlt16x4c, SfcAlt16x4d, SfcAlt16x4e, SfcAlt16x4f, SfcAlt16x4g, SfcAlt16x4h, SfcAlt16x4i, SfcAlt16x4j, SfcAlt16x4k, SfcAlt16x4l,, u16x4);
-make_sfc_alt_16_simd!(SfcAlt16x8a, SfcAlt16x8b, SfcAlt16x8c, SfcAlt16x8d, SfcAlt16x8e, SfcAlt16x8f, SfcAlt16x8g, SfcAlt16x8h, SfcAlt16x8i, SfcAlt16x8j, SfcAlt16x8k, SfcAlt16x8l,, u16x8);
-make_sfc_alt_16_simd!(SfcAlt16x16a, SfcAlt16x16b, SfcAlt16x16c, SfcAlt16x16d, SfcAlt16x16e, SfcAlt16x16f, SfcAlt16x16g, SfcAlt16x16h, SfcAlt16x16i, SfcAlt16x16j, SfcAlt16x16k, SfcAlt16x16l,, u16x16);
-make_sfc_alt_16_simd!(SfcAlt16x32a, SfcAlt16x32b, SfcAlt16x32c, SfcAlt16x32d, SfcAlt16x32e, SfcAlt16x32f, SfcAlt16x32g, SfcAlt16x32h, SfcAlt16x32i, SfcAlt16x32j, SfcAlt16x32k, SfcAlt16x32l,, u16x32);
-
-macro_rules! make_sfc_alt_8_simd {
-    ($($name:ident,)+, $vector:ident) => (
-        // make_sfc_alt_simd_versions!($($name,)+, $vector, u8, 8, constants: 3, 2, 1, e1: 0, e2: 5, 2,   offset: 1);
-        make_sfc_alt_simd_versions!($($name,)+, $vector, u8, 8, constants: 3, 2, 1, e1: !0, e2: 5, 2, offset: 1);
-    )
-}
-
-make_sfc_alt_8_simd!(SfcAlt8x2a, SfcAlt8x2b, SfcAlt8x2c, SfcAlt8x2d, SfcAlt8x2e, SfcAlt8x2f, SfcAlt8x2g, SfcAlt8x2h, SfcAlt8x2i, SfcAlt8x2j, SfcAlt8x2k, SfcAlt8x2l,, u8x2);
-// make_sfc_alt_8_simd!(SfcAlt8x4a, SfcAlt8x4b, SfcAlt8x4c, SfcAlt8x4d, SfcAlt8x4e, SfcAlt8x4f, SfcAlt8x4g, SfcAlt8x4h, SfcAlt8x4i, SfcAlt8x4j, SfcAlt8x4k, SfcAlt8x4l,, u8x4);
-// make_sfc_alt_8_simd!(SfcAlt8x8a, SfcAlt8x8b, SfcAlt8x8c, SfcAlt8x8d, SfcAlt8x8e, SfcAlt8x8f, SfcAlt8x8g, SfcAlt8x8h, SfcAlt8x8i, SfcAlt8x8j, SfcAlt8x8k, SfcAlt8x8l,, u8x8);
-// make_sfc_alt_8_simd!(SfcAlt8x16a, SfcAlt8x16b, SfcAlt8x16c, SfcAlt8x16d, SfcAlt8x16e, SfcAlt8x16f, SfcAlt8x16g, SfcAlt8x16h, SfcAlt8x16i, SfcAlt8x16j, SfcAlt8x16k, SfcAlt8x16l,, u8x16);
-// make_sfc_alt_8_simd!(SfcAlt8x32a, SfcAlt8x32b, SfcAlt8x32c, SfcAlt8x32d, SfcAlt8x32e, SfcAlt8x32f, SfcAlt8x32g, SfcAlt8x32h, SfcAlt8x32i, SfcAlt8x32j, SfcAlt8x32k, SfcAlt8x32l,, u8x32);
-// make_sfc_alt_8_simd!(SfcAlt8x64a, SfcAlt8x64b, SfcAlt8x64c, SfcAlt8x64d, SfcAlt8x64e, SfcAlt8x64f, SfcAlt8x64g, SfcAlt8x64h, SfcAlt8x64i, SfcAlt8x64j, SfcAlt8x64k, SfcAlt8x64l,, u8x64);
-
-macro_rules! make_sfc_alt_split_64_simd {
-    ($($name:ident,)+, $vector:ident) => (
-        make_sfc_alt_simd_versions!($($name,)+, $vector, u64, 64, constants: 25, 12, 3, e1: 43, e2: 48, 3, offset: u64::max_value() / $vector::lanes() as u64);
-    )
-}
-
-make_sfc_alt_split_64_simd!(SfcAltSplit64x2a, SfcAltSplit64x2b, SfcAltSplit64x2c, SfcAltSplit64x2d, SfcAltSplit64x2e, SfcAltSplit64x2f, SfcAltSplit64x2g, SfcAltSplit64x2h, SfcAltSplit64x2i, SfcAltSplit64x2j, SfcAltSplit64x2k, SfcAltSplit64x2l,, u64x2);
-make_sfc_alt_split_64_simd!(SfcAltSplit64x4a, SfcAltSplit64x4b, SfcAltSplit64x4c, SfcAltSplit64x4d, SfcAltSplit64x4e, SfcAltSplit64x4f, SfcAltSplit64x4g, SfcAltSplit64x4h, SfcAltSplit64x4i, SfcAltSplit64x4j, SfcAltSplit64x4k, SfcAltSplit64x4l,, u64x4);
-make_sfc_alt_split_64_simd!(SfcAltSplit64x8a, SfcAltSplit64x8b, SfcAltSplit64x8c, SfcAltSplit64x8d, SfcAltSplit64x8e, SfcAltSplit64x8f, SfcAltSplit64x8g, SfcAltSplit64x8h, SfcAltSplit64x8i, SfcAltSplit64x8j, SfcAltSplit64x8k, SfcAltSplit64x8l,, u64x8);
-
-macro_rules! make_sfc_alt_split_32_simd {
-    ($($name:ident,)+, $vector:ident) => (
-        make_sfc_alt_simd_versions!($($name,)+, $vector, u32, 32, constants: 25, 8, 3, e1: 23, e2: 14, 3, offset: u32::max_value() / $vector::lanes() as u32);
-    )
-}
-
-make_sfc_alt_split_32_simd!(SfcAltSplit32x2a, SfcAltSplit32x2b, SfcAltSplit32x2c, SfcAltSplit32x2d, SfcAltSplit32x2e, SfcAltSplit32x2f, SfcAltSplit32x2g, SfcAltSplit32x2h, SfcAltSplit32x2i, SfcAltSplit32x2j, SfcAltSplit32x2k, SfcAltSplit32x2l,, u32x2);
-make_sfc_alt_split_32_simd!(SfcAltSplit32x4a, SfcAltSplit32x4b, SfcAltSplit32x4c, SfcAltSplit32x4d, SfcAltSplit32x4e, SfcAltSplit32x4f, SfcAltSplit32x4g, SfcAltSplit32x4h, SfcAltSplit32x4i, SfcAltSplit32x4j, SfcAltSplit32x4k, SfcAltSplit32x4l,, u32x4);
-make_sfc_alt_split_32_simd!(SfcAltSplit32x8a, SfcAltSplit32x8b, SfcAltSplit32x8c, SfcAltSplit32x8d, SfcAltSplit32x8e, SfcAltSplit32x8f, SfcAltSplit32x8g, SfcAltSplit32x8h, SfcAltSplit32x8i, SfcAltSplit32x8j, SfcAltSplit32x8k, SfcAltSplit32x8l,, u32x8);
-make_sfc_alt_split_32_simd!(SfcAltSplit32x16a, SfcAltSplit32x16b, SfcAltSplit32x16c, SfcAltSplit32x16d, SfcAltSplit32x16e, SfcAltSplit32x16f, SfcAltSplit32x16g, SfcAltSplit32x16h, SfcAltSplit32x16i, SfcAltSplit32x16j, SfcAltSplit32x16k, SfcAltSplit32x16l,, u32x16);
-
-macro_rules! make_sfc_alt_split_16_simd {
-    ($($name:ident,)+, $vector:ident) => (
-        make_sfc_alt_simd_versions!($($name,)+, $vector, u16, 16, constants: 7, 3, 2, e1: 11, e2: 9, 3, offset: u16::max_value() / $vector::lanes() as u16);
-    )
-}
-
-make_sfc_alt_split_16_simd!(SfcAltSplit16x2a, SfcAltSplit16x2b, SfcAltSplit16x2c, SfcAltSplit16x2d, SfcAltSplit16x2e, SfcAltSplit16x2f, SfcAltSplit16x2g, SfcAltSplit16x2h, SfcAltSplit16x2i, SfcAltSplit16x2j, SfcAltSplit16x2k, SfcAltSplit16x2l,, u16x2);
-make_sfc_alt_split_16_simd!(SfcAltSplit16x4a, SfcAltSplit16x4b, SfcAltSplit16x4c, SfcAltSplit16x4d, SfcAltSplit16x4e, SfcAltSplit16x4f, SfcAltSplit16x4g, SfcAltSplit16x4h, SfcAltSplit16x4i, SfcAltSplit16x4j, SfcAltSplit16x4k, SfcAltSplit16x4l,, u16x4);
-make_sfc_alt_split_16_simd!(SfcAltSplit16x8a, SfcAltSplit16x8b, SfcAltSplit16x8c, SfcAltSplit16x8d, SfcAltSplit16x8e, SfcAltSplit16x8f, SfcAltSplit16x8g, SfcAltSplit16x8h, SfcAltSplit16x8i, SfcAltSplit16x8j, SfcAltSplit16x8k, SfcAltSplit16x8l,, u16x8);
-make_sfc_alt_split_16_simd!(SfcAltSplit16x16a, SfcAltSplit16x16b, SfcAltSplit16x16c, SfcAltSplit16x16d, SfcAltSplit16x16e, SfcAltSplit16x16f, SfcAltSplit16x16g, SfcAltSplit16x16h, SfcAltSplit16x16i, SfcAltSplit16x16j, SfcAltSplit16x16k, SfcAltSplit16x16l,, u16x16);
-make_sfc_alt_split_16_simd!(SfcAltSplit16x32a, SfcAltSplit16x32b, SfcAltSplit16x32c, SfcAltSplit16x32d, SfcAltSplit16x32e, SfcAltSplit16x32f, SfcAltSplit16x32g, SfcAltSplit16x32h, SfcAltSplit16x32i, SfcAltSplit16x32j, SfcAltSplit16x32k, SfcAltSplit16x32l,, u16x32);
-
-macro_rules! make_sfc_alt_split_8_simd {
-    ($($name:ident,)+, $vector:ident) => (
-        // make_sfc_alt_simd_versions!($($name,)+, $vector, u8, 8, constants: 3, 2, 1, e1: 0, e2: 5, 2, offset: u8::max_value() / $vector::lanes() as u8);
-        make_sfc_alt_simd_versions!($($name,)+, $vector, u8, 8, constants: 3, 2, 1, e1: !0, e2: 5, 2, offset: u8::max_value() / $vector::lanes() as u8);
-    )
-}
-
-make_sfc_alt_split_8_simd!(SfcAltSplit8x2a, SfcAltSplit8x2b, SfcAltSplit8x2c, SfcAltSplit8x2d, SfcAltSplit8x2e, SfcAltSplit8x2f, SfcAltSplit8x2g, SfcAltSplit8x2h, SfcAltSplit8x2i, SfcAltSplit8x2j, SfcAltSplit8x2k, SfcAltSplit8x2l,, u8x2);
-// make_sfc_alt_split_8_simd!(SfcAltSplit8x4a, SfcAltSplit8x4b, SfcAltSplit8x4c, SfcAltSplit8x4d, SfcAltSplit8x4e, SfcAltSplit8x4f, SfcAltSplit8x4g, SfcAltSplit8x4h, SfcAltSplit8x4i, SfcAltSplit8x4j, SfcAltSplit8x4k, SfcAltSplit8x4l,, u8x4);
-// make_sfc_alt_split_8_simd!(SfcAltSplit8x8a, SfcAltSplit8x8b, SfcAltSplit8x8c, SfcAltSplit8x8d, SfcAltSplit8x8e, SfcAltSplit8x8f, SfcAltSplit8x8g, SfcAltSplit8x8h, SfcAltSplit8x8i, SfcAltSplit8x8j, SfcAltSplit8x8k, SfcAltSplit8x8l,, u8x8);
-// make_sfc_alt_split_8_simd!(SfcAltSplit8x16a, SfcAltSplit8x16b, SfcAltSplit8x16c, SfcAltSplit8x16d, SfcAltSplit8x16e, SfcAltSplit8x16f, SfcAltSplit8x16g, SfcAltSplit8x16h, SfcAltSplit8x16i, SfcAltSplit8x16j, SfcAltSplit8x16k, SfcAltSplit8x16l,, u8x16);
-// make_sfc_alt_split_8_simd!(SfcAltSplit8x32a, SfcAltSplit8x32b, SfcAltSplit8x32c, SfcAltSplit8x32d, SfcAltSplit8x32e, SfcAltSplit8x32f, SfcAltSplit8x32g, SfcAltSplit8x32h, SfcAltSplit8x32i, SfcAltSplit8x32j, SfcAltSplit8x32k, SfcAltSplit8x32l,, u8x32);
-// make_sfc_alt_split_8_simd!(SfcAltSplit8x64a, SfcAltSplit8x64b, SfcAltSplit8x64c, SfcAltSplit8x64d, SfcAltSplit8x64e, SfcAltSplit8x64f, SfcAltSplit8x64g, SfcAltSplit8x64h, SfcAltSplit8x64i, SfcAltSplit8x64j, SfcAltSplit8x64k, SfcAltSplit8x64l,, u8x64);
+make_sfc! { 8bit: u8x2, SfcAlt8x2a, SfcAlt8x2b, SfcAlt8x2c, SfcAlt8x2d, SfcAlt8x2e, SfcAlt8x2f, SfcAlt8x2g, SfcAlt8x2h, SfcAlt8x2i, SfcAlt8x2j, SfcAlt8x2k, SfcAlt8x2l, }
+make_sfc! { 8bit: u8x4, SfcAlt8x4a, SfcAlt8x4b, SfcAlt8x4c, SfcAlt8x4d, SfcAlt8x4e, SfcAlt8x4f, SfcAlt8x4g, SfcAlt8x4h, SfcAlt8x4i, SfcAlt8x4j, SfcAlt8x4k, SfcAlt8x4l, }
+make_sfc! { 8bit: u8x8, SfcAlt8x8a, SfcAlt8x8b, SfcAlt8x8c, SfcAlt8x8d, SfcAlt8x8e, SfcAlt8x8f, SfcAlt8x8g, SfcAlt8x8h, SfcAlt8x8i, SfcAlt8x8j, SfcAlt8x8k, SfcAlt8x8l, }
+make_sfc! { 8bit: u8x16, SfcAlt8x16a, SfcAlt8x16b, SfcAlt8x16c, SfcAlt8x16d, SfcAlt8x16e, SfcAlt8x16f, SfcAlt8x16g, SfcAlt8x16h, SfcAlt8x16i, SfcAlt8x16j, SfcAlt8x16k, SfcAlt8x16l, }
+make_sfc! { 8bit: u8x32, SfcAlt8x32a, SfcAlt8x32b, SfcAlt8x32c, SfcAlt8x32d, SfcAlt8x32e, SfcAlt8x32f, SfcAlt8x32g, SfcAlt8x32h, SfcAlt8x32i, SfcAlt8x32j, SfcAlt8x32k, SfcAlt8x32l, }
+make_sfc! { 8bit: u8x64, SfcAlt8x64a, SfcAlt8x64b, SfcAlt8x64c, SfcAlt8x64d, SfcAlt8x64e, SfcAlt8x64f, SfcAlt8x64g, SfcAlt8x64h, SfcAlt8x64i, SfcAlt8x64j, SfcAlt8x64k, SfcAlt8x64l, }
+*/

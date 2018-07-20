@@ -14,7 +14,7 @@ use core::mem;
 use Rng;
 use distributions::{Distribution, Standard};
 #[cfg(feature="simd_support")]
-use stdsimd::simd::*;
+use core::simd::*;
 
 /// A distribution to sample floating point numbers uniformly in the half-open
 /// interval `(0, 1]`, i.e. including 1 but not 0.

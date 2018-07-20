@@ -5,7 +5,7 @@
 //! [SIMDxorshift]: (https://github.com/lemire/SIMDxorshift
 
 // use core::mem::size_of;
-use stdsimd::simd::*;
+use core::simd::*;
 
 use {swap_unchecked, Rng};
 
