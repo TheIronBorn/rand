@@ -13,6 +13,10 @@ use {swap_unchecked, Rng};
 pub trait SimdShuf {
     /// Shuffle a mutable slice in place, using an SIMD implementation.
     ///
+    /// This applies Durstenfeld's algorithm for the [Fisher–Yates shuffle](
+    /// https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm)
+    /// which produces an unbiased permutation.
+    ///
     /// To be used in the form:
     /// ```rust
     /// u16x8::simd_shuffle(&mut rng, &mut list);
@@ -45,8 +49,7 @@ macro_rules! impl_simd_shuf {
                 );
 
                 // Create a vector to hold `$vec::lanes()` range bounds at
-                // once. This should be evaluated at compile-time.
-                // TODO: consider making this a macro
+                // once.
                 let mut interval = $vec::default();
                 for vec_idx in 0..$vec::lanes() {
                     // (len, len - 1, len - 2, len - 3, ..., len - $vec::lanes() + 1)
@@ -64,7 +67,12 @@ macro_rules! impl_simd_shuf {
                     for vec_idx in 0..$vec::lanes() {
                         slice_idx -= 1;
                         let rand_idx = rand_indices.extract(vec_idx) as usize;
-                        unsafe { swap_unchecked(values, slice_idx, rand_idx); }
+
+                        if cfg!(any(test, debug_assertions)) {
+                            values.swap(slice_idx, rand_idx);
+                        } else {
+                            unsafe { swap_unchecked(values, slice_idx, rand_idx); }
+                        }
                     }
 
                     // move onto the next interval
@@ -72,7 +80,10 @@ macro_rules! impl_simd_shuf {
                 }
 
                 // shuffle the remaining elements
-                // This is likely overzealous
+                // optimized by using an appropriate u16xM vector, which
+                // require less data than a u32xM/u64xM vector and often have
+                // faster `wmul` implementations than u8xM vectors. This is
+                // likely overzealous and bloats binary size
                 let remainder = values.len() % $vec::lanes();
                 if remainder > 1 {
                     match remainder - 1 {
@@ -108,7 +119,11 @@ macro_rules! rem_shuf {
         for vec_idx in 0..$rem - 1 {
             $slice_idx -= 1;
             let rand_idx = rand_indices.extract(vec_idx) as usize;
-            unsafe { swap_unchecked($values, $slice_idx, rand_idx); }
+            if cfg!(any(test, debug_assertions)) {
+                $values.swap($slice_idx, rand_idx);
+            } else {
+                unsafe { swap_unchecked($values, $slice_idx, rand_idx); }
+            }
         }
     }};
 }
