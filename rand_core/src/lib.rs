@@ -46,13 +46,15 @@
 #![cfg_attr(feature="simd_support", feature(stdsimd))]
 #![cfg_attr(all(feature="simd_support"), feature(platform_intrinsics))]
 
+// #[cfg(feature="simd_support")]
+extern crate packed_simd;
+// extern crate stdsimd;
+
 #[cfg(feature="std")] extern crate core;
 #[cfg(all(feature = "alloc", not(feature="std")))] extern crate alloc;
 #[cfg(feature="serde1")] extern crate serde;
 #[cfg(feature="serde1")] #[macro_use] extern crate serde_derive;
 
-#[cfg(feature="simd_support")]
-extern crate stdsimd;
 
 use core::default::Default;
 use core::convert::AsMut;
@@ -66,7 +68,7 @@ mod error;
 pub mod block;
 pub mod impls;
 pub mod le;
-pub mod utils;
+// pub mod utils;
 #[cfg(feature="simd_support")]
 pub mod simd_impls;
 

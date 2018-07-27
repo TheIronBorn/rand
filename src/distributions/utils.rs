@@ -1,7 +1,7 @@
 //! Math helper functions
 
 #[cfg(feature = "simd_support")]
-use core::simd::*;
+use packed_simd::*;
 
 // Until portable shuffles land in stdsimd, we expose and use the shuffle intrinsics directly.
 #[cfg(feature = "simd_support")]
@@ -14,7 +14,7 @@ extern "platform-intrinsic" {
     pub fn simd_shuffle64<T, U>(a: T, b: T, indices: [u32; 64]) -> U;
 }
 
-/// Implement byte swapping for SIMD vectors
+/*/// Implement byte swapping for SIMD vectors
 #[cfg(feature = "simd_support")]
 pub trait SwapBytes {
     /// `swap_bytes` for a vector (horizontally)
@@ -136,9 +136,37 @@ impl_to_le! {
     i32x2, i32x4, i32x8, i32x16,
     u64x2, u64x4, u64x8,
     i64x2, i64x4, i64x8,
+}*/
+
+pub trait Rotates<T> {
+    fn _rotate_left(self, T) -> Self;
+    fn _rotate_right(self, T) -> Self;
 }
 
-#[cfg(test)]
+macro_rules! impl_rotates {
+    ($elem_ty:ty, $($ty:ident,)+) => {
+        $(
+            impl Rotates<$elem_ty> for $ty {
+                #[inline(always)]
+                fn _rotate_left(self, n: $elem_ty) -> Self {
+                    self.rotate_left($ty::splat(n))
+                }
+
+                #[inline(always)]
+                fn _rotate_right(self, n: $elem_ty) -> Self {
+                    self.rotate_right($ty::splat(n))
+                }
+            }
+        )+
+    };
+}
+
+impl_rotates! { u8, u8x2, u8x4, u8x8, u8x16, u8x32, u8x64, }
+impl_rotates! { u16, u16x2, u16x4, u16x8, u16x16, u16x32, }
+impl_rotates! { u32, u32x2, u32x4, u32x8, u32x16, }
+impl_rotates! { u64, u64x2, u64x4, u64x8, }
+
+/*#[cfg(test)]
 mod tests {
     use super::*;
     use core::mem;
@@ -191,4 +219,4 @@ mod tests {
 
         assert_eq!(expected, actual);
     }
-}
+}*/

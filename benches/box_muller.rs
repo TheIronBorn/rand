@@ -1,22 +1,22 @@
 #![feature(test)]
 #![cfg(feature = "simd_support")]
 #![feature(stdsimd)]
+#![allow(unused_imports)]
 
 extern crate test;
 extern crate rand;
 // extern crate stdsimd;
+extern crate packed_simd;
 
 const RAND_BENCH_N: u64 = 1 << 14;
 
 use std::mem::{size_of, transmute};
-use std::simd::*;
+use packed_simd::*;
 use test::Bencher;
 
 use rand::{Rng, RngCore, FromEntropy};
-use rand::prng::{SfcAlt64x2a, XorShiftRng};
-use rand::prng::hc128::Hc128Rng;
-use rand::distributions::box_muller::{BoxMuller, BoxMullerCore};
-use rand::distributions::box_muller::SimdMath;
+use rand::prng::{SfcAlt64x2a, XorShiftRng, Hc128Rng};
+use rand::distributions::box_muller::{BoxMuller, BoxMullerCore, SimdMath};
 use rand::distributions::*;
 
 macro_rules! distr_bm {

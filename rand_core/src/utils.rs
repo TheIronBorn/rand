@@ -1,7 +1,10 @@
 //! Math helper functions
 
+// extern crate packed_simd;
+
 #[cfg(feature = "simd_support")]
-use core::simd::*;
+// use packed_simd::*;
+use packed_simd::*;
 
 // Until portable shuffles land in stdsimd, we expose and use the shuffle intrinsics directly.
 #[cfg(feature = "simd_support")]

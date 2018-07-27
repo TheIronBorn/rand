@@ -100,7 +100,7 @@
 #[cfg(feature = "std")]
 use std::time::Duration;
 #[cfg(feature = "simd_support")]
-use core::simd::*;
+use packed_simd::*;
 #[cfg(feature = "simd_support")]
 use core::arch::x86_64::*;
 #[cfg(feature = "simd_support")]
@@ -307,7 +307,7 @@ impl<X: SampleUniform> From<::core::ops::Range<X>> for Uniform<X> {
 #[derive(Clone, Copy, Debug)]
 pub struct UniformInt<X> {
     low: X,
-    range: X,
+    pub range: X,
     zone: X,
 }
 
@@ -461,7 +461,7 @@ macro_rules! uniform_simd_int_impl {
                         "Uniform::new_inclusive called with `low > high`");
                 let unsigned_max = ::core::$u_scalar::MAX;
 
-                let range = $unsigned::from((high - low) + 1);
+                let range: $unsigned = ((high - low) + 1).cast();
                 // the `range > 0` case is complicated. Unimplemented for now
                 let ints_to_reject = (unsigned_max - range + 1) % range;
                 let zone = unsigned_max - ints_to_reject;
@@ -469,15 +469,15 @@ macro_rules! uniform_simd_int_impl {
                 UniformInt {
                     low: low,
                     // These are really $unsigned values, but store as $ty:
-                    range: $ty::from(range),
-                    zone: $ty::from(zone),
+                    range: range.cast(),
+                    zone: zone.cast(),
                 }
             }
 
             fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Self::X {
-                let range = $unsigned::from(self.range);
+                let range: $unsigned = self.range.cast();
                 // TODO: ensure these casts are a no-op
-                let zone = $unsigned::from($signed::from(self.zone));
+                let zone: $unsigned = self.zone.cast();
 
                 // This might seem very slow, generating a whole new
                 // SIMD vector for every sample rejection. However, for
@@ -508,7 +508,8 @@ macro_rules! uniform_simd_int_impl {
 
                 let v = SimdRejectionSampling::sample(rng, &Standard, cmp);
                 let (hi, _) = v.wmul(range);
-                self.low + $ty::from(hi)
+                let hi: $ty = hi.cast();
+                self.low + hi
             }
 
             #[inline(always)]
@@ -518,7 +519,7 @@ macro_rules! uniform_simd_int_impl {
             {
                 assert!(low.lt(high).all(),
                         "Uniform::sample_single called with low >= high");
-                let range = $unsigned::from(high - low);
+                let range: $unsigned = (high - low).cast();
                 let zone =
                     if mem::size_of::<$u_scalar>() <= 2 {
                         let unsigned_max = ::core::$u_scalar::MAX;
@@ -545,7 +546,8 @@ macro_rules! uniform_simd_int_impl {
                     let (hi, lo) = v.wmul(range);
                     let mask = lo.le(zone);
                     if mask.all() {
-                        return low + $ty::from(hi);
+                        let hi: $ty = hi.cast();
+                        return low + hi;
                     }
                     // Replace only the failing lanes
                     v = mask.select(v, rng.gen());
@@ -557,7 +559,7 @@ macro_rules! uniform_simd_int_impl {
             {
                 assert!($ty::splat(0).lt(high).all(),
                         "Uniform::sample_single_below called with 0 >= high");
-                let range = $unsigned::from(high);
+                let range: $unsigned = high.cast();
                 let zone =
                     if mem::size_of::<$u_scalar>() <= 2 {
                         let unsigned_max = ::core::$u_scalar::MAX;
@@ -577,7 +579,7 @@ macro_rules! uniform_simd_int_impl {
 
                 let v = SimdRejectionSampling::sample(rng, &Standard, cmp);
                 let (hi, _) = v.wmul(range);
-                $ty::from(hi)
+                hi.cast()
             }
         }
     };
@@ -664,7 +666,9 @@ macro_rules! wmul_impl {
                     //       u16xN vectors could use mulhi/mullo
                     //       perhaps better mul/shuf/blend operations for general
                     let tmp = $wide::from(self) * $wide::from(x);
-                    ($ty::from(tmp >> $shift), $ty::from(tmp))
+                    let hi: $ty = (tmp >> $shift).cast();
+                    let lo: $ty = tmp.cast();
+                    (hi, lo)
                 }
             }
         )+

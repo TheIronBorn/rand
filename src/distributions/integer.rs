@@ -13,11 +13,11 @@
 use {Rng};
 use distributions::{Distribution, Standard};
 #[cfg(feature="simd_support")]
-use core::simd::*;
+use packed_simd::*;
 #[cfg(feature="simd_support")]
 use std::mem;
-#[cfg(feature="simd_support")]
-use ToLittleEndian;
+// #[cfg(feature="simd_support")]
+// use ToLittleEndian;
 
 impl Distribution<u8> for Standard {
     #[inline]

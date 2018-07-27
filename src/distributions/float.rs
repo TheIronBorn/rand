@@ -14,7 +14,7 @@ use core::mem;
 use Rng;
 use distributions::{Distribution, Standard};
 #[cfg(feature="simd_support")]
-use core::simd::*;
+use packed_simd::*;
 
 /// A distribution to sample floating point numbers uniformly in the half-open
 /// interval `(0, 1]`, i.e. including 1 but not 0.
@@ -170,10 +170,10 @@ macro_rules! simd_float_impls {
             /// (not including either endpoint) with a uniform distribution.
             fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> $ty {
                 const EPSILON: $f_scalar = 1.0 / (1u64 << $fraction_bits) as $f_scalar;
-                let float_size = mem::size_of::<$f_scalar>() * 8;
+                const FLOAT_SIZE: u32 = mem::size_of::<$f_scalar>() as u32 * 8;
 
                 let value: $uty = rng.gen();
-                let fraction = value >> (float_size - $fraction_bits);
+                let fraction = value >> (FLOAT_SIZE - $fraction_bits);
                 fraction.into_float_with_exponent(0) - (1.0 - EPSILON / 2.0)
             }
         }

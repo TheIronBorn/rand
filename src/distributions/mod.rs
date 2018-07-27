@@ -206,6 +206,8 @@ pub mod central_limit;
 #[cfg(feature = "std")]
 #[doc(hidden)] pub mod cauchy;
 
+pub mod utils;
+
 mod float;
 mod integer;
 #[cfg(feature="std")]

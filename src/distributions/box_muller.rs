@@ -4,10 +4,12 @@
 
 // TODO: look into more accurate math
 
+#![allow(unused_variables)]
+
+/*#[cfg(feature="simd_support")]
+use core::arch::x86_64::*;*/
 #[cfg(feature="simd_support")]
-use core::arch::x86_64::*;
-#[cfg(feature="simd_support")]
-use core::simd::*;
+use packed_simd::*;
 #[cfg(feature="simd_support")]
 use core::f32::consts::PI as PI_32;
 #[cfg(feature="simd_support")]
@@ -33,7 +35,7 @@ use distributions::Uniform;
 ///
 /// ```rust
 /// #![feature(stdsimd)]
-/// use std::simd::f32x4;
+/// use packed_simd::f32x4;
 ///
 /// use rand::distributions::{BoxMuller, BoxMullerCore};
 /// use rand::NewRng;
@@ -194,14 +196,15 @@ macro_rules! impl_box_muller {
 
             #[inline(always)]
             fn ftrig<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
-                const TWO_PI: $vector = $vector::splat(2.0 * $pi);
+                /*const TWO_PI: $vector = $vector::splat(2.0 * $pi);
 
                 let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrte();
                 let intermediate = TWO_PI * rng.gen::<$vector>();
                 let sin_theta = unsafe { simd_fsin(intermediate) };
                 let cos_theta = unsafe { simd_fcos(intermediate) };
 
-                (radius * sin_theta, radius * cos_theta)
+                (radius * sin_theta, radius * cos_theta)*/
+                unimplemented!()
             }
 
             #[inline(always)]
@@ -304,14 +307,15 @@ macro_rules! impl_box_muller_64 {
 
             #[inline(always)]
             fn ftrig<R: Rng + ?Sized>(rng: &mut R) -> ($vector, $vector) {
-                const TWO_PI: $vector = $vector::splat(2.0 * $pi);
+                /*const TWO_PI: $vector = $vector::splat(2.0 * $pi);
 
                 let radius = (-2.0 * rng.gen::<$vector>().ln()).sqrte();
                 let intermediate = TWO_PI * rng.gen::<$vector>();
                 let sin_theta = unsafe { simd_fsin(intermediate) };
                 let cos_theta = unsafe { simd_fcos(intermediate) };
 
-                (radius * sin_theta, radius * cos_theta)
+                (radius * sin_theta, radius * cos_theta)*/
+                unimplemented!()
             }
 
             #[inline(always)]
@@ -400,7 +404,7 @@ impl_box_muller_64!(PI_64, (f64x2, u64x2), (f64x4, u64x4), (f64x8, u64x8));
 ///
 /// ```rust
 /// #![feature(stdsimd)]
-/// use std::simd::f32x4;
+/// use packed_simd::f32x4;
 ///
 /// use rand::distributions::{LogBoxMuller, BoxMullerCore};
 /// use rand::NewRng;
@@ -497,7 +501,7 @@ where
 #[cfg(feature="simd_support")]
 pub trait SimdIntegerMath<T> {
     /// Shifts the bits to the left by a specified amount, `n`,
-    /// wrapping the truncated bits to the end of the resulting integer.
+    /// wrapping the castated bits to the end of the resulting integer.
     ///
     /// Please note this isn't the same operation as `<<`!
     ///
@@ -517,7 +521,7 @@ pub trait SimdIntegerMath<T> {
     fn rotate_left(self, n: T) -> Self;
 
     /// Shifts the bits to the left by a specified amount, `n`,
-    /// wrapping the truncated bits to the end of the resulting integer.
+    /// wrapping the castated bits to the end of the resulting integer.
     ///
     /// Please note this isn't the same operation as `>>`!
     ///
@@ -598,8 +602,8 @@ macro_rules! impl_ctlz {
 
                 let mut t = $fty::from_bits($large::from(self) | exponent);
                 t -= power;
-                let x = Self::from($large::from_bits(t) >> $bits);
-                const SHIFT: $scalar = $bits - (2 * $bits - ::core::$f_scalar::MANTISSA_DIGITS as $scalar + 1);
+                let x: Self = ($large::from_bits(t) >> $bits).cast();
+                const SHIFT: u32 = $bits - (2 * $bits - ::core::$f_scalar::MANTISSA_DIGITS + 1);
                 const SUB: $scalar = (1 << (2 * $bits - ::core::$f_scalar::MANTISSA_DIGITS as $scalar - 1)) - 1;
                 $bits as $scalar - 1 - ((x >> SHIFT) - SUB)
             }
@@ -635,7 +639,9 @@ macro_rules! impl_ctlz_w_u16 {
         impl LeadingZeros for $ty {
             #[inline(always)]
             fn leading_zeros(self) -> Self {
-                $ty::from($large::from(self).leading_zeros()) - (16 - $bits)
+                let large: $large = self.cast();
+                let r: $ty = large.leading_zeros().cast();
+                r - (16 - $bits)
             }
         }
     )+)
@@ -1022,7 +1028,7 @@ macro_rules! impl_simd_math {
     ($fty:ident, $uty:ident, $uscalar:ty, $fscalar:ident) => (
         impl SimdMath for $fty {
             fn sin_cos(self) -> ($fty, $fty) {
-                const SIGN_MASK: $uscalar = 1 << size_of::<$uscalar>() * 8 - 1;
+                /*const SIGN_MASK: $uscalar = 1 << size_of::<$uscalar>() * 8 - 1;
 
                 let mut x = self;
                 /* extract the sign bit (upper one) */
@@ -1113,7 +1119,8 @@ macro_rules! impl_simd_math {
                     $fty::from_bits($uty::from_bits(xmm1) ^ $uty::from_bits(sign_bit_sin)),
                     $fty::from_bits($uty::from_bits(xmm2) ^ $uty::from_bits(sign_bit_cos))
                 )
-                // (self.sin(), self.cos())
+                // (self.sin(), self.cos())*/
+                unimplemented!()
             }
 
             fn tan(self) -> Self {
@@ -1125,11 +1132,14 @@ macro_rules! impl_simd_math {
             }
 
             fn floor(self) -> Self {
-               $fty::from($uty::from(self))
+               // $fty::from($uty::from(self))
+               let u: $uty = self.cast();
+               let r: $fty = u.cast();
+               r
             }
 
             fn ln(self) -> $fty {
-                let mut x = self;
+                /*let mut x = self;
 
                 let one = $fty::splat(1.0);
 
@@ -1171,7 +1181,8 @@ macro_rules! impl_simd_math {
 
                 x += y;
                 x += e * 0.693_359_375;
-                $fty::from_bits($uty::from_bits(x) | $uty::from_bits(invalid_mask)) // negative arg will be NAN
+                $fty::from_bits($uty::from_bits(x) | $uty::from_bits(invalid_mask)) // negative arg will be NAN*/
+                unimplemented!()
             }
 
             // should compile down to a single instruction
@@ -1185,7 +1196,7 @@ macro_rules! impl_simd_math {
             }
 
             fn exp(self) -> Self {
-                let mut x = self;
+                /*let mut x = self;
 
                 let one = $fty::splat(1.0);
 
@@ -1236,7 +1247,8 @@ macro_rules! impl_simd_math {
                 imm0 += 0x7f;
                 imm0 <<= 23;
                 let pow2n = $fty::from(imm0);
-                y * pow2n
+                y * pow2n*/
+                unimplemented!()
             }
 
             fn powf(self, n: Self) -> Self {
@@ -1249,7 +1261,7 @@ macro_rules! impl_simd_math {
             }
 
             fn log_gamma(self) -> Self {
-                // precalculated 6 coefficients for the first 6 terms of the series
+                /*// precalculated 6 coefficients for the first 6 terms of the series
                 let coefficients = [
                     76.18009172947146,
                     -86.50532032941677,
@@ -1274,7 +1286,8 @@ macro_rules! impl_simd_math {
                 // get everything together
                 // a is Ag(x)
                 // 2.5066... is sqrt(2pi)
-                log + (2.5066282746310005 * a / self).ln()
+                log + (2.5066282746310005 * a / self).ln()*/
+                unimplemented!()
             }
         }
     )
@@ -1294,7 +1307,7 @@ impl_simd_math!(f32x16, u32x16, u32, f32);
 #[cfg(feature="simd_support")]
 impl SimdMath for f32x4 {
     fn ln(self) -> Self {
-        let one = __m128::from_bits(Self::splat(1.0));
+        /*let one = __m128::from_bits(Self::splat(1.0));
 
         let mut x = __m128::from_bits(self);
 
@@ -1356,11 +1369,12 @@ impl SimdMath for f32x4 {
             x = _mm_add_ps(x, tmp);
             x = _mm_or_ps(x, invalid_mask); // negative arg will be NAN
             Self::from_bits(x)
-        }
+        }*/
+        unimplemented!()
     }
 
     fn sin_cos(self) -> (Self, Self) {
-        let mut x = __m128::from_bits(self);
+        /*let mut x = __m128::from_bits(self);
 
         unsafe {
             /* extract the sign bit (upper one) */
@@ -1455,7 +1469,8 @@ impl SimdMath for f32x4 {
                 Self::from_bits(_mm_xor_ps(xmm2, sign_bit_cos)),
             )
         }
-        // (self.sin(), self.cos())
+        // (self.sin(), self.cos())*/
+        unimplemented!()
     }
 
     fn tan(self) -> Self {
@@ -1467,7 +1482,10 @@ impl SimdMath for f32x4 {
     }
 
     fn floor(self) -> Self {
-        Self::from(u32x4::from(self))
+        let u: u32x4 = self.cast();
+        let r: Self = u.cast();
+        r
+        // Self::from(u32x4::from(self))
     }
 
     fn sqrt(self) -> Self {
@@ -1497,7 +1515,7 @@ impl SimdMath for f32x4 {
     }
 
     fn log_gamma(self) -> Self {
-        // precalculated 6 coefficients for the first 6 terms of the series
+        /*// precalculated 6 coefficients for the first 6 terms of the series
         let coefficients = [
             76.18009172947146,
             -86.50532032941677,
@@ -1522,14 +1540,15 @@ impl SimdMath for f32x4 {
         // get everything together
         // a is Ag(x)
         // 2.5066... is sqrt(2pi)
-        log + (2.5066282746310005 * a / self).ln()
+        log + (2.5066282746310005 * a / self).ln()*/
+        unimplemented!()
     }
 }
 
 #[cfg(feature="simd_support")]
 impl SimdMath for f32x8 {
     fn sin_cos(self) -> (Self, Self) {
-        let minus_cephes_dp1 = __m256::from_bits(f32x8::splat(-0.78515625));
+        /*let minus_cephes_dp1 = __m256::from_bits(f32x8::splat(-0.78515625));
         let minus_cephes_dp2 = __m256::from_bits(f32x8::splat(-2.4187564849853515625e-4));
         let minus_cephes_dp3 = __m256::from_bits(f32x8::splat(-3.77489497744594108e-8));
 
@@ -1711,7 +1730,8 @@ impl SimdMath for f32x8 {
                 f32x8::from_bits(_mm256_xor_ps(xmm2, sign_bit_cos)),
             )
         }
-        // (self.sin(), self.cos())
+        // (self.sin(), self.cos())*/
+        unimplemented!()
     }
 
     fn tan(self) -> Self {
@@ -1723,11 +1743,15 @@ impl SimdMath for f32x8 {
     }
 
     fn floor(self) -> Self {
-        Self::from(u32x8::from(self))
+        /*let u: u32x4 = self.cast();
+        let r: Self = u.cast();
+        r*/
+        unimplemented!()
+        // Self::from(u32x8::from(self))
     }
 
     fn ln(self) -> Self {
-        let mut x = __m256::from_bits(self);
+        /*let mut x = __m256::from_bits(self);
         let mut imm0: __m256i;
         let one: __m256 = __m256::from_bits(Self::splat(1.0));
         unsafe {
@@ -1815,7 +1839,8 @@ impl SimdMath for f32x8 {
             x = _mm256_add_ps(x, tmp);
             x = _mm256_or_ps(x, invalid_mask); // negative arg will be NAN
             Self::from_bits(x)
-        }
+        }*/
+        unimplemented!()
     }
 
     fn sqrt(self) -> Self {
@@ -1828,7 +1853,7 @@ impl SimdMath for f32x8 {
     }
 
     fn exp(self) -> Self {
-        let mut x = __m256::from_bits(self);
+        /*let mut x = __m256::from_bits(self);
         let one: __m256 = __m256::from_bits(Self::splat(1.0));
 
         unsafe {
@@ -1894,7 +1919,8 @@ impl SimdMath for f32x8 {
             let pow2n: __m256 = _mm256_castsi256_ps(imm0);
             y = _mm256_mul_ps(y, pow2n);
             Self::from_bits(y)
-        }
+        }*/
+        unimplemented!()
     }
 
     fn powf(self, n: Self) -> Self {
@@ -1907,7 +1933,7 @@ impl SimdMath for f32x8 {
     }
 
     fn log_gamma(self) -> Self {
-        // precalculated 6 coefficients for the first 6 terms of the series
+        /*// precalculated 6 coefficients for the first 6 terms of the series
         let coefficients = [
             76.18009172947146,
             -86.50532032941677,
@@ -1932,7 +1958,8 @@ impl SimdMath for f32x8 {
         // get everything together
         // a is Ag(x)
         // 2.5066... is sqrt(2pi)
-        log + (2.5066282746310005 * a / self).ln()
+        log + (2.5066282746310005 * a / self).ln()*/
+        unimplemented!()
     }
 }
 
@@ -1953,7 +1980,7 @@ macro_rules! impl_simd_math_f64 {
             }
 
             fn tan(self) -> Self {
-                let mut x = self;
+                /*let mut x = self;
 
                 let z = x * ::core::f64::consts::FRAC_PI_2.recip();
                 let y = unsafe { $fty::from_bits($round($intrinsic::from_bits(z), 0)) };
@@ -2037,11 +2064,16 @@ macro_rules! impl_simd_math_f64 {
                 p = p * x2 + 0.333333333333334980164153;
                 p = x2 * p * x + x;
 
-                m.select(p, 1.0 / p)
+                m.select(p, 1.0 / p)*/
+                unimplemented!()
             }
 
             fn floor(self) -> Self {
-                $fty::from($uty::from(self))
+                /*let u: $uty = self.cast();
+                let r: $fty = u.cast();
+                r*/
+                unimplemented!()
+                // $fty::from($uty::from(self))
             }
 
             fn ln(self) -> $fty {
@@ -2080,7 +2112,7 @@ macro_rules! impl_simd_math_f64 {
             }
 
             fn log_gamma(self) -> Self {
-                // precalculated 6 coefficients for the first 6 terms of the series
+                /*// precalculated 6 coefficients for the first 6 terms of the series
                 let coefficients = [
                     76.18009172947146,
                     -86.50532032941677,
@@ -2105,7 +2137,8 @@ macro_rules! impl_simd_math_f64 {
                 // get everything together
                 // a is Ag(x)
                 // 2.5066... is sqrt(2pi)
-                log + (2.5066282746310005 * a / self).ln()
+                log + (2.5066282746310005 * a / self).ln()*/
+                unimplemented!()
             }
         }
     };
@@ -2133,7 +2166,7 @@ impl SimdMath for f64x8 {
     }
 
     fn tan(self) -> Self {
-        let mut x = self;
+        /*let mut x = self;
 
         let z = x * ::core::f64::consts::FRAC_PI_2.recip();
         let ceil = |x: Self| -(-x).floor();
@@ -2220,11 +2253,15 @@ impl SimdMath for f64x8 {
         p = p * x2 + 0.333333333333334980164153;
         p = x2 * p * x + x;
 
-        m.select(p, 1.0 / p)
+        m.select(p, 1.0 / p)*/
+        unimplemented!()
     }
 
     fn floor(self) -> Self {
-        Self::from(u64x8::from(self))
+        let u: u64x8 = self.cast();
+        let r: Self = u.cast();
+        r
+        // Self::from(u64x8::from(self))
     }
 
     fn ln(self) -> Self {
@@ -2263,7 +2300,7 @@ impl SimdMath for f64x8 {
     }
 
     fn log_gamma(self) -> Self {
-        // precalculated 6 coefficients for the first 6 terms of the series
+        /*// precalculated 6 coefficients for the first 6 terms of the series
         let coefficients = [
             76.18009172947146,
             -86.50532032941677,
@@ -2288,7 +2325,8 @@ impl SimdMath for f64x8 {
         // get everything together
         // a is Ag(x)
         // 2.5066... is sqrt(2pi)
-        log + (2.5066282746310005 * a / self).ln()
+        log + (2.5066282746310005 * a / self).ln()*/
+        unimplemented!()
     }
 }
 

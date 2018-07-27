@@ -1,4 +1,4 @@
-use core::simd::*;
+use packed_simd::*;
 
 use distributions::Distribution;
 use Rng;
@@ -55,16 +55,16 @@ impl_simd_rejection_sampling! { u8x4, m8x4 }
 impl_simd_rejection_sampling! { u8x8, m8x8 }
 impl_simd_rejection_sampling! { u8x16, m8x16 }
 impl_simd_rejection_sampling! { u8x32, m8x32 }
-impl_simd_rejection_sampling! { u8x64, m1x64 }
+impl_simd_rejection_sampling! { u8x64, m8x64 }
 impl_simd_rejection_sampling! { u16x2, m16x2 }
 impl_simd_rejection_sampling! { u16x4, m16x4 }
 impl_simd_rejection_sampling! { u16x8, m16x8 }
 impl_simd_rejection_sampling! { u16x16, m16x16 }
-impl_simd_rejection_sampling! { u16x32, m1x32 }
+impl_simd_rejection_sampling! { u16x32, m16x32 }
 impl_simd_rejection_sampling! { u32x2, m32x2 }
 impl_simd_rejection_sampling! { u32x4, m32x4 }
 impl_simd_rejection_sampling! { u32x8, m32x8 }
-impl_simd_rejection_sampling! { u32x16, m1x16 }
+impl_simd_rejection_sampling! { u32x16, m32x16 }
 impl_simd_rejection_sampling! { u64x2, m64x2 }
 impl_simd_rejection_sampling! { u64x4, m64x4 }
-impl_simd_rejection_sampling! { u64x8, m1x8 }
+impl_simd_rejection_sampling! { u64x8, m64x8 }

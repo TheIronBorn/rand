@@ -7,7 +7,7 @@ extern crate rand;
 extern crate stdsimd;*/
 
 const RAND_BENCH_N: u64 = 1000;
-const SHUF_SIZE: usize = 1000;
+const SHUF_SIZE: usize = 1 << 15;
 
 use test::Bencher;
 
@@ -201,9 +201,12 @@ fn gen_1k_fill(b: &mut Bencher) {
 mod simd_benches {
     use super::*;
 
-    use std::simd::*;
+    extern crate packed_simd;
+
+    use self::packed_simd::*;
 
     use rand::SimdShuf;
+    use rand::simd_shuffle::*;
     use rand::prng::SfcAlt64x2a;
 
     const SHUF_BENCH: usize = 1 << 0;
@@ -213,9 +216,9 @@ mod simd_benches {
             #[bench]
             fn $fnn(b: &mut Bencher) {
                 let mut rng = $rng::from_rng(thread_rng()).unwrap();
-                let x: &mut [usize] = &mut [1; SHUF_SIZE];
+                let x: &mut [u32] = &mut [1; SHUF_SIZE];
                 b.iter(|| {
-                    let mut accum = 0usize;
+                    let mut accum = 0u32;
                     for _ in 0..SHUF_BENCH {
                         $vec::simd_shuffle(&mut rng, x);
                         accum = accum.wrapping_add(x[0]);
@@ -225,7 +228,7 @@ mod simd_benches {
             }
         )
     }
-    macro_rules! shuffle {
+    macro_rules! scalar_shuffle {
         ($fnn:ident, $rng:ident) => (
             #[bench]
             fn $fnn(b: &mut Bencher) {
@@ -243,20 +246,49 @@ mod simd_benches {
         )
     }
 
-    simd_shuffle!(simd_shuffle_sfc32x4, SfcAlt64x2a, u16x8);
+    #[bench]
+    fn rs_shuffle_sfc32x4(b: &mut Bencher) {
+        let mut rng = SfcAlt64x2a::from_rng(thread_rng()).unwrap();
+        let x: &mut [u32] = &mut [1; SHUF_SIZE];
+        b.iter(|| {
+            let mut accum = 0u32;
+            for _ in 0..SHUF_BENCH {
+                rs_shuffle(&mut rng, x);
+                accum = accum.wrapping_add(x[0]);
+            }
+            accum
+        })
+    }
+
+    #[bench]
+    fn merge_shuffle_sfc32x4(b: &mut Bencher) {
+        let mut rng = SfcAlt64x2a::from_rng(thread_rng()).unwrap();
+        let x: &mut [u32] = &mut [1; SHUF_SIZE];
+        b.iter(|| {
+            let mut accum = 0u32;
+            for _ in 0..SHUF_BENCH {
+                merge_shuffle(&mut rng, x);
+                accum = accum.wrapping_add(x[0]);
+            }
+            accum
+        })
+    }
+
+    // simd_shuffle!(simd_shuffle_sfc32x4, SfcAlt64x2a, u16x8);
+    simd_shuffle!(simd_shuffle_sfc32x4, SfcAlt64x2a, u32x4);
     simd_shuffle!(simd_shuffle_smallrng, SmallRng, u16x8);
-    shuffle!(shuffle_smallrng, SmallRng);
+    scalar_shuffle!(shuffle_smallrng, SmallRng);
     simd_shuffle!(simd_shuffle_stdrng, StdRng, u16x8);
     simd_shuffle!(simd_shuffle_stdrng_512, StdRng, u16x32);
     simd_shuffle!(simd_shuffle_stdrng_256, StdRng, u16x16);
-    shuffle!(shuffle_stdrng, StdRng);
+    scalar_shuffle!(shuffle_stdrng, StdRng);
 }
 
 /*#[cfg(feature = "simd_support")]
 mod shuf_below {
     use super::*;
 
-    use core::simd::*;
+    use packed_simd::*;
 
     use rand::SimdShuf;
     use rand::prng::SfcAlt64x2a;

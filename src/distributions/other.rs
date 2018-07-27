@@ -175,7 +175,7 @@ mod simd {
 
     use super::*;
 
-    use core::simd::*;
+    use packed_simd::*;
 
     /// Sample chars as SIMD integer vectors.
     ///
@@ -309,22 +309,22 @@ mod simd {
         m8x8, i8x8,
         m8x16, i8x16,
         m8x32, i8x32,
-        m1x64, i8x64, // 512-bit mask types have strange names
+        m8x64, i8x64, // 512-bit mask types have strange names
 
         m16x2, i16x2,
         m16x4, i16x4,
         m16x8, i16x8,
         m16x16, i16x16,
-        m1x32, i16x32,
+        m16x32, i16x32,
 
         m32x2, i32x2,
         m32x4, i32x4,
         m32x8, i32x8,
-        m1x16, i32x16,
+        m32x16, i32x16,
 
         m64x2, i64x2,
         m64x4, i64x4,
-        m1x8, i64x8,
+        m64x8, i64x8,
     }
 }
 #[cfg(feature = "simd_support")]
@@ -377,7 +377,7 @@ mod tests {
     mod simd {
         // extern crate stdsimd;
 
-        use core::simd::*;
+        use packed_simd::*;
 
         use distributions::other::*;
 

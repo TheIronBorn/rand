@@ -225,8 +225,8 @@
        html_favicon_url = "https://www.rust-lang.org/favicon.ico",
        html_root_url = "https://docs.rs/rand/0.5.0")]
 
-#![deny(missing_docs)]
-#![deny(missing_debug_implementations)]
+// #![deny(missing_docs)]
+// #![deny(missing_debug_implementations)]
 #![doc(test(attr(allow(unused_variables), deny(warnings))))]
 
 #![cfg_attr(feature="cargo-clippy", warn(clippy_pedantic))]
@@ -244,8 +244,11 @@
 #![cfg_attr(all(feature="i128_support", feature="nightly"), allow(stable_features))] // stable since 2018-03-27
 #![cfg_attr(all(feature="i128_support", feature="nightly"), feature(i128_type, i128))]
 #![cfg_attr(all(feature="simd_support", feature="nightly"), feature(stdsimd))]
+#![cfg_attr(all(feature="simd_support", feature="nightly"), feature(packed_simd))]
 #![cfg_attr(all(feature="simd_support", feature="nightly"), feature(platform_intrinsics))]
 #![cfg_attr(feature = "stdweb", recursion_limit="128")]
+
+#![feature(platform_intrinsics)]
 
 #[cfg(feature="std")] extern crate std as core;
 #[cfg(all(feature = "alloc", not(feature="std")))] extern crate alloc;
@@ -270,10 +273,16 @@ extern crate rand_core;
 /*#[cfg(feature="simd_support")]
 extern crate stdsimd;*/
 
+// #[cfg(feature="simd_support")]
+extern crate packed_simd;
+
 #[cfg(feature="simd_support")]
-mod simd_shuffle;
+pub mod simd_shuffle;
 #[cfg(feature="simd_support")]
 pub use simd_shuffle::SimdShuf;
+
+// use packed_simd::*;
+use packed_simd::*;
 
 // Re-exports from rand_core
 pub use rand_core::{RngCore, CryptoRng, SeedableRng};
@@ -321,14 +330,14 @@ pub mod isaac {
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#[cfg(feature="simd_support")]
-use core::simd::*;
+/*#[cfg(feature="simd_support")]
+use packed_simd::*;*/
 use core::{marker, mem, slice, ptr};
 use distributions::{Distribution, Standard};
 use distributions::uniform::{SampleUniform, UniformSampler};
 
-#[cfg(feature="simd_support")]
-use rand_core::utils::ToLittleEndian;
+// #[cfg(feature="simd_support")]
+// use rand_core::utils::ToLittleEndian;
 
 
 /// A type that can be randomly generated using an [`Rng`].
@@ -431,11 +440,6 @@ pub trait Rng: RngCore {
     #[inline(always)]
     fn gen_range<T: PartialOrd + SampleUniform>(&mut self, low: T, high: T) -> T {
         T::Sampler::sample_single(low, high, self)
-    }
-
-    ///
-    fn gen_below<T: PartialOrd + SampleUniform>(&mut self, high: T) -> T {
-        T::Sampler::sample_single_below(high, self)
     }
 
     /// Sample a new value, using the given distribution.

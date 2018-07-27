@@ -11,8 +11,8 @@ const RAND_BENCH_N: u64 = 1000;
 use std::mem::size_of;
 use test::Bencher;
 
-use rand::{Rng, FromEntropy, XorShiftRng};
-use rand::prng::hc128::Hc128Rng;
+use rand::{Rng, FromEntropy};
+use rand::prng::{XorShiftRng, Hc128Rng};
 use rand::distributions::*;
 
 macro_rules! distr_int {
@@ -112,7 +112,7 @@ distr_float!(distr_gamma_small_shape, f64, XorShiftRng, Gamma::new(0.1, 1.0));
 distr_float!(distr_cauchy, f64, XorShiftRng, Cauchy::new(4.2, 6.9));
 distr_int!(distr_binomial, u64, XorShiftRng, Binomial::new(20, 0.7));
 distr_int!(distr_poisson, u64, XorShiftRng, Poisson::new(4.0));
-distr!(distr_bernoulli, bool, XorShiftRng, Bernoulli::<u64>::new(0.18));
+// distr!(distr_bernoulli, bool, XorShiftRng, Bernoulli::<u64>::new(0.18));
 
 
 // construct and sample from a range
@@ -164,11 +164,14 @@ fn dist_iter(b: &mut Bencher) {
 mod simd {
     // extern crate stdsimd;
 
+    extern crate packed_simd;
+
     use super::*;
 
-    use std::simd::*;
+    use self::packed_simd::*;
 
     use rand::prng::*;
+/*<<<<<<< Updated upstream
 
     distr_int!(distr_standard_codepoint_x4, u32x4, Sfc32x4Rng, SimdCharDistribution);
     distr_int!(distr_standard_alphanumeric_x8, u32x8, Sfc32x4Rng, AlphanumericSimd);
@@ -192,41 +195,87 @@ mod simd {
     macro_rules! many_int_distr {
         ($(($fnn:ident, $rng:ident, $ty:ident),)+, $low:expr, $high:expr) => ($(
             distr_int!($fnn, $ty, $rng, Uniform::new($ty::splat($low), $ty::splat($high)));
+=======*/
+    use rand::prelude::*;
+
+    macro_rules! many_int_distr {
+        ($(($fnn:ident, $gen_range:ident, $rng:ident, $ty:ident),)+, $scalar:ident, $low:expr, $high:expr) => ($(
+            // distr_int!($fnn, $ty, $rng, Uniform::new($ty::splat($low), $ty::splat($high)));
+            #[bench]
+            fn $fnn(b: &mut Bencher) {
+                let mut rng = $rng::from_rng(&mut thread_rng()).unwrap();
+                // make the first lane the full width
+                let low = $ty::splat($low);//.replace(0, $scalar::min_value());
+                let high = $ty::splat($high);//.replace(0, $scalar::max_value());
+                // assert!(low.le(high).all(), "{:?} {:?}", low, high);
+                let distr = Uniform::new_inclusive(low, high);
+
+                b.iter(|| {
+                    let mut accum = $ty::default();
+                    for _ in 0..::RAND_BENCH_N {
+                        let x: $ty = distr.sample(&mut rng);
+                        // stdsimd has no `wrapping_add`, so we must rely
+                        // on the lack of overflow checks in release mode.
+                        accum += x;
+                    }
+                    accum
+                });
+                b.bytes = size_of::<$ty>() as u64 * ::RAND_BENCH_N;
+            }
+
+            // construct and sample from a range
+            #[bench]
+            fn $gen_range(b: &mut Bencher) {
+                let mut rng = $rng::from_rng(&mut thread_rng()).unwrap();
+                let low = $ty::splat($low);
+
+                b.iter(|| {
+                    let mut high = $ty::splat($high);
+                    let mut accum = $ty::splat(0);
+                    for _ in 0..::RAND_BENCH_N {
+                        accum += rng.gen_range(low, high);
+                        // force recalculation of range each time
+                        high = (high + 1) & std::$scalar::MAX;
+                    }
+                    accum
+                });
+                b.bytes = size_of::<$ty>() as u64 * ::RAND_BENCH_N;
+            }
         )+)
     }
 
     many_int_distr! {
-        (distr_uniform_i8x2, Sfc32x2Rng, i8x2),
-        (distr_uniform_i8x4, Sfc32x2Rng, i8x4),
-        (distr_uniform_i8x8, Sfc32x2Rng, i8x8),
-        (distr_uniform_i8x16, Sfc32x4Rng, i8x16),
-        (distr_uniform_i8x32, Sfc32x4Rng, i8x32),
-        (distr_uniform_i8x64, Sfc32x4Rng, i8x64),,
-        20, 100
+        (distr_uniform_i8x2, gen_range_i8x2, VeryFast32x2e, i8x2),
+        (distr_uniform_i8x4, gen_range_i8x4, VeryFast32x2e, i8x4),
+        (distr_uniform_i8x8, gen_range_i8x8, VeryFast32x2e, i8x8),
+        (distr_uniform_i8x16, gen_range_i8x16, VeryFast32x4e, i8x16),
+        (distr_uniform_i8x32, gen_range_i8x32, VeryFast32x4e, i8x32),
+        (distr_uniform_i8x64, gen_range_i8x64, VeryFast32x4e, i8x64),,
+        i8, -20, 100
     }
 
     many_int_distr! {
-        (distr_uniform_i16x2, Sfc32x2Rng, i16x2),
-        (distr_uniform_i16x4, Sfc32x2Rng, i16x4),
-        (distr_uniform_i16x8, Sfc32x4Rng, i16x8),
-        (distr_uniform_i16x16, Sfc32x4Rng, i16x16),
-        (distr_uniform_i16x32, Sfc32x4Rng, i16x32),,
-        -500, 2000
+        (distr_uniform_i16x2, gen_range_i16x2, VeryFast32x2e, i16x2),
+        (distr_uniform_i16x4, gen_range_i16x4, VeryFast32x2e, i16x4),
+        (distr_uniform_i16x8, gen_range_i16x8, VeryFast32x4e, i16x8),
+        (distr_uniform_i16x16, gen_range_i16x16, VeryFast32x4e, i16x16),
+        (distr_uniform_i16x32, gen_range_i16x32, VeryFast32x4e, i16x32),,
+        i16, -500, 2000
     }
 
     many_int_distr! {
-        (distr_uniform_i32x2, Sfc32x2Rng, i32x2),
-        (distr_uniform_i32x4, Sfc32x4Rng, i32x4),
-        (distr_uniform_i32x8, Sfc32x4Rng, i32x8),
-        (distr_uniform_i32x16, Sfc32x4Rng, i32x16),,
-        -200_000_000, 800_000_000
+        (distr_uniform_i32x2, gen_range_i32x2, VeryFast32x2e, i32x2),
+        (distr_uniform_i32x4, gen_range_i32x4, VeryFast32x4e, i32x4),
+        (distr_uniform_i32x8, gen_range_i32x8, VeryFast32x4e, i32x8),
+        (distr_uniform_i32x16, gen_range_i32x16, VeryFast32x4e, i32x16),,
+        i32, -200_000_000, 800_000_000
     }
 
     many_int_distr! {
-        (distr_uniform_i64x2, Sfc32x4Rng, i64x2),
-        (distr_uniform_i64x4, Sfc32x4Rng, i64x4),
-        (distr_uniform_i64x8, Sfc32x4Rng, i64x8),,
-        3, 123_456_789_123
+        (distr_uniform_i64x2, gen_range_i64x2, VeryFast32x4e, i64x2),
+        (distr_uniform_i64x4, gen_range_i64x4, VeryFast32x4e, i64x4),
+        (distr_uniform_i64x8, gen_range_i64x8, VeryFast32x4e, i64x8),,
+        i64, 3, 123_456_789_123
     }
 
     macro_rules! many_float_distr {
@@ -236,14 +285,14 @@ mod simd {
     }
 
     many_float_distr! {
-        (distr_range_f32x2, Sfc32x2Rng, f32x2),
-        (distr_range_f32x4, Sfc32x4Rng, f32x4),
-        (distr_range_f32x8, Sfc32x4Rng, f32x8),
-        (distr_range_f32x16, Sfc32x4Rng, f32x16),
+        (distr_range_f32x2, VeryFast32x2e, f32x2),
+        (distr_range_f32x4, VeryFast32x4e, f32x4),
+        (distr_range_f32x8, VeryFast32x4e, f32x8),
+        (distr_range_f32x16, VeryFast32x4e, f32x16),
 
-        (distr_range_f64x2, Sfc32x4Rng, f64x2),
-        (distr_range_f64x4, Sfc32x4Rng, f64x4),
-        (distr_range_f64x8, Sfc32x4Rng, f64x8),,
+        (distr_range_f64x2, VeryFast32x4e, f64x2),
+        (distr_range_f64x4, VeryFast32x4e, f64x4),
+        (distr_range_f64x8, VeryFast32x4e, f64x8),,
         2.26, 2.319
     }
 }

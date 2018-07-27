@@ -9,7 +9,7 @@ extern crate test;
 const RAND_BENCH_N: usize = 1 << 10;
 
 use std::mem::*;
-use std::simd::*;
+use packed_simd::*;
 use test::Bencher;
 
 use rand::distributions::Uniform;

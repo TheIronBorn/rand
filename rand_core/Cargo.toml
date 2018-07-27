@@ -18,13 +18,16 @@ travis-ci = { repository = "rust-lang-nursery/rand" }
 appveyor = { repository = "alexcrichton/rand" }
 
 [features]
-default = ["std"]
+default = ["std", "simd_support"]
 std = ["alloc"]    # use std library; should be default but for above bug
 alloc = []  # enables Vec and Box support without std
 serde1 = ["serde", "serde_derive"] # enables serde for BlockRng wrapper
-simd_support = [] # enables SIMD support
+simd_support = ["packed_simd"] # enables SIMD support
 
 [dependencies]
 serde = { version = "1", optional = true }
 serde_derive = { version = "^1.0.38", optional = true }
-stdsimd = { git = "https://github.com/rust-lang-nursery/stdsimd" }
+# stdsimd = { git = "https://github.com/rust-lang-nursery/stdsimd" }
+# packed_simd = { git = "https://github.com/gnzlbg/packed_simd", features = ["into_bits"] }
+# packed_simd = { path = "/Users/daniel/Documents/GitHub/packed_simd", features = ["into_bits"] }
+packed_simd = { version = "0.1", optional = true, features = ["into_bits"] }

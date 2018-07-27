@@ -4,15 +4,15 @@
 #![allow(unused_imports)]
 
 extern crate rand;
-extern crate stdsimd;
+extern crate packed_simd;
 
 use std::f64;
 use std::mem::{size_of, transmute};
-use core::simd::*;
+use packed_simd::*;
 
 use rand::{Rng, thread_rng, SeedableRng, FromEntropy};
 use rand::rngs::SmallRng;
-use rand::prng::SfcAltSplit64x2a;
+use rand::prng::SfcAlt64x2k;
 use rand::distributions::box_muller::{BoxMuller, BoxMullerCore, SimdMath};
 use rand::distributions::{StandardNormal, Uniform};
 
@@ -62,7 +62,7 @@ macro_rules! clt_normal {
     ($fnn:ident, $ty:ident, $scalar:ty) => (
         #[test]
         fn $fnn() {
-            let mut rng = SfcAltSplit64x2a::from_rng(thread_rng()).unwrap();
+            let mut rng = SfcAlt64x2k::from_rng(thread_rng()).unwrap();
             fn sample<R: Rng>(rng: &mut R) -> f64 {
                 const HALF: $scalar = $ty::lanes() as $scalar / 2.0;
                 let inv = 1.0 / ($ty::lanes() as $scalar / 12.0).sqrt();

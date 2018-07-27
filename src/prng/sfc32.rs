@@ -12,10 +12,8 @@
 
 use core::fmt;
 #[cfg(feature = "simd_support")]
-use core::simd::*;
+use packed_simd::*;
 
-#[cfg(feature = "simd_support")]
-use distributions::box_muller::SimdIntegerMath;
 #[cfg(feature = "simd_support")]
 use rand_core::simd_impls::{SimdRng, SimdRngImpls};
 use rand_core::{impls, le, Error, RngCore, SeedableRng};
@@ -195,7 +193,7 @@ macro_rules! make_sfc_simd {
                 self.counter += 1;
                 self.a = self.b ^ (self.b >> $rsh);
                 self.b = self.c + (self.c << $lsh);
-                self.c = self.c.rotate_left($rot) + tmp;
+                self.c = rotate_left!(self.c, $rot, $vector) + tmp;
                 tmp
             }
         }

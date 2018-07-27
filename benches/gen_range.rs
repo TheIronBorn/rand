@@ -4,11 +4,12 @@
 
 extern crate rand;
 // extern crate stdsimd;
+extern crate packed_simd;
 extern crate test;
 
 const RAND_BENCH_N: usize = 1 << 10;
 
-use std::simd::*;
+use packed_simd::*;
 use test::Bencher;
 
 use rand::prelude::*;
@@ -73,7 +74,7 @@ mod no_approx {
                         // #[inline(always)] means there should be no other
                         // difference in the benchmarks
 
-                        let range = $unsigned::from(high - low);
+                        let range: $unsigned = (high - low).cast();
                         let unsigned_max = $u_scalar::max_value();
                         let ints_to_reject = (unsigned_max - range + 1) % range;
                         let zone = unsigned_max - ints_to_reject;
@@ -83,7 +84,8 @@ mod no_approx {
                             let (hi, lo) = v.wmul(range);
                             let mask = lo.le(zone);
                             if mask.all() {
-                                accum += $low + $ty::from(hi);
+                                let hi: $ty = hi.cast();
+                                accum += $low + hi;
                                 break;
                             }
                             // Replace only the failing lanes

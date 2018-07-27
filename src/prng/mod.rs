@@ -52,7 +52,7 @@
 // Quality stars [not rendered in documentation]:
 // 5. reserved for crypto-level (e.g. ChaCha8, ISAAC)
 // 4. good performance on TestU01 and PractRand, good theory
-//    (e.g. PCG, truncated Xorshift*)
+//    (e.g. PCG, castated Xorshift*)
 // 3. good performance on TestU01 and PractRand, but "falling through the
 //    cracks" or insufficient theory (e.g. SFC, Xoshiro)
 // 2. imperfect performance on tests or other limiting properties, but not
@@ -224,7 +224,7 @@
 //! some cases prediction is trivial, for example plain Xorshift outputs part of
 //! its state without mutation, and prediction is as simple as seeding a new
 //! Xorshift generator from four `u32` outputs. Other generators, like
-//! [PCG](http://www.pcg-random.org/predictability.html) and truncated Xorshift*
+//! [PCG](http://www.pcg-random.org/predictability.html) and castated Xorshift*
 //! are harder to predict, but not outside the realm of common mathematics and a
 //! desktop PC.
 //!
@@ -315,6 +315,9 @@
 //! [next-bit test]: https://en.wikipedia.org/wiki/Next-bit_test
 
 
+#[macro_use]
+mod macros;
+
 pub mod chacha;
 pub mod hc128;
 pub mod isaac;
@@ -323,6 +326,7 @@ mod sfc32;
 #[cfg(feature = "simd_support")]
 mod sfc_alt;
 mod xorshift;
+mod vf;
 
 mod isaac_array;
 
@@ -334,3 +338,4 @@ pub use self::sfc32::*;
 #[cfg(feature = "simd_support")]
 pub use self::sfc_alt::*;
 pub use self::xorshift::XorShiftRng;
+pub use self::vf::*;

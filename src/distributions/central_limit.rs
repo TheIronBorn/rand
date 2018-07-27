@@ -1,7 +1,7 @@
 //! The central limit theorem and derived distributions.
 
 use core::marker::PhantomData;
-use core::simd::*;
+use packed_simd::*;
 
 use distributions::Distribution;
 use Rng;
@@ -162,7 +162,6 @@ impl_clt_scalar! { f64x8, f64 }
 #[cfg(test)]
 mod tests {
     use super::*;
-    use core::simd::*;
 
     #[test]
     fn test_clt_vector() {

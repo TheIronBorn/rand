@@ -3,9 +3,9 @@
 // Some slight complexity in this module because we can't use `gen::<vector>()`
 
 use core::mem;
-use core::simd::*;
+use packed_simd::*;
 
-use utils::ToLittleEndian;
+// use utils::ToLittleEndian;
 
 /// Enables an RNG to use [`SimdRngImpls`].
 ///
@@ -17,8 +17,8 @@ use utils::ToLittleEndian;
 /// #![feature(stdsimd)]
 /// extern crate stdsimd;
 /// extern crate rand_core;
-/// use core::simd::u32x4;
-/// use rand_core::simd_impls::SimdRng;
+/// use packed_simd::u32x4;
+/// use rand_packed_simd_impls::SimdRng;
 ///
 /// #[allow(dead_code)]
 /// struct CountingSimdRng(u32x4);
@@ -48,9 +48,9 @@ pub trait SimdRng<Vector> {
 /// #![feature(stdsimd)]
 /// extern crate stdsimd;
 /// extern crate rand_core;
-/// use core::simd::u32x4;
+/// use packed_simd::u32x4;
 /// use rand_core::{RngCore, Error};
-/// use rand_core::simd_impls::{SimdRng, SimdRngImpls};
+/// use rand_packed_simd_impls::{SimdRng, SimdRngImpls};
 ///
 /// #[allow(dead_code)]
 /// struct CountingSimdRng(u32x4);
@@ -120,7 +120,7 @@ macro_rules! impl_simd_rng {
                 for _ in 0..dest.len() / CHUNK_SIZE {
                     let mut results = $v8::from_bits(rng.generate());
                     results = results.to_le(); // TODO: look into reverse store intrinsics
-                    results.store_unaligned(&mut dest[read_len..]);
+                    results.write_to_slice_aligned(&mut dest[read_len..]);
                     read_len += CHUNK_SIZE;
                 }
                 let remainder = dest.len() % CHUNK_SIZE;
@@ -135,7 +135,7 @@ macro_rules! impl_simd_rng {
                     #[repr(align(16))]
                     struct Aligned([u8; $v8::lanes()]);
                     let mut buf = Aligned([0_u8; $v8::lanes()]);
-                    results.store_aligned(&mut buf.0);
+                    results.write_to_slice_aligned(&mut buf.0);
 
                     dest[len..].copy_from_slice(&buf.0[..remainder]);
                 }
@@ -197,7 +197,7 @@ impl SimdRngImpls<u8x2> for u8x2 {
         for _ in 0..dest.len() / CHUNK_SIZE {
             let mut results = u8x2::from_bits(rng.generate());
             results = results.to_le();
-            results.store_unaligned(&mut dest[read_len..]);
+            results.write_to_slice_aligned(&mut dest[read_len..]);
             read_len += CHUNK_SIZE;
         }
         let remainder = dest.len() % CHUNK_SIZE;
@@ -206,7 +206,7 @@ impl SimdRngImpls<u8x2> for u8x2 {
             results = results.to_le();
             let len = dest.len() - remainder;
             let mut buf = [0_u8; u8x2::lanes()];
-            results.store_unaligned(&mut buf);
+            results.write_to_slice_aligned(&mut buf);
             dest[len..].copy_from_slice(&buf[..remainder]);
         }
     }
@@ -235,7 +235,7 @@ impl SimdRngImpls<u16x2> for u16x2 {
         for _ in 0..dest.len() / CHUNK_SIZE {
             let mut results = u8x4::from_bits(rng.generate());
             results = results.to_le();
-            results.store_unaligned(&mut dest[read_len..]);
+            results.write_to_slice_aligned(&mut dest[read_len..]);
             read_len += CHUNK_SIZE;
         }
         let remainder = dest.len() % CHUNK_SIZE;
@@ -244,7 +244,7 @@ impl SimdRngImpls<u16x2> for u16x2 {
             results = results.to_le();
             let len = dest.len() - remainder;
             let mut buf = [0_u8; u8x8::lanes()];
-            results.store_unaligned(&mut buf);
+            results.write_to_slice_aligned(&mut buf);
             dest[len..].copy_from_slice(&buf[..remainder]);
         }
     }
@@ -270,7 +270,7 @@ impl SimdRngImpls<u16x4> for u16x4 {
         for _ in 0..dest.len() / CHUNK_SIZE {
             let mut results = u8x8::from_bits(rng.generate());
             results = results.to_le();
-            results.store_unaligned(&mut dest[read_len..]);
+            results.write_to_slice_aligned(&mut dest[read_len..]);
             read_len += CHUNK_SIZE;
         }
         let remainder = dest.len() % CHUNK_SIZE;
@@ -279,7 +279,7 @@ impl SimdRngImpls<u16x4> for u16x4 {
             results = results.to_le();
             let len = dest.len() - remainder;
             let mut buf = [0_u8; u8x8::lanes()];
-            results.store_unaligned(&mut buf);
+            results.write_to_slice_aligned(&mut buf);
             dest[len..].copy_from_slice(&buf[..remainder]);
         }
     }
@@ -306,7 +306,7 @@ impl SimdRngImpls<u32x2> for u32x2 {
         for _ in 0..dest.len() / CHUNK_SIZE {
             let mut results = u8x8::from_bits(rng.generate());
             results = results.to_le();
-            results.store_unaligned(&mut dest[read_len..]);
+            results.write_to_slice_aligned(&mut dest[read_len..]);
             read_len += CHUNK_SIZE;
         }
         let remainder = dest.len() % CHUNK_SIZE;
@@ -315,7 +315,7 @@ impl SimdRngImpls<u32x2> for u32x2 {
             results = results.to_le();
             let len = dest.len() - remainder;
             let mut buf = [0_u8; u8x8::lanes()];
-            results.store_unaligned(&mut buf);
+            results.write_to_slice_aligned(&mut buf);
             dest[len..].copy_from_slice(&buf[..remainder]);
         }
     }

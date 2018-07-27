@@ -87,7 +87,7 @@ mod simd {
 
     use super::*;
 
-    use core::simd::*;
+    use packed_simd::*;
 
     macro_rules! impl_boolean_vector {
         ($fty:ident, $uty:ident, $mty:ident) => (
@@ -102,7 +102,8 @@ mod simd {
                     const MAX_P_INT: f64 = ::core::u64::MAX as f64;
 
                     let cmp = p.lt($fty::splat(1.0));
-                    let p_int = cmp.select($uty::from(p * MAX_P_INT), $uty::splat(::core::u64::MAX));
+                    let mul: $uty = (p * MAX_P_INT).cast();
+                    let p_int = cmp.select(mul, $uty::splat(::core::u64::MAX));
 
                     Bernoulli::<$uty> { p_int }
                 }
@@ -124,7 +125,7 @@ mod simd {
 
     impl_boolean_vector! { f64x2, u64x2, m64x2 }
     impl_boolean_vector! { f64x4, u64x4, m64x4 }
-    impl_boolean_vector! { f64x8, u64x8, m1x8 } // 512-bit mask types have strange names
+    impl_boolean_vector! { f64x8, u64x8, m64x8 } // 512-bit mask types have strange names
 }
 #[cfg(feature = "simd_support")]
 pub use self::simd::*;
@@ -137,7 +138,7 @@ mod test {
     extern crate stdsimd;*/
 
     #[cfg(feature = "simd_support")]
-    use core::simd::*;
+    use packed_simd::*;
 
     use super::Bernoulli;
 
@@ -204,7 +205,8 @@ mod test {
         for _ in 0..N {
             sum += u64x2::from_bits(d.sample(&mut rng)) & 1;
         }
-        let avg = f64x2::from(sum) / (N as f64);
+        let sum: f64x2 = sum.cast();
+        let avg = sum / (N as f64);
 
         assert!((avg - P).abs().lt(f64x2::splat(1e-3)).all());
     }

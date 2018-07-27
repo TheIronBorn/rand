@@ -23,7 +23,7 @@ nightly = ["i128_support", "simd_support"] # enables all features requiring nigh
 std = ["rand_core/std", "alloc", "libc", "winapi", "cloudabi", "fuchsia-zircon"]
 alloc = ["rand_core/alloc"]  # enables Vec and Box support (without std)
 i128_support = [] # enables i128 and u128 support
-simd_support = ["rand_core/simd_support"] # enables SIMD support
+simd_support = ["packed_simd", "rand_core/simd_support"] # enables SIMD support
 serde1 = ["serde", "serde_derive", "rand_core/serde1"] # enables serialization for PRNGs
 
 [workspace]
@@ -35,6 +35,9 @@ log = { version = "0.4", optional = true }
 serde = { version = "1", optional = true }
 serde_derive = { version = "1", optional = true }
 # stdsimd = { git = "https://github.com/rust-lang-nursery/stdsimd" }
+# packed_simd = { git = "https://github.com/gnzlbg/packed_simd", features = ["into_bits"] }
+packed_simd = { version = "0.1", optional = true, features = ["into_bits"] }
+# packed_simd = { path = "/Users/daniel/Documents/GitHub/packed_simd", features = ["into_bits"] }
 
 [target.'cfg(unix)'.dependencies]
 libc = { version = "0.2", optional = true }

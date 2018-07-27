@@ -4,8 +4,7 @@
 //!
 //! [SIMDxorshift]: (https://github.com/lemire/SIMDxorshift
 
-// use core::mem::size_of;
-use core::simd::*;
+use packed_simd::*;
 
 use {swap_unchecked, Rng};
 
@@ -59,8 +58,7 @@ macro_rules! impl_simd_shuf {
 
                 // shuffle a multiple of `$vec::lanes()` slice elements
                 for _ in 0..values.len() / $vec::lanes() {
-                    // `gen_below` is about 10% faster
-                    let rand_indices = rng.gen_below(interval);
+                    let rand_indices = rng.gen_range($vec::splat(0), interval);
 
                     // swap each `rand_idx` with the next `slice_idx`
                     // TODO: could probably be optimized
@@ -115,7 +113,7 @@ macro_rules! rem_shuf {
             interval = interval.replace(vec_idx, ($rem - vec_idx) as $scalar);
         }
 
-        let rand_indices = $rng.gen_below(interval);
+        let rand_indices = $rng.gen_range($vec::splat(0), interval);
         for vec_idx in 0..$rem - 1 {
             $slice_idx -= 1;
             let rand_idx = rand_indices.extract(vec_idx) as usize;

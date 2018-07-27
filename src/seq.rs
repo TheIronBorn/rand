@@ -161,7 +161,7 @@ pub fn sample_indices<R>(rng: &mut R, length: usize, amount: usize) -> Vec<usize
 /// Sample an amount of indices using an inplace partial fisher yates method.
 ///
 /// This allocates the entire `length` of indices and randomizes only the first `amount`.
-/// It then truncates to `amount` and returns.
+/// It then castates to `amount` and returns.
 ///
 /// This is better than using a `HashMap` "cache" when `amount >= length / 2`
 /// since it does not require allocating an extra cache and is much faster.
