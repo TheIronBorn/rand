@@ -59,7 +59,7 @@ macro_rules! benches {
 //
 // `$ cargo benchcmp wide_mul bitmask_simple <benchmark_file>`
 
-mod wide_mul {
+mod wide_mul_unbiased {
     use super::*;
 
     macro_rules! simd_uniform_bench {
