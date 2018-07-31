@@ -3,220 +3,194 @@
 #[cfg(feature = "simd_support")]
 use packed_simd::*;
 
-// Until portable shuffles land in stdsimd, we expose and use the shuffle intrinsics directly.
-#[cfg(feature = "simd_support")]
-extern "platform-intrinsic" {
-    pub fn simd_shuffle2<T, U>(a: T, b: T, indices: [u32; 2]) -> U;
-    pub fn simd_shuffle4<T, U>(a: T, b: T, indices: [u32; 4]) -> U;
-    pub fn simd_shuffle8<T, U>(a: T, b: T, indices: [u32; 8]) -> U;
-    pub fn simd_shuffle16<T, U>(a: T, b: T, indices: [u32; 16]) -> U;
-    pub fn simd_shuffle32<T, U>(a: T, b: T, indices: [u32; 32]) -> U;
-    pub fn simd_shuffle64<T, U>(a: T, b: T, indices: [u32; 64]) -> U;
+pub trait WideningMultiply<RHS = Self> {
+    type Output;
+
+    fn wmul(self, x: RHS) -> Self::Output;
 }
 
-/*/// Implement byte swapping for SIMD vectors
-#[cfg(feature = "simd_support")]
-pub trait SwapBytes {
-    /// `swap_bytes` for a vector (horizontally)
-    fn swap_bytes(self) -> Self;
-}
+macro_rules! wmul_impl {
+    ($ty:ty, $wide:ty, $shift:expr) => {
+        impl WideningMultiply for $ty {
+            type Output = ($ty, $ty);
 
-// `simd_shuffleX` require constant indices, making this a small pain to implement
-#[cfg(feature = "simd_support")]
-macro_rules! impl_swap_bytes {
-    ($ty:ident, $vec8:ident, $shuf:ident, $indices:expr) => (
-        impl SwapBytes for $ty {
-            fn swap_bytes(self) -> Self {
-                let vec8 = $vec8::from_bits(self);
-                let shuffled: $vec8 = unsafe { $shuf(vec8, vec8, $indices) };
-                $ty::from_bits(shuffled)
+            #[inline(always)]
+            fn wmul(self, x: $ty) -> Self::Output {
+                let tmp = (self as $wide) * (x as $wide);
+                ((tmp >> $shift) as $ty, tmp as $ty)
             }
         }
-    );
+    };
 
-    // bulk impl for a shuffle intrinsic/vector width
-    ($vec8:ident, $shuf:ident, $indices:expr, $($ty:ident,)+) => ($(
-        impl_swap_bytes! { $ty, $vec8, $shuf, $indices }
-    )+);
-}
-
-#[cfg(feature = "simd_support")]
-impl_swap_bytes! {
-    u8x2,
-    simd_shuffle2,
-    [1, 0],
-    u8x2, i8x2,
-}
-
-#[cfg(feature = "simd_support")]
-impl_swap_bytes! {
-    u8x4,
-    simd_shuffle4,
-    [3, 2, 1, 0],
-    u8x4, i8x4,
-    u16x2, i16x2,
-}
-
-#[cfg(feature = "simd_support")]
-impl_swap_bytes! {
-    u8x8,
-    simd_shuffle8,
-    [7, 6, 5, 4, 3, 2, 1, 0],
-    u8x8, i8x8,
-    u16x4, i16x4,
-    u32x2, i32x2,
-}
-
-#[cfg(feature = "simd_support")]
-impl_swap_bytes! {
-    u8x16,
-    simd_shuffle16,
-    [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-    u8x16, i8x16,
-    u16x8, i16x8,
-    u32x4, i32x4,
-    u64x2, i64x2,
-}
-
-#[cfg(feature = "simd_support")]
-impl_swap_bytes! {
-    u8x32,
-    simd_shuffle32,
-    [31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-    u8x32, i8x32,
-    u16x16, i16x16,
-    u32x8, i32x8,
-    u64x4, i64x4,
-}
-
-#[cfg(feature = "simd_support")]
-impl_swap_bytes! {
-    u8x64,
-    simd_shuffle64,
-    [63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-    u8x64, i8x64,
-    u16x32, i16x32,
-    u32x16, i32x16,
-    u64x8, i64x8,
-}
-
-/// Endian byte swapping for SIMD vectors
-pub trait ToLittleEndian {
-    /// Converts self to little endian from the target's endianness.
-    ///
-    /// On little endian this is a no-op. On big endian the bytes are swapped.
-    fn to_le(self) -> Self;
-}
-
-#[cfg(feature = "simd_support")]
-macro_rules! impl_to_le {
-    ($($ty:ty,)+) => ($(
-        impl ToLittleEndian for $ty {
-            fn to_le(self) -> Self {
-                #[cfg(target_endian = "little")]
-                {
-                    self
-                }
-                #[cfg(not(target_endian = "little"))]
-                {
-                    self.swap_bytes()
-                }
-            }
-        }
-    )+)
-}
-
-#[cfg(feature = "simd_support")]
-impl_to_le! {
-    u8x2, u8x4, u8x8, u8x16, u8x32, u8x64,
-    i8x2, i8x4, i8x8, i8x16, i8x32, i8x64,
-    u16x2, u16x4, u16x8, u16x16, u16x32,
-    i16x2, i16x4, i16x8, i16x16, i16x32,
-    u32x2, u32x4, u32x8, u32x16,
-    i32x2, i32x4, i32x8, i32x16,
-    u64x2, u64x4, u64x8,
-    i64x2, i64x4, i64x8,
-}*/
-
-pub trait Rotates<T> {
-    fn _rotate_left(self, T) -> Self;
-    fn _rotate_right(self, T) -> Self;
-}
-
-macro_rules! impl_rotates {
-    ($elem_ty:ty, $($ty:ident,)+) => {
+    // simd bulk implementation
+    ($(($ty:ident, $wide:ident),)+, $shift:expr) => {
         $(
-            impl Rotates<$elem_ty> for $ty {
+            impl WideningMultiply for $ty {
+                type Output = ($ty, $ty);
                 #[inline(always)]
-                fn _rotate_left(self, n: $elem_ty) -> Self {
-                    self.rotate_left($ty::splat(n))
-                }
-
-                #[inline(always)]
-                fn _rotate_right(self, n: $elem_ty) -> Self {
-                    self.rotate_right($ty::splat(n))
+                fn wmul(self, x: $ty) -> Self::Output {
+                    // TODO: optimize: there may be better mul/shuf/blend
+                    // operations.
+                    // For supported vectors, this should hopefully stay
+                    // within supported registers
+                    let y: $wide = self.cast();
+                    let x: $wide = x.cast();
+                    let tmp = y * x;
+                    let hi: $ty = (tmp >> $shift).cast();
+                    let lo: $ty = tmp.cast();
+                    (hi, lo)
                 }
             }
         )+
     };
 }
+wmul_impl! { u8, u16, 8 }
+wmul_impl! { u16, u32, 16 }
+wmul_impl! { u32, u64, 32 }
+#[cfg(feature = "i128_support")]
+wmul_impl! { u64, u128, 64 }
 
-impl_rotates! { u8, u8x2, u8x4, u8x8, u8x16, u8x32, u8x64, }
-impl_rotates! { u16, u16x2, u16x4, u16x8, u16x16, u16x32, }
-impl_rotates! { u32, u32x2, u32x4, u32x8, u32x16, }
-impl_rotates! { u64, u64x2, u64x4, u64x8, }
+// This code is a translation of the __mulddi3 function in LLVM's
+// compiler-rt. It is an optimised variant of the common method
+// `(a + b) * (c + d) = ac + ad + bc + bd`.
+//
+// For some reason LLVM can optimise the C version very well, but
+// keeps shuffling registers in this Rust translation.
+macro_rules! wmul_impl_large {
+    ($ty:ty, $half:expr) => {
+        impl WideningMultiply for $ty {
+            type Output = ($ty, $ty);
 
-/*#[cfg(test)]
-mod tests {
+            #[inline(always)]
+            fn wmul(self, b: $ty) -> Self::Output {
+                const LOWER_MASK: $ty = !0 >> $half;
+                let mut low = (self & LOWER_MASK).wrapping_mul(b & LOWER_MASK);
+                let mut t = low >> $half;
+                low &= LOWER_MASK;
+                t += (self >> $half).wrapping_mul(b & LOWER_MASK);
+                low += (t & LOWER_MASK) << $half;
+                let mut high = t >> $half;
+                t = low >> $half;
+                low &= LOWER_MASK;
+                t += (b >> $half).wrapping_mul(self & LOWER_MASK);
+                low += (t & LOWER_MASK) << $half;
+                high += t >> $half;
+                high += (self >> $half).wrapping_mul(b >> $half);
+
+                (high, low)
+            }
+        }
+    };
+
+    // simd bulk implementation
+    (($($ty:ty,)+) $scalar:ty, $half:expr) => {
+        $(
+            impl WideningMultiply for $ty {
+                type Output = ($ty, $ty);
+                #[inline(always)]
+                fn wmul(self, b: $ty) -> Self::Output {
+                    // needs wrapping multiplication
+                    const LOWER_MASK: $scalar = !0 >> $half;
+                    let mut low = (self & LOWER_MASK) * (b & LOWER_MASK);
+                    let mut t = low >> $half;
+                    low &= LOWER_MASK;
+                    t += (self >> $half) * (b & LOWER_MASK);
+                    low += (t & LOWER_MASK) << $half;
+                    let mut high = t >> $half;
+                    t = low >> $half;
+                    low &= LOWER_MASK;
+                    t += (b >> $half) * (self & LOWER_MASK);
+                    low += (t & LOWER_MASK) << $half;
+                    high += t >> $half;
+                    high += (self >> $half) * (b >> $half);
+                    (high, low)
+                }
+            }
+        )+
+    };
+}
+#[cfg(not(feature = "i128_support"))]
+wmul_impl_large! { u64, 32 }
+#[cfg(feature = "i128_support")]
+wmul_impl_large! { u128, 64 }
+
+macro_rules! wmul_impl_usize {
+    ($ty:ty) => {
+        impl WideningMultiply for usize {
+            type Output = (usize, usize);
+
+            #[inline(always)]
+            fn wmul(self, x: usize) -> Self::Output {
+                let (high, low) = (self as $ty).wmul(x as $ty);
+                (high as usize, low as usize)
+            }
+        }
+    }
+}
+#[cfg(target_pointer_width = "32")]
+wmul_impl_usize! { u32 }
+#[cfg(target_pointer_width = "64")]
+wmul_impl_usize! { u64 }
+
+#[cfg(feature = "simd_support")]
+mod simd_wmul {
+    #[cfg(target_arch = "x86")]
+    use core::arch::x86::*;
+    #[cfg(target_arch = "x86_64")]
+    use core::arch::x86_64::*;
     use super::*;
-    use core::mem;
-
-    // testing larger vectors is less simple
-    #[test]
-    #[cfg(feature = "simd_support")]
-    fn swap_bytes_128() {
-        let x: u128 = 0x2d99787926d46932a4c1f32680f70c55;
-        let expected = x.swap_bytes();
-
-        let vec: u8x16 = unsafe { mem::transmute(x) };
-        let actual = unsafe { mem::transmute(vec.swap_bytes()) };
-
-        assert_eq!(expected, actual);
+    wmul_impl! {
+        (u8x2, u16x2),
+        (u8x4, u16x4),
+        (u8x8, u16x8),
+        (u8x16, u16x16),
+        (u8x32, u16x32),,
+        8
     }
-
-    #[test]
-    #[cfg(feature = "simd_support")]
-    fn swap_bytes_64() {
-        let x: u64 = 0x2d99787926d46932;
-        let expected = x.swap_bytes();
-
-        let vec: u8x8 = unsafe { mem::transmute(x) };
-        let actual = unsafe { mem::transmute(vec.swap_bytes()) };
-
-        assert_eq!(expected, actual);
+    wmul_impl! { (u16x2, u32x2),, 16 }
+    #[cfg(not(target_feature = "sse2"))]
+    wmul_impl! { (u16x4, u32x4),, 16 }
+    #[cfg(not(target_feature = "sse4.2"))]
+    wmul_impl! { (u16x8, u32x8),, 16 }
+    #[cfg(not(target_feature = "avx2"))]
+    wmul_impl! { (u16x16, u32x16),, 16 }
+    // 16-bit lane widths allow use of the x86 `mulhi` instructions, which
+    // means `wmul` can be implemented with only two instructions.
+    #[allow(unused_macros)]
+    macro_rules! wmul_impl_16 {
+        ($ty:ident, $intrinsic:ident, $mulhi:ident, $mullo:ident) => {
+            impl WideningMultiply for $ty {
+                type Output = ($ty, $ty);
+                #[inline(always)]
+                fn wmul(self, x: $ty) -> Self::Output {
+                    let b = $intrinsic::from_bits(x);
+                    let a = $intrinsic::from_bits(self);
+                    let hi = $ty::from_bits(unsafe { $mulhi(a, b) });
+                    let lo = $ty::from_bits(unsafe { $mullo(a, b) });
+                    (hi, lo)
+                }
+            }
+        };
     }
-
-    #[test]
-    #[cfg(feature = "simd_support")]
-    fn swap_bytes_32() {
-        let x: u32 = 0x2d997872;
-        let expected = x.swap_bytes();
-
-        let vec: u8x4 = unsafe { mem::transmute(x) };
-        let actual = unsafe { mem::transmute(vec.swap_bytes()) };
-
-        assert_eq!(expected, actual);
+    #[cfg(target_feature = "sse2")]
+    wmul_impl_16! { u16x4, __m64, _mm_mulhi_pu16, _mm_mullo_pi16 }
+    #[cfg(target_feature = "sse4.2")]
+    wmul_impl_16! { u16x8, __m128i, _mm_mulhi_epu16, _mm_mullo_epi16 }
+    #[cfg(target_feature = "avx2")]
+    wmul_impl_16! { u16x16, __m256i, _mm256_mulhi_epu16, _mm256_mullo_epi16 }
+    // FIXME: there are no `__m512i` types in stdsimd yet, so `wmul::<u16x32>`
+    // cannot use the same implementation.
+    wmul_impl! {
+        (u32x2, u64x2),
+        (u32x4, u64x4),
+        (u32x8, u64x8),,
+        32
     }
-
-    #[test]
-    #[cfg(feature = "simd_support")]
-    fn swap_bytes_16() {
-        let x: u16 = 0x2d99;
-        let expected = x.swap_bytes();
-
-        let vec: u8x2 = unsafe { mem::transmute(x) };
-        let actual = unsafe { mem::transmute(vec.swap_bytes()) };
-
-        assert_eq!(expected, actual);
-    }
-}*/
+    // TODO: optimize, this seems to seriously slow things down
+    wmul_impl_large! { (u64x2, u64x4, u64x8,) u64, 32 }
+    wmul_impl_large! { (u8x64,) u8, 4 }
+    wmul_impl_large! { (u16x32,) u16, 8 }
+    wmul_impl_large! { (u32x16,) u32, 16 }
+}
+#[cfg(feature = "simd_support")]
+pub use self::simd_wmul::*;

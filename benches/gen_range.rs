@@ -57,7 +57,7 @@ mod approx {
 mod no_approx {
     use super::*;
 
-    use rand::distributions::uniform::WideningMultiply;
+    use rand::distributions::utils::WideningMultiply;
 
     macro_rules! gen_range_int {
         ($fnn:ident, $ty:ident, $unsigned:ident, $scalar:ident, $u_scalar:ident, $low:expr, $high:expr) => {
