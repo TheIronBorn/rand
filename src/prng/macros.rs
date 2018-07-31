@@ -10,6 +10,7 @@ macro_rules! shuffle_bytes {
 }
 
 #[macro_export]
+#[cfg_attr(rustfmt, rustfmt_skip)]
 macro_rules! rotate_left {
 
     /* +++++++++++ 32-bit lane width +++++++++++ */
@@ -137,6 +138,7 @@ macro_rules! rotate_left {
 }
 
 #[macro_export]
+#[cfg_attr(rustfmt, rustfmt_skip)]
 macro_rules! rotate_right {
 
     /* +++++++++++ 32-bit lane width +++++++++++ */
