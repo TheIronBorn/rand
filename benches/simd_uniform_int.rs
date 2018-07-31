@@ -34,7 +34,8 @@ macro_rules! benches {
             (simd_uniform_i16x8, simd_uniform_single_i16x8, SfcAlt64x4k, i16x8, u16x8),
             (simd_uniform_i16x16, simd_uniform_single_i16x16, SfcAlt64x4k, i16x16, u16x16),
             (simd_uniform_i16x32, simd_uniform_single_i16x32, SfcAlt64x4k, i16x32, u16x32),,
-            i16, u16, -500, 2000
+            // i16, u16, -500, 2000
+            i16, u16, -40, 2000 // this range is close to the next power of two, better for bitmask methods
         }
 
         simd_uniform_bench! {
@@ -53,6 +54,10 @@ macro_rules! benches {
         }
     }
 }
+
+// The module structure eases `cargo benchcmp` use.
+//
+// `$ cargo benchcmp wide_mul bitmask_simple <benchmark_file>`
 
 mod wide_mul {
     use super::*;
