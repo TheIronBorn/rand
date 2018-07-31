@@ -141,6 +141,62 @@ mod wide_mul {
     benches!();
 }
 
+mod wide_mul_biased {
+    use super::*;
+
+    macro_rules! simd_uniform_bench {
+        ($(($uniform:ident, $gen_range:ident, $rng:ident, $ty:ident, $uty:ident),)+, $scalar:ident, $u_scalar:ident, $low:expr, $high:expr) => ($(
+            #[bench]
+            fn $uniform(b: &mut Bencher) {
+                let mut rng = $rng::from_rng(&mut thread_rng()).unwrap();
+                let low = $ty::splat($low);
+                let high = $ty::splat($high);
+                let range: $uty = (high - low).cast();
+
+                b.iter(|| {
+                    let mut accum = $ty::default();
+                    for _ in 0..::RAND_BENCH_N {
+                        let (hi, _) = rng.gen::<$uty>().wmul(range);
+                        let hi: $ty = hi.cast();
+                        accum += low + hi;
+                    }
+                    accum
+                });
+                b.bytes = mem::size_of::<$ty>() as u64 * ::RAND_BENCH_N;
+            }
+
+            // construct and sample from a range
+            #[bench]
+            fn $gen_range(b: &mut Bencher) {
+                let mut rng = $rng::from_rng(&mut thread_rng()).unwrap();
+                let mut low = $ty::splat($low);
+                for i in 0..$ty::lanes() {
+                    low = low.replace(i, $low - i as $scalar);
+                }
+
+                b.iter(|| {
+                    let mut high = $ty::splat($high);
+                    let mut accum = $ty::splat(0);
+                    for _ in 0..::RAND_BENCH_N {
+                        let range: $uty = (high - low).cast();
+
+                        let (hi, _) = rng.gen::<$uty>().wmul(range);
+                        let hi: $ty = hi.cast();
+                        accum += low + hi;
+
+                        // force recalculation of range each time
+                        high = (high + 1) & std::$scalar::MAX;
+                    }
+                    accum
+                });
+                b.bytes = mem::size_of::<$ty>() as u64 * ::RAND_BENCH_N;
+            }
+        )+)
+    }
+
+    benches!();
+}
+
 mod bitmask_simple {
     use super::*;
 
