@@ -502,3 +502,116 @@ pub fn ziggurat<R: Rng + ?Sized, P, Z>(
         }
     }
 }
+
+#[cfg(feature = "simd_support")]
+mod threshold_approximation {
+    use super::*;
+
+    pub trait ThresholdApproximation {
+        /// Calculates a faster threshold for `UniformInt` than a modulo threshold.
+        /// Unlike modulo, this may not produce the best possible threshold. It
+        /// should only be used in `sample_single`.
+        fn threshold_approx(self) -> Self;
+    }
+
+    // FIXME: use `plzcnt` when Rust supports 512-bit widths.
+
+    macro_rules! llvm_approx {
+        ($ty:ident, $llvm:ident) => {
+            impl ThresholdApproximation for $ty {
+                fn threshold_approx(self) -> Self {
+                    // this is safe because `range` should never be zero
+                    self << unsafe { $llvm(self, true) }
+                }
+            }
+        };
+        ($(($ty:ident, $llvm:ident)),+) => {
+            $( llvm_approx! { $ty, $llvm } )+
+        };
+    }
+
+    // LLVM doesn't switch to a bsf/lzcnt algorithm with few lanes.
+    macro_rules! scalar_approx {
+        ($ty:ident) => {
+            impl ThresholdApproximation for $ty {
+                fn threshold_approx(self) -> Self {
+                    let mut lz = [0; Self::lanes()];
+                    for (i, y) in lz.0.iter_mut().enumerate() {
+                        // this is safe because `range` should never be zero
+                        *y = unsafe { intrinsics::ctlz_nonzero(self.extract(i)) };
+                    }
+                    self << Self::from_slice_unaligned(&lz.0)
+                }
+            }
+        };
+    }
+    scalar_approx! { u32x2 }
+    scalar_approx! { u32x4 }
+    scalar_approx! { u64x2 }
+    scalar_approx! { u64x4 }
+
+    #[allow(improper_ctypes, dead_code)]
+    extern "C" {
+        #[link_name = "llvm.ctlz.v2xi8"]
+        fn ctlz_u8x2(x: u8x2, is_zero_undef: bool) -> u8x2;
+        #[link_name = "llvm.ctlz.v4xi8"]
+        fn ctlz_u8x4(x: u8x4, is_zero_undef: bool) -> u8x4;
+        #[link_name = "llvm.ctlz.v8xi8"]
+        fn ctlz_u8x8(x: u8x8, is_zero_undef: bool) -> u8x8;
+        #[link_name = "llvm.ctlz.v16xi8"]
+        fn ctlz_u8x16(x: u8x16, is_zero_undef: bool) -> u8x16;
+        #[link_name = "llvm.ctlz.v32xi8"]
+        fn ctlz_u8x32(x: u8x32, is_zero_undef: bool) -> u8x32;
+        #[link_name = "llvm.ctlz.v64xi8"]
+        fn ctlz_u8x64(x: u8x64, is_zero_undef: bool) -> u8x64;
+
+        #[link_name = "llvm.ctlz.v2xi16"]
+        fn ctlz_u16x2(x: u16x2, is_zero_undef: bool) -> u16x2;
+        #[link_name = "llvm.ctlz.v4xi16"]
+        fn ctlz_u16x4(x: u16x4, is_zero_undef: bool) -> u16x4;
+        #[link_name = "llvm.ctlz.v8xi16"]
+        fn ctlz_u16x8(x: u16x8, is_zero_undef: bool) -> u16x8;
+        #[link_name = "llvm.ctlz.v16xi16"]
+        fn ctlz_u16x16(x: u16x16, is_zero_undef: bool) -> u16x16;
+        #[link_name = "llvm.ctlz.v32xi16"]
+        fn ctlz_u16x32(x: u16x32, is_zero_undef: bool) -> u16x32;
+
+        #[link_name = "llvm.ctlz.v2xi32"]
+        fn ctlz_u32x2(x: u32x2, is_zero_undef: bool) -> u32x2;
+        #[link_name = "llvm.ctlz.v4xi32"]
+        fn ctlz_u32x4(x: u32x4, is_zero_undef: bool) -> u32x4;
+        #[link_name = "llvm.ctlz.v8xi32"]
+        fn ctlz_u32x8(x: u32x8, is_zero_undef: bool) -> u32x8;
+        #[link_name = "llvm.ctlz.v16xi32"]
+        fn ctlz_u32x16(x: u32x16, is_zero_undef: bool) -> u32x16;
+
+        #[link_name = "llvm.ctlz.v2xi64"]
+        fn ctlz_u64x2(x: u64x2, is_zero_undef: bool) -> u64x2;
+        #[link_name = "llvm.ctlz.v4xi64"]
+        fn ctlz_u64x4(x: u64x4, is_zero_undef: bool) -> u64x4;
+        #[link_name = "llvm.ctlz.v8xi64"]
+        fn ctlz_u64x8(x: u64x8, is_zero_undef: bool) -> u64x8;
+    }
+
+    llvm_approx! {
+        (u8x2, ctlz_u8x2),
+        (u8x4, ctlz_u8x4),
+        (u8x8, ctlz_u8x8),
+        (u8x16, ctlz_u8x16), 
+        (u8x32, ctlz_u8x32),
+        (u8x64, ctlz_u8x64),
+
+        (u16x2, ctlz_u16x2), 
+        (u16x4, ctlz_u16x4), 
+        (u16x8, ctlz_u16x8), 
+        (u16x16, ctlz_u16x16),
+        (u16x32, ctlz_u16x32),
+
+        (u32x8, ctlz_u32x8),
+        (u32x16, ctlz_u32x16),
+
+        (u64x8, ctlz_u64x8)
+    }
+}
+#[cfg(feature = "simd_support")]
+pub use self::threshold_approximation::ThresholdApproximation;
