@@ -225,6 +225,45 @@ gen_range_int!(gen_range_i32_high, i32, -200_000_000i32, 800_000_000);
 gen_range_int!(gen_range_i64_high, i64, 3i64, 123_456_789_123);
 gen_range_int!(gen_range_i128_high, i128, -12345678901234i128, 123_456_789_123_456_789);
 
+// construct and sample from a range
+macro_rules! gen_range_int_old {
+    ($fnn:ident, $ty:ident, $low:expr, $high:expr) => {
+        #[bench]
+        fn $fnn(b: &mut Bencher) {
+            let mut rng = Pcg64Mcg::from_entropy();
+
+            b.iter(|| {
+                let mut high = $high;
+                let mut accum: $ty = 0;
+                for _ in 0..RAND_BENCH_N {
+                    accum = accum.wrapping_add(UniformInt::<$ty>::sample_single_inclusive_old($low, high, &mut rng));
+                    // force recalculation of range each time
+                    high = high.wrapping_add(1) & std::$ty::MAX;
+                }
+                accum
+            });
+            b.bytes = size_of::<$ty>() as u64 * RAND_BENCH_N;
+        }
+    };
+}
+
+// Algorithms such as Fisher–Yates shuffle often require uniform values from an
+// incrementing range 0..n. We use -1..n here to prevent wrapping in the test
+// from generating a 0-sized range.
+gen_range_int_old!(gen_range_old_i8_low, i8, -1i8, 0);
+gen_range_int_old!(gen_range_old_i16_low, i16, -1i16, 0);
+gen_range_int_old!(gen_range_old_i32_low, i32, -1i32, 0);
+gen_range_int_old!(gen_range_old_i64_low, i64, -1i64, 0);
+gen_range_int_old!(gen_range_old_i128_low, i128, -1i128, 0);
+
+// These were the initially tested ranges. They are likely to see fewer
+// rejections than the low tests.
+gen_range_int_old!(gen_range_old_i8_high, i8, -20i8, 100);
+gen_range_int_old!(gen_range_old_i16_high, i16, -500i16, 2000);
+gen_range_int_old!(gen_range_old_i32_high, i32, -200_000_000i32, 800_000_000);
+gen_range_int_old!(gen_range_old_i64_high, i64, 3i64, 123_456_789_123);
+gen_range_int_old!(gen_range_old_i128_high, i128, -12345678901234i128, 123_456_789_123_456_789);
+
 // construct and sample from a floating-point range
 macro_rules! gen_range_float {
     ($fnn:ident, $ty:ident, $low:expr, $high:expr) => {

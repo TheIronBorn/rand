@@ -430,6 +430,47 @@ macro_rules! uniform_int_impl {
             type Sampler = UniformInt<$ty>;
         }
 
+        impl UniformInt<$ty> {
+            ///
+            #[inline]
+            pub fn sample_single_inclusive_old<R: Rng + ?Sized, B1, B2>(low_b: B1, high_b: B2, rng: &mut R) -> $ty
+            where
+                B1: SampleBorrow<$ty> + Sized,
+                B2: SampleBorrow<$ty> + Sized,
+            {
+                let low = *low_b.borrow();
+                let high = *high_b.borrow();
+                assert!(low <= high, "UniformSampler::sample_single_inclusive: low > high");
+                let range = high.wrapping_sub(low).wrapping_add(1) as $unsigned as $u_large;
+                // If the above resulted in wrap-around to 0, the range is $ty::MIN..=$ty::MAX,
+                // and any integer will do.
+                if range == 0 {
+                    return rng.gen();
+                }
+
+                let zone = if ::core::$unsigned::MAX <= ::core::u16::MAX as $unsigned {
+                    // Using a modulus is faster than the approximation for
+                    // i8 and i16. I suppose we trade the cost of one
+                    // modulus for near-perfect branch prediction.
+                    let unsigned_max: $u_large = ::core::$u_large::MAX;
+                    let ints_to_reject = (unsigned_max - range + 1) % range;
+                    unsigned_max - ints_to_reject
+                } else {
+                    // conservative but fast approximation. `- 1` is necessary to allow the
+                    // same comparison without bias.
+                    (range << range.leading_zeros()).wrapping_sub(1)
+                };
+
+                loop {
+                    let v: $u_large = rng.gen();
+                    let (hi, lo) = v.wmul(range);
+                    if lo <= zone {
+                        return low.wrapping_add(hi as $ty);
+                    }
+                }
+            }
+        }
+
         impl UniformSampler for UniformInt<$ty> {
             // We play free and fast with unsigned vs signed here
             // (when $ty is signed), but that's fine, since the
