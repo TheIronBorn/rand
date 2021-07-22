@@ -45,6 +45,8 @@ small_rng = []
 # using min-const-generics
 min_const_gen = []
 
+crit = ["criterion/html_reports", "criterion-cycles-per-byte"]
+
 [workspace]
 members = [
     "rand_core",
@@ -58,6 +60,8 @@ members = [
 rand_core = { path = "rand_core", version = "0.6.0" }
 log = { version = "0.4.4", optional = true }
 serde = { version = "1.0.103", features = ["derive"], optional = true }
+criterion = { version = "*", features = ["html_reports"], optional = true }
+criterion-cycles-per-byte = { version = "*", optional = true }
 
 [dependencies.packed_simd]
 # NOTE: so far no version works reliably due to dependence on unstable features
@@ -92,3 +96,8 @@ rustdoc-args = ["--cfg", "doc_cfg"]
 
 [package.metadata.playground]
 features = ["small_rng", "serde1"]
+
+[[bench]]
+name = "dist_crit"
+harness = false
+required-features = ["crit"]

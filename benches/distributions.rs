@@ -14,7 +14,7 @@
 
 extern crate test;
 
-const RAND_BENCH_N: u64 = 1000;
+const RAND_BENCH_N: u64 = 100_000;
 
 use rand::distributions::{Alphanumeric, Open01, OpenClosed01, Standard, Uniform};
 use rand::distributions::uniform::{UniformInt, UniformSampler};
@@ -218,12 +218,12 @@ gen_range_int!(gen_range_i64_low, i64, -1i64, 0);
 gen_range_int!(gen_range_i128_low, i128, -1i128, 0);
 
 // These were the initially tested ranges. They are likely to see fewer
-// rejections than the low tests.
-gen_range_int!(gen_range_i8_high, i8, -20i8, 100);
-gen_range_int!(gen_range_i16_high, i16, -500i16, 2000);
-gen_range_int!(gen_range_i32_high, i32, -200_000_000i32, 800_000_000);
-gen_range_int!(gen_range_i64_high, i64, 3i64, 123_456_789_123);
-gen_range_int!(gen_range_i128_high, i128, -12345678901234i128, 123_456_789_123_456_789);
+// rejections than the low tests. 2^(N - 1) + 1
+gen_range_int!(gen_range_i8_high, i8, i8::min_value(), 1);
+gen_range_int!(gen_range_i16_high, i16, i16::min_value(), 1);
+gen_range_int!(gen_range_i32_high, i32, i32::min_value(), 1);
+gen_range_int!(gen_range_i64_high, i64, i64::min_value(), 1);
+gen_range_int!(gen_range_i128_high, i128, i128::min_value(), 1);
 
 // construct and sample from a range
 macro_rules! gen_range_int_old {
@@ -236,7 +236,7 @@ macro_rules! gen_range_int_old {
                 let mut high = $high;
                 let mut accum: $ty = 0;
                 for _ in 0..RAND_BENCH_N {
-                    accum = accum.wrapping_add(UniformInt::<$ty>::sample_single_inclusive_old($low, high, &mut rng));
+                    accum = accum.wrapping_add(UniformInt::<$ty>::sample_single_inclusive_old($low, high - 1, &mut rng));
                     // force recalculation of range each time
                     high = high.wrapping_add(1) & std::$ty::MAX;
                 }
@@ -257,12 +257,12 @@ gen_range_int_old!(gen_range_old_i64_low, i64, -1i64, 0);
 gen_range_int_old!(gen_range_old_i128_low, i128, -1i128, 0);
 
 // These were the initially tested ranges. They are likely to see fewer
-// rejections than the low tests.
-gen_range_int_old!(gen_range_old_i8_high, i8, -20i8, 100);
-gen_range_int_old!(gen_range_old_i16_high, i16, -500i16, 2000);
-gen_range_int_old!(gen_range_old_i32_high, i32, -200_000_000i32, 800_000_000);
-gen_range_int_old!(gen_range_old_i64_high, i64, 3i64, 123_456_789_123);
-gen_range_int_old!(gen_range_old_i128_high, i128, -12345678901234i128, 123_456_789_123_456_789);
+// rejections than the low tests. 2^(N - 1) + 1
+gen_range_int_old!(gen_range_old_i8_high, i8, i8::min_value(), 1);
+gen_range_int_old!(gen_range_old_i16_high, i16, i16::min_value(), 1);
+gen_range_int_old!(gen_range_old_i32_high, i32, i32::min_value(), 1);
+gen_range_int_old!(gen_range_old_i64_high, i64, i64::min_value(), 1);
+gen_range_int_old!(gen_range_old_i128_high, i128, i128::min_value(), 1);
 
 // construct and sample from a floating-point range
 macro_rules! gen_range_float {
