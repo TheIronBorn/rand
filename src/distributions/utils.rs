@@ -424,10 +424,17 @@ macro_rules! simd_impl {
     };
 }
 
-#[cfg(feature="simd_support")] simd_impl! { f32x2, f32, m32x2, u32x2 }
-#[cfg(feature="simd_support")] simd_impl! { f32x4, f32, m32x4, u32x4 }
-#[cfg(feature="simd_support")] simd_impl! { f32x8, f32, m32x8, u32x8 }
-#[cfg(feature="simd_support")] simd_impl! { f32x16, f32, m32x16, u32x16 }
-#[cfg(feature="simd_support")] simd_impl! { f64x2, f64, m64x2, u64x2 }
-#[cfg(feature="simd_support")] simd_impl! { f64x4, f64, m64x4, u64x4 }
-#[cfg(feature="simd_support")] simd_impl! { f64x8, f64, m64x8, u64x8 }
+#[cfg(feature = "simd_support")]
+simd_impl! { f32x2, f32, m32x2, u32x2 }
+#[cfg(feature = "simd_support")]
+simd_impl! { f32x4, f32, m32x4, u32x4 }
+#[cfg(feature = "simd_support")]
+simd_impl! { f32x8, f32, m32x8, u32x8 }
+#[cfg(feature = "simd_support")]
+simd_impl! { f32x16, f32, m32x16, u32x16 }
+#[cfg(feature = "simd_support")]
+simd_impl! { f64x2, f64, m64x2, u64x2 }
+#[cfg(feature = "simd_support")]
+simd_impl! { f64x4, f64, m64x4, u64x4 }
+#[cfg(feature = "simd_support")]
+simd_impl! { f64x8, f64, m64x8, u64x8 }

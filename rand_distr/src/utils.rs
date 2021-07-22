@@ -71,12 +71,8 @@ pub(crate) fn log_gamma<F: num_traits::Float>(x: F) -> F {
 // size from force-inlining.
 #[inline(always)]
 pub(crate) fn ziggurat<R: Rng + ?Sized, P, Z>(
-    rng: &mut R,
-    symmetric: bool,
-    x_tab: ziggurat_tables::ZigTable,
-    f_tab: ziggurat_tables::ZigTable,
-    mut pdf: P,
-    mut zero_case: Z
+    rng: &mut R, symmetric: bool, x_tab: ziggurat_tables::ZigTable,
+    f_tab: ziggurat_tables::ZigTable, mut pdf: P, mut zero_case: Z,
 ) -> f64
 where
     P: FnMut(f64) -> f64,

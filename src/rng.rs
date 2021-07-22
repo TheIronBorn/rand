@@ -9,11 +9,11 @@
 
 //! [`Rng`] trait
 
-use rand_core::{Error, RngCore};
 use crate::distributions::uniform::{SampleRange, SampleUniform};
 use crate::distributions::{self, Distribution, Standard};
 use core::num::Wrapping;
 use core::{mem, slice};
+use rand_core::{Error, RngCore};
 
 /// An automatically-implemented extension trait on [`RngCore`] providing high-level
 /// generic methods for sampling values and other convenience methods.
@@ -129,7 +129,7 @@ pub trait Rng: RngCore {
     fn gen_range<T, R>(&mut self, range: R) -> T
     where
         T: SampleUniform,
-        R: SampleRange<T>
+        R: SampleRange<T>,
     {
         assert!(!range.is_empty(), "cannot sample empty range");
         range.sample_single(self)
@@ -216,7 +216,8 @@ pub trait Rng: RngCore {
     /// [`fill_bytes`]: RngCore::fill_bytes
     /// [`try_fill`]: Rng::try_fill
     fn fill<T: Fill + ?Sized>(&mut self, dest: &mut T) {
-        dest.try_fill(self).unwrap_or_else(|_| panic!("Rng::fill failed"))
+        dest.try_fill(self)
+            .unwrap_or_else(|_| panic!("Rng::fill failed"))
     }
 
     /// Fill any type implementing [`Fill`] with random data
@@ -434,8 +435,8 @@ impl_fill_arrays!(!div 4096, N,N,N,N,N,N,N,);
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::test::rng;
     use crate::rngs::mock::StepRng;
+    use crate::test::rng;
     #[cfg(feature = "alloc")] use alloc::boxed::Box;
 
     #[test]

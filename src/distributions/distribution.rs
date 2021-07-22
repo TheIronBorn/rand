@@ -10,9 +10,8 @@
 //! Distribution trait and associates
 
 use crate::Rng;
+#[cfg(feature = "alloc")] use alloc::string::String;
 use core::iter;
-#[cfg(feature = "alloc")]
-use alloc::string::String;
 
 /// Types (distributions) that can be used to create a random instance of `T`.
 ///
@@ -236,9 +235,7 @@ mod tests {
 
     #[test]
     fn test_make_an_iter() {
-        fn ten_dice_rolls_other_than_five<R: Rng>(
-            rng: &mut R,
-        ) -> impl Iterator<Item = i32> + '_ {
+        fn ten_dice_rolls_other_than_five<R: Rng>(rng: &mut R) -> impl Iterator<Item = i32> + '_ {
             Uniform::new_inclusive(1, 6)
                 .sample_iter(rng)
                 .filter(|x| *x != 5)
@@ -257,8 +254,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test_dist_string() {
-        use core::str;
         use crate::distributions::DistString;
+        use core::str;
         let mut rng = crate::test::rng(213);
 
         let s1 = Alphanumeric.sample_string(&mut rng, 20);

@@ -17,12 +17,11 @@ use self::ChiSquaredRepr::*;
 use self::GammaRepr::*;
 
 use crate::normal::StandardNormal;
-use num_traits::Float;
 use crate::{Distribution, Exp, Exp1, Open01};
-use rand::Rng;
 use core::fmt;
-#[cfg(feature = "serde1")]
-use serde::{Serialize, Deserialize};
+use num_traits::Float;
+use rand::Rng;
+#[cfg(feature = "serde1")] use serde::{Deserialize, Serialize};
 
 /// The Gamma distribution `Gamma(shape, scale)` distribution.
 ///
@@ -567,7 +566,9 @@ where
     F: Float,
     Open01: Distribution<F>,
 {
-    a: F, b: F, switched_params: bool,
+    a: F,
+    b: F,
+    switched_params: bool,
     algorithm: BetaAlgorithm<F>,
 }
 
@@ -619,15 +620,15 @@ where
         if a > F::one() {
             // Algorithm BB
             let alpha = a + b;
-            let beta = ((alpha - F::from(2.).unwrap())
-                        / (F::from(2.).unwrap()*a*b - alpha)).sqrt();
+            let beta =
+                ((alpha - F::from(2.).unwrap()) / (F::from(2.).unwrap() * a * b - alpha)).sqrt();
             let gamma = a + F::one() / beta;
 
             Ok(Beta {
-                a, b, switched_params,
-                algorithm: BetaAlgorithm::BB(BB {
-                    alpha, beta, gamma,
-                })
+                a,
+                b,
+                switched_params,
+                algorithm: BetaAlgorithm::BB(BB { alpha, beta, gamma }),
             })
         } else {
             // Algorithm BC
@@ -638,16 +639,22 @@ where
             let beta = F::one() / b;
             let delta = F::one() + a - b;
             let kappa1 = delta
-                * (F::from(1. / 18. / 4.).unwrap() + F::from(3. / 18. / 4.).unwrap()*b)
-                / (a*beta - F::from(14. / 18.).unwrap());
+                * (F::from(1. / 18. / 4.).unwrap() + F::from(3. / 18. / 4.).unwrap() * b)
+                / (a * beta - F::from(14. / 18.).unwrap());
             let kappa2 = F::from(0.25).unwrap()
-                + (F::from(0.5).unwrap() + F::from(0.25).unwrap()/delta)*b;
+                + (F::from(0.5).unwrap() + F::from(0.25).unwrap() / delta) * b;
 
             Ok(Beta {
-                a, b, switched_params,
+                a,
+                b,
+                switched_params,
                 algorithm: BetaAlgorithm::BC(BC {
-                    alpha, beta, delta, kappa1, kappa2,
-                })
+                    alpha,
+                    beta,
+                    delta,
+                    kappa1,
+                    kappa2,
+                }),
             })
         }
     }
@@ -668,12 +675,11 @@ where
                     let u2 = rng.sample(Open01);
                     let v = algo.beta * (u1 / (F::one() - u1)).ln();
                     w = self.a * v.exp();
-                    let z = u1*u1 * u2;
+                    let z = u1 * u1 * u2;
                     let r = algo.gamma * v - F::from(4.).unwrap().ln();
                     let s = self.a + r - w;
                     // 2.
-                    if s + F::one() + F::from(5.).unwrap().ln()
-                        >= F::from(5.).unwrap() * z {
+                    if s + F::one() + F::from(5.).unwrap().ln() >= F::from(5.).unwrap() * z {
                         break;
                     }
                     // 3.
@@ -686,7 +692,7 @@ where
                         break;
                     }
                 }
-            },
+            }
             BetaAlgorithm::BC(algo) => {
                 loop {
                     let z;
@@ -717,11 +723,13 @@ where
                     let v = algo.beta * (u1 / (F::one() - u1)).ln();
                     w = self.a * v.exp();
                     if !(algo.alpha * ((algo.alpha / (self.b + w)).ln() + v)
-                         - F::from(4.).unwrap().ln() < z.ln()) {
+                        - F::from(4.).unwrap().ln()
+                        < z.ln())
+                    {
                         break;
                     };
                 }
-            },
+            }
         };
         // 5. for BB, 6. for BC
         if !self.switched_params {

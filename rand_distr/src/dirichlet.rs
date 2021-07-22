@@ -9,11 +9,11 @@
 
 //! The dirichlet distribution.
 #![cfg(feature = "alloc")]
-use num_traits::Float;
 use crate::{Distribution, Exp1, Gamma, Open01, StandardNormal};
-use rand::Rng;
-use core::fmt;
 use alloc::{boxed::Box, vec, vec::Vec};
+use core::fmt;
+use num_traits::Float;
+use rand::Rng;
 
 /// The Dirichlet distribution `Dirichlet(alpha)`.
 ///
@@ -93,7 +93,9 @@ where
             }
         }
 
-        Ok(Dirichlet { alpha: alpha.to_vec().into_boxed_slice() })
+        Ok(Dirichlet {
+            alpha: alpha.to_vec().into_boxed_slice(),
+        })
     }
 
     /// Construct a new `Dirichlet` with the given shape parameter `alpha` and `size`.
@@ -128,11 +130,11 @@ where
         for (s, &a) in samples.iter_mut().zip(self.alpha.iter()) {
             let g = Gamma::new(a, F::one()).unwrap();
             *s = g.sample(rng);
-            sum =  sum + (*s);
+            sum = sum + (*s);
         }
         let invacc = F::one() / sum;
         for s in samples.iter_mut() {
-            *s = (*s)*invacc;
+            *s = (*s) * invacc;
         }
         samples
     }

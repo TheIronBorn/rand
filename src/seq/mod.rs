@@ -212,7 +212,6 @@ pub trait SliceRandom {
     /// println!("{:?}", choices.choose_multiple_weighted(&mut rng, 2, |item| item.1).unwrap().collect::<Vec<_>>());
     /// ```
     /// [`choose_multiple`]: SliceRandom::choose_multiple
-    //
     // Note: this is feature-gated on std due to usage of f64::powf.
     // If necessary, we may use alloc+libm as an alternative (see PR #1089).
     #[cfg(feature = "std")]
@@ -385,7 +384,7 @@ pub trait IteratorRandom: Iterator + Sized {
             let (lower, _) = self.size_hint();
             if lower >= 2 {
                 let highest_selected = (0..lower)
-                    .filter(|ix| gen_index(rng, consumed+ix+1) == 0)
+                    .filter(|ix| gen_index(rng, consumed + ix + 1) == 0)
                     .last();
 
                 consumed += lower;
@@ -400,10 +399,10 @@ pub trait IteratorRandom: Iterator + Sized {
 
             let elem = self.nth(next);
             if elem.is_none() {
-                return result
+                return result;
             }
 
-            if gen_index(rng, consumed+1) == 0 {
+            if gen_index(rng, consumed + 1) == 0 {
                 result = elem;
             }
             consumed += 1;
@@ -925,33 +924,48 @@ mod test {
         }
 
         let reference = test_iter(0..9);
-        assert_eq!(test_iter([0, 1, 2, 3, 4, 5, 6, 7, 8].iter().cloned()), reference);
+        assert_eq!(
+            test_iter([0, 1, 2, 3, 4, 5, 6, 7, 8].iter().cloned()),
+            reference
+        );
 
         #[cfg(feature = "alloc")]
         assert_eq!(test_iter((0..9).collect::<Vec<_>>().into_iter()), reference);
         assert_eq!(test_iter(UnhintedIterator { iter: 0..9 }), reference);
-        assert_eq!(test_iter(ChunkHintedIterator {
-            iter: 0..9,
-            chunk_size: 4,
-            chunk_remaining: 4,
-            hint_total_size: false,
-        }), reference);
-        assert_eq!(test_iter(ChunkHintedIterator {
-            iter: 0..9,
-            chunk_size: 4,
-            chunk_remaining: 4,
-            hint_total_size: true,
-        }), reference);
-        assert_eq!(test_iter(WindowHintedIterator {
-            iter: 0..9,
-            window_size: 2,
-            hint_total_size: false,
-        }), reference);
-        assert_eq!(test_iter(WindowHintedIterator {
-            iter: 0..9,
-            window_size: 2,
-            hint_total_size: true,
-        }), reference);
+        assert_eq!(
+            test_iter(ChunkHintedIterator {
+                iter: 0..9,
+                chunk_size: 4,
+                chunk_remaining: 4,
+                hint_total_size: false,
+            }),
+            reference
+        );
+        assert_eq!(
+            test_iter(ChunkHintedIterator {
+                iter: 0..9,
+                chunk_size: 4,
+                chunk_remaining: 4,
+                hint_total_size: true,
+            }),
+            reference
+        );
+        assert_eq!(
+            test_iter(WindowHintedIterator {
+                iter: 0..9,
+                window_size: 2,
+                hint_total_size: false,
+            }),
+            reference
+        );
+        assert_eq!(
+            test_iter(WindowHintedIterator {
+                iter: 0..9,
+                window_size: 2,
+                hint_total_size: true,
+            }),
+            reference
+        );
     }
 
     #[test]

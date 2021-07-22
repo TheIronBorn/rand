@@ -57,8 +57,7 @@ use crate::impls::{fill_via_u32_chunks, fill_via_u64_chunks};
 use crate::{CryptoRng, Error, RngCore, SeedableRng};
 use core::convert::AsRef;
 use core::fmt;
-#[cfg(feature = "serde1")]
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "serde1")] use serde::{Deserialize, Serialize};
 
 /// A trait for RNGs which do not generate random numbers individually, but in
 /// blocks (typically `[u32; N]`). This technique is commonly used by
@@ -179,8 +178,7 @@ impl<R: BlockRngCore> BlockRng<R> {
 }
 
 impl<R: BlockRngCore<Item = u32>> RngCore for BlockRng<R>
-where
-    <R as BlockRngCore>::Results: AsRef<[u32]> + AsMut<[u32]>,
+where <R as BlockRngCore>::Results: AsRef<[u32]> + AsMut<[u32]>
 {
     #[inline]
     fn next_u32(&mut self) -> u32 {
@@ -347,8 +345,7 @@ impl<R: BlockRngCore> BlockRng64<R> {
 }
 
 impl<R: BlockRngCore<Item = u64>> RngCore for BlockRng64<R>
-where
-    <R as BlockRngCore>::Results: AsRef<[u64]> + AsMut<[u64]>,
+where <R as BlockRngCore>::Results: AsRef<[u64]> + AsMut<[u64]>
 {
     #[inline]
     fn next_u32(&mut self) -> u32 {

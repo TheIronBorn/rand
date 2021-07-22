@@ -8,10 +8,10 @@
 
 //! The Pareto distribution.
 
-use num_traits::Float;
 use crate::{Distribution, OpenClosed01};
-use rand::Rng;
 use core::fmt;
+use num_traits::Float;
+use rand::Rng;
 
 /// Samples floating-point numbers according to the Pareto distribution
 ///
@@ -26,7 +26,9 @@ use core::fmt;
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Pareto<F>
-where F: Float, OpenClosed01: Distribution<F>
+where
+    F: Float,
+    OpenClosed01: Distribution<F>,
 {
     scale: F,
     inv_neg_shape: F,
@@ -55,7 +57,9 @@ impl fmt::Display for Error {
 impl std::error::Error for Error {}
 
 impl<F> Pareto<F>
-where F: Float, OpenClosed01: Distribution<F>
+where
+    F: Float,
+    OpenClosed01: Distribution<F>,
 {
     /// Construct a new Pareto distribution with given `scale` and `shape`.
     ///
@@ -78,7 +82,9 @@ where F: Float, OpenClosed01: Distribution<F>
 }
 
 impl<F> Distribution<F> for Pareto<F>
-where F: Float, OpenClosed01: Distribution<F>
+where
+    F: Float,
+    OpenClosed01: Distribution<F>,
 {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> F {
         let u: F = OpenClosed01.sample(rng);

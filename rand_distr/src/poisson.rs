@@ -9,10 +9,10 @@
 
 //! The Poisson distribution.
 
-use num_traits::{Float, FloatConst};
 use crate::{Cauchy, Distribution, Standard};
-use rand::Rng;
 use core::fmt;
+use num_traits::{Float, FloatConst};
+use rand::Rng;
 
 /// The Poisson distribution `Poisson(lambda)`.
 ///
@@ -31,7 +31,9 @@ use core::fmt;
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Poisson<F>
-where F: Float + FloatConst, Standard: Distribution<F>
+where
+    F: Float + FloatConst,
+    Standard: Distribution<F>,
 {
     lambda: F,
     // precalculated values
@@ -61,7 +63,9 @@ impl fmt::Display for Error {
 impl std::error::Error for Error {}
 
 impl<F> Poisson<F>
-where F: Float + FloatConst, Standard: Distribution<F>
+where
+    F: Float + FloatConst,
+    Standard: Distribution<F>,
 {
     /// Construct a new `Poisson` with the given shape parameter
     /// `lambda`.
@@ -81,7 +85,9 @@ where F: Float + FloatConst, Standard: Distribution<F>
 }
 
 impl<F> Distribution<F> for Poisson<F>
-where F: Float + FloatConst, Standard: Distribution<F>
+where
+    F: Float + FloatConst,
+    Standard: Distribution<F>,
 {
     #[inline]
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> F {
@@ -92,7 +98,7 @@ where F: Float + FloatConst, Standard: Distribution<F>
             let mut result = F::zero();
             let mut p = F::one();
             while p > self.exp_lambda {
-                p = p*rng.gen::<F>();
+                p = p * rng.gen::<F>();
                 result = result + F::one();
             }
             result - F::one()
@@ -147,8 +153,7 @@ mod test {
     use super::*;
 
     fn test_poisson_avg_gen<F: Float + FloatConst>(lambda: F, tol: F)
-        where Standard: Distribution<F>
-    {
+    where Standard: Distribution<F> {
         let poisson = Poisson::new(lambda).unwrap();
         let mut rng = crate::test::rng(123);
         let mut sum = F::zero();

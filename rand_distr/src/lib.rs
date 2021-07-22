@@ -76,15 +76,12 @@
 //!   - [`InverseGaussian`] distribution
 //!   - [`NormalInverseGaussian`] distribution
 
-#[cfg(feature = "alloc")]
-extern crate alloc;
+#[cfg(feature = "alloc")] extern crate alloc;
 
-#[cfg(feature = "std")]
-extern crate std;
+#[cfg(feature = "std")] extern crate std;
 
 // This is used for doc links:
-#[allow(unused)]
-use rand::Rng;
+#[allow(unused)] use rand::Rng;
 
 pub use rand::distributions::{
     uniform, Alphanumeric, Bernoulli, BernoulliError, DistIter, Distribution, Open01, OpenClosed01,
@@ -103,9 +100,11 @@ pub use self::gamma::{
 };
 pub use self::geometric::{Error as GeoError, Geometric, StandardGeometric};
 pub use self::hypergeometric::{Error as HyperGeoError, Hypergeometric};
-pub use self::inverse_gaussian::{InverseGaussian, Error as InverseGaussianError};
+pub use self::inverse_gaussian::{Error as InverseGaussianError, InverseGaussian};
 pub use self::normal::{Error as NormalError, LogNormal, Normal, StandardNormal};
-pub use self::normal_inverse_gaussian::{NormalInverseGaussian, Error as NormalInverseGaussianError};
+pub use self::normal_inverse_gaussian::{
+    Error as NormalInverseGaussianError, NormalInverseGaussian,
+};
 pub use self::pareto::{Error as ParetoError, Pareto};
 pub use self::pert::{Pert, PertError};
 pub use self::poisson::{Error as PoissonError, Poisson};
@@ -198,4 +197,3 @@ mod unit_sphere;
 mod utils;
 mod weibull;
 mod ziggurat_tables;
-

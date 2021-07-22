@@ -1,7 +1,7 @@
 use crate::{Distribution, InverseGaussian, Standard, StandardNormal};
+use core::fmt;
 use num_traits::Float;
 use rand::Rng;
-use core::fmt;
 
 /// Error type returned from `NormalInverseGaussian::new`
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -15,8 +15,12 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            Error::AlphaNegativeOrNull => "alpha <= 0 or is NaN in normal inverse Gaussian distribution",
-            Error::AbsoluteBetaNotLessThanAlpha => "|beta| >= alpha or is NaN in normal inverse Gaussian distribution",
+            Error::AlphaNegativeOrNull => {
+                "alpha <= 0 or is NaN in normal inverse Gaussian distribution"
+            }
+            Error::AbsoluteBetaNotLessThanAlpha => {
+                "|beta| >= alpha or is NaN in normal inverse Gaussian distribution"
+            }
         })
     }
 }

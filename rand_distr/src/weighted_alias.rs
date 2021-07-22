@@ -11,13 +11,12 @@
 
 use super::WeightedError;
 use crate::{uniform::SampleUniform, Distribution, Uniform};
+use alloc::{boxed::Box, vec, vec::Vec};
 use core::fmt;
 use core::iter::Sum;
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use rand::Rng;
-use alloc::{boxed::Box, vec, vec::Vec};
-#[cfg(feature = "serde1")]
-use serde::{Serialize, Deserialize};
+#[cfg(feature = "serde1")] use serde::{Deserialize, Serialize};
 
 /// A distribution using weighted sampling to pick a discretely selected item.
 ///
@@ -67,8 +66,14 @@ use serde::{Serialize, Deserialize};
 /// [`Uniform<W>::sample`]: Distribution::sample
 #[cfg_attr(doc_cfg, doc(cfg(feature = "alloc")))]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde1", serde(bound(serialize = "W: Serialize, W::Sampler: Serialize")))]
-#[cfg_attr(feature = "serde1", serde(bound(deserialize = "W: Deserialize<'de>, W::Sampler: Deserialize<'de>")))]
+#[cfg_attr(
+    feature = "serde1",
+    serde(bound(serialize = "W: Serialize, W::Sampler: Serialize"))
+)]
+#[cfg_attr(
+    feature = "serde1",
+    serde(bound(deserialize = "W: Deserialize<'de>, W::Sampler: Deserialize<'de>"))
+)]
 pub struct WeightedAliasIndex<W: AliasableWeight> {
     aliases: Box<[u32]>,
     no_alias_odds: Box<[W]>,
@@ -506,7 +511,9 @@ mod test {
 
     #[test]
     fn value_stability() {
-        fn test_samples<W: AliasableWeight>(weights: Vec<W>, buf: &mut [usize], expected: &[usize]) {
+        fn test_samples<W: AliasableWeight>(
+            weights: Vec<W>, buf: &mut [usize], expected: &[usize],
+        ) {
             assert_eq!(buf.len(), expected.len());
             let distr = WeightedAliasIndex::new(weights).unwrap();
             let mut rng = crate::test::rng(0x9c9fa0b0580a7031);

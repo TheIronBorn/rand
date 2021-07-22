@@ -8,10 +8,10 @@
 
 //! The Weibull distribution.
 
-use num_traits::Float;
 use crate::{Distribution, OpenClosed01};
-use rand::Rng;
 use core::fmt;
+use num_traits::Float;
+use rand::Rng;
 
 /// Samples floating-point numbers according to the Weibull distribution
 ///
@@ -26,7 +26,9 @@ use core::fmt;
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Weibull<F>
-where F: Float, OpenClosed01: Distribution<F>
+where
+    F: Float,
+    OpenClosed01: Distribution<F>,
 {
     inv_shape: F,
     scale: F,
@@ -55,7 +57,9 @@ impl fmt::Display for Error {
 impl std::error::Error for Error {}
 
 impl<F> Weibull<F>
-where F: Float, OpenClosed01: Distribution<F>
+where
+    F: Float,
+    OpenClosed01: Distribution<F>,
 {
     /// Construct a new `Weibull` distribution with given `scale` and `shape`.
     pub fn new(scale: F, shape: F) -> Result<Weibull<F>, Error> {
@@ -73,7 +77,9 @@ where F: Float, OpenClosed01: Distribution<F>
 }
 
 impl<F> Distribution<F> for Weibull<F>
-where F: Float, OpenClosed01: Distribution<F>
+where
+    F: Float,
+    OpenClosed01: Distribution<F>,
 {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> F {
         let x: F = rng.sample(OpenClosed01);

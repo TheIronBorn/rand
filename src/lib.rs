@@ -52,13 +52,10 @@
 #![cfg_attr(feature = "simd_support", feature(stdsimd))]
 #![cfg_attr(feature = "nightly", feature(slice_partition_at_index))]
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
-#![allow(
-    clippy::float_cmp,
-    clippy::neg_cmp_op_on_partial_ord,
-)]
+#![allow(clippy::float_cmp, clippy::neg_cmp_op_on_partial_ord)]
 
-#[cfg(feature = "std")] extern crate std;
 #[cfg(feature = "alloc")] extern crate alloc;
+#[cfg(feature = "std")] extern crate std;
 
 #[allow(unused)]
 macro_rules! trace { ($($x:tt)*) => (

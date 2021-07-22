@@ -23,7 +23,8 @@
 #[doc(no_inline)]
 pub use crate::rngs::SmallRng;
 #[cfg(feature = "std_rng")]
-#[doc(no_inline)] pub use crate::rngs::StdRng;
+#[doc(no_inline)]
+pub use crate::rngs::StdRng;
 #[doc(no_inline)]
 #[cfg(all(feature = "std", feature = "std_rng"))]
 pub use crate::rngs::ThreadRng;

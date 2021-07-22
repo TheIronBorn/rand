@@ -9,10 +9,10 @@
 
 //! The Cauchy distribution.
 
-use num_traits::{Float, FloatConst};
 use crate::{Distribution, Standard};
-use rand::Rng;
 use core::fmt;
+use num_traits::{Float, FloatConst};
+use rand::Rng;
 
 /// The Cauchy distribution `Cauchy(median, scale)`.
 ///
@@ -34,7 +34,9 @@ use core::fmt;
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Cauchy<F>
-where F: Float + FloatConst, Standard: Distribution<F>
+where
+    F: Float + FloatConst,
+    Standard: Distribution<F>,
 {
     median: F,
     scale: F,
@@ -60,7 +62,9 @@ impl fmt::Display for Error {
 impl std::error::Error for Error {}
 
 impl<F> Cauchy<F>
-where F: Float + FloatConst, Standard: Distribution<F>
+where
+    F: Float + FloatConst,
+    Standard: Distribution<F>,
 {
     /// Construct a new `Cauchy` with the given shape parameters
     /// `median` the peak location and `scale` the scale factor.
@@ -73,7 +77,9 @@ where F: Float + FloatConst, Standard: Distribution<F>
 }
 
 impl<F> Distribution<F> for Cauchy<F>
-where F: Float + FloatConst, Standard: Distribution<F>
+where
+    F: Float + FloatConst,
+    Standard: Distribution<F>,
 {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> F {
         // sample from [0, 1)

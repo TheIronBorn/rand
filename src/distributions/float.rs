@@ -14,8 +14,7 @@ use crate::Rng;
 use core::mem;
 #[cfg(feature = "simd_support")] use packed_simd::*;
 
-#[cfg(feature = "serde1")]
-use serde::{Serialize, Deserialize};
+#[cfg(feature = "serde1")] use serde::{Deserialize, Serialize};
 
 /// A distribution to sample floating point numbers uniformly in the half-open
 /// interval `(0, 1]`, i.e. including 1 but not 0.

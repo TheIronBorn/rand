@@ -103,9 +103,9 @@
 //! [`UniformDuration`]: crate::distributions::uniform::UniformDuration
 //! [`SampleBorrow::borrow`]: crate::distributions::uniform::SampleBorrow::borrow
 
+use core::ops::{Range, RangeInclusive};
 #[cfg(not(feature = "std"))] use core::time::Duration;
 #[cfg(feature = "std")] use std::time::Duration;
-use core::ops::{Range, RangeInclusive};
 
 use crate::distributions::float::IntoFloat;
 use crate::distributions::utils::{BoolAsSIMD, FloatAsSIMD, FloatSIMDUtils, WideningMultiply};
@@ -118,8 +118,7 @@ use crate::distributions::utils::Float;
 
 #[cfg(feature = "simd_support")] use packed_simd::*;
 
-#[cfg(feature = "serde1")]
-use serde::{Serialize, Deserialize};
+#[cfg(feature = "serde1")] use serde::{Deserialize, Serialize};
 
 /// Sample values uniformly between two bounds.
 ///
@@ -173,7 +172,10 @@ use serde::{Serialize, Deserialize};
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde1", serde(bound(serialize = "X::Sampler: Serialize")))]
-#[cfg_attr(feature = "serde1", serde(bound(deserialize = "X::Sampler: Deserialize<'de>")))]
+#[cfg_attr(
+    feature = "serde1",
+    serde(bound(deserialize = "X::Sampler: Deserialize<'de>"))
+)]
 pub struct Uniform<X: SampleUniform>(X::Sampler);
 
 impl<X: SampleUniform> Uniform<X> {
@@ -289,10 +291,10 @@ pub trait UniformSampler: Sized {
     /// some types more optimal implementations for single usage may be provided
     /// via this method.
     /// Results may not be identical.
-    fn sample_single_inclusive<R: Rng + ?Sized, B1, B2>(low: B1, high: B2, rng: &mut R)
-        -> Self::X
-        where B1: SampleBorrow<Self::X> + Sized,
-              B2: SampleBorrow<Self::X> + Sized
+    fn sample_single_inclusive<R: Rng + ?Sized, B1, B2>(low: B1, high: B2, rng: &mut R) -> Self::X
+    where
+        B1: SampleBorrow<Self::X> + Sized,
+        B2: SampleBorrow<Self::X> + Sized,
     {
         let uniform: Self = UniformSampler::new_inclusive(low, high);
         uniform.sample(rng)
@@ -433,39 +435,54 @@ macro_rules! uniform_int_impl {
         impl UniformInt<$ty> {
             ///
             #[inline]
-            pub fn sample_single_inclusive_old<R: Rng + ?Sized, B1, B2>(low_b: B1, high_b: B2, rng: &mut R) -> $ty
+            pub fn sample_single_inclusive_old<R: Rng + ?Sized, B1, B2>(
+                low_b: B1, high_b: B2, rng: &mut R,
+            ) -> $ty
             where
                 B1: SampleBorrow<$ty> + Sized,
                 B2: SampleBorrow<$ty> + Sized,
             {
                 let low = *low_b.borrow();
                 let high = *high_b.borrow();
-                assert!(low <= high, "UniformSampler::sample_single_inclusive: low > high");
-                let range = high.wrapping_sub(low).wrapping_add(1) as $unsigned as $u_large;
+                assert!(
+                    low <= high,
+                    "UniformSampler::sample_single_inclusive: low > high"
+                );
+                let mut range = high.wrapping_sub(low).wrapping_add(1) as $unsigned as $u_large;
                 // If the above resulted in wrap-around to 0, the range is $ty::MIN..=$ty::MAX,
                 // and any integer will do.
                 if range == 0 {
                     return rng.gen();
                 }
 
-                let zone = if ::core::$unsigned::MAX <= ::core::u16::MAX as $unsigned {
-                    // Using a modulus is faster than the approximation for
-                    // i8 and i16. I suppose we trade the cost of one
-                    // modulus for near-perfect branch prediction.
-                    let unsigned_max: $u_large = ::core::$u_large::MAX;
-                    let ints_to_reject = (unsigned_max - range + 1) % range;
-                    unsigned_max - ints_to_reject
-                } else {
-                    // conservative but fast approximation. `- 1` is necessary to allow the
-                    // same comparison without bias.
-                    (range << range.leading_zeros()).wrapping_sub(1)
-                };
+                // let zone = if ::core::$unsigned::MAX <= ::core::u16::MAX as $unsigned {
+                // Using a modulus is faster than the approximation for
+                // i8 and i16. I suppose we trade the cost of one
+                // modulus for near-perfect branch prediction.
+                // let unsigned_max: $u_large = ::core::$u_large::MAX;
+                // let ints_to_reject = (unsigned_max - range + 1) % range;
+                // unsigned_max - ints_to_reject
+                // } else {
+                // conservative but fast approximation. `- 1` is necessary to allow the
+                // same comparison without bias.
+                // (range << range.leading_zeros()).wrapping_sub(1)
+                // };
+                //
+                // loop {
+                // let v: $u_large = rng.gen();
+                // let (hi, lo) = v.wmul(range);
+                // if lo <= zone {
+                // return low.wrapping_add(hi as $ty);
+                // }
+                // }
 
+                let mut mask = $u_large::max_value();
+                range -= 1;
+                mask >>= (range | 1).leading_zeros();
                 loop {
-                    let v: $u_large = rng.gen();
-                    let (hi, lo) = v.wmul(range);
-                    if lo <= zone {
-                        return low.wrapping_add(hi as $ty);
+                    let x = rng.gen::<$u_large>() & mask;
+                    if x <= range {
+                        return low.wrapping_add(x as $ty);
                     }
                 }
             }
@@ -555,14 +572,19 @@ macro_rules! uniform_int_impl {
             }
 
             #[inline]
-            fn sample_single_inclusive<R: Rng + ?Sized, B1, B2>(low_b: B1, high_b: B2, rng: &mut R) -> Self::X
+            fn sample_single_inclusive<R: Rng + ?Sized, B1, B2>(
+                low_b: B1, high_b: B2, rng: &mut R,
+            ) -> Self::X
             where
                 B1: SampleBorrow<Self::X> + Sized,
                 B2: SampleBorrow<Self::X> + Sized,
             {
                 let low = *low_b.borrow();
                 let high = *high_b.borrow();
-                assert!(low <= high, "UniformSampler::sample_single_inclusive: low > high");
+                assert!(
+                    low <= high,
+                    "UniformSampler::sample_single_inclusive: low > high"
+                );
                 let range = high.wrapping_sub(low).wrapping_add(1) as $unsigned as $u_large;
                 // If the above resulted in wrap-around to 0, the range is $ty::MIN..=$ty::MAX,
                 // and any integer will do.
@@ -971,7 +993,10 @@ macro_rules! uniform_float_impl {
                     "UniformSampler::sample_single: low >= high"
                 );
                 let mut scale = high - low;
-                assert!(scale.all_finite(), "UniformSampler::sample_single: range overflow");
+                assert!(
+                    scale.all_finite(),
+                    "UniformSampler::sample_single: range overflow"
+                );
 
                 loop {
                     // Generate a value in the range [1, 2)
@@ -1192,25 +1217,47 @@ mod tests {
     #[test]
     #[cfg(feature = "serde1")]
     fn test_serialization_uniform_duration() {
-        let distr = UniformDuration::new(std::time::Duration::from_secs(10), std::time::Duration::from_secs(60));
-        let de_distr: UniformDuration = bincode::deserialize(&bincode::serialize(&distr).unwrap()).unwrap();
-        assert_eq!(
-            distr.offset, de_distr.offset
+        let distr = UniformDuration::new(
+            std::time::Duration::from_secs(10),
+            std::time::Duration::from_secs(60),
         );
+        let de_distr: UniformDuration =
+            bincode::deserialize(&bincode::serialize(&distr).unwrap()).unwrap();
+        assert_eq!(distr.offset, de_distr.offset);
         match (distr.mode, de_distr.mode) {
-            (UniformDurationMode::Small {secs: a_secs, nanos: a_nanos}, UniformDurationMode::Small {secs, nanos}) => {
+            (
+                UniformDurationMode::Small {
+                    secs: a_secs,
+                    nanos: a_nanos,
+                },
+                UniformDurationMode::Small { secs, nanos },
+            ) => {
                 assert_eq!(a_secs, secs);
 
                 assert_eq!(a_nanos.0.low, nanos.0.low);
                 assert_eq!(a_nanos.0.range, nanos.0.range);
                 assert_eq!(a_nanos.0.z, nanos.0.z);
             }
-            (UniformDurationMode::Medium {nanos: a_nanos} , UniformDurationMode::Medium {nanos}) => {
+            (
+                UniformDurationMode::Medium { nanos: a_nanos },
+                UniformDurationMode::Medium { nanos },
+            ) => {
                 assert_eq!(a_nanos.0.low, nanos.0.low);
                 assert_eq!(a_nanos.0.range, nanos.0.range);
                 assert_eq!(a_nanos.0.z, nanos.0.z);
             }
-            (UniformDurationMode::Large {max_secs:a_max_secs, max_nanos:a_max_nanos, secs:a_secs}, UniformDurationMode::Large {max_secs, max_nanos, secs} ) => {
+            (
+                UniformDurationMode::Large {
+                    max_secs: a_max_secs,
+                    max_nanos: a_max_nanos,
+                    secs: a_secs,
+                },
+                UniformDurationMode::Large {
+                    max_secs,
+                    max_nanos,
+                    secs,
+                },
+            ) => {
                 assert_eq!(a_max_secs, max_secs);
                 assert_eq!(a_max_nanos, max_nanos);
 
@@ -1218,22 +1265,24 @@ mod tests {
                 assert_eq!(a_secs.0.range, secs.0.range);
                 assert_eq!(a_secs.0.z, secs.0.z);
             }
-            _ => panic!("`UniformDurationMode` was not serialized/deserialized correctly")
+            _ => panic!("`UniformDurationMode` was not serialized/deserialized correctly"),
         }
     }
-    
+
     #[test]
     #[cfg(feature = "serde1")]
     fn test_uniform_serialization() {
-        let unit_box: Uniform<i32>  = Uniform::new(-1, 1);
-        let de_unit_box: Uniform<i32> = bincode::deserialize(&bincode::serialize(&unit_box).unwrap()).unwrap();
+        let unit_box: Uniform<i32> = Uniform::new(-1, 1);
+        let de_unit_box: Uniform<i32> =
+            bincode::deserialize(&bincode::serialize(&unit_box).unwrap()).unwrap();
 
         assert_eq!(unit_box.0.low, de_unit_box.0.low);
         assert_eq!(unit_box.0.range, de_unit_box.0.range);
         assert_eq!(unit_box.0.z, de_unit_box.0.z);
 
         let unit_box: Uniform<f32> = Uniform::new(-1., 1.);
-        let de_unit_box: Uniform<f32> = bincode::deserialize(&bincode::serialize(&unit_box).unwrap()).unwrap();
+        let de_unit_box: Uniform<f32> =
+            bincode::deserialize(&bincode::serialize(&unit_box).unwrap()).unwrap();
 
         assert_eq!(unit_box.0.low, de_unit_box.0.low);
         assert_eq!(unit_box.0.scale, de_unit_box.0.scale);
@@ -1400,8 +1449,9 @@ mod tests {
                             assert!(low_scalar <= v && v < high_scalar);
                             let v = rng.sample(my_incl_uniform).extract(lane);
                             assert!(low_scalar <= v && v <= high_scalar);
-                            let v = <$ty as SampleUniform>::Sampler
-                                ::sample_single(low, high, &mut rng).extract(lane);
+                            let v =
+                                <$ty as SampleUniform>::Sampler::sample_single(low, high, &mut rng)
+                                    .extract(lane);
                             assert!(low_scalar <= v && v < high_scalar);
                         }
 
@@ -1412,9 +1462,15 @@ mod tests {
 
                         assert_eq!(zero_rng.sample(my_uniform).extract(lane), low_scalar);
                         assert_eq!(zero_rng.sample(my_incl_uniform).extract(lane), low_scalar);
-                        assert_eq!(<$ty as SampleUniform>::Sampler
-                            ::sample_single(low, high, &mut zero_rng)
-                            .extract(lane), low_scalar);
+                        assert_eq!(
+                            <$ty as SampleUniform>::Sampler::sample_single(
+                                low,
+                                high,
+                                &mut zero_rng
+                            )
+                            .extract(lane),
+                            low_scalar
+                        );
                         assert!(max_rng.sample(my_uniform).extract(lane) < high_scalar);
                         assert!(max_rng.sample(my_incl_uniform).extract(lane) <= high_scalar);
 
@@ -1427,9 +1483,13 @@ mod tests {
                                 (-1i64 << $bits_shifted) as u64,
                             );
                             assert!(
-                                <$ty as SampleUniform>::Sampler
-                                    ::sample_single(low, high, &mut lowering_max_rng)
-                                    .extract(lane) < high_scalar
+                                <$ty as SampleUniform>::Sampler::sample_single(
+                                    low,
+                                    high,
+                                    &mut lowering_max_rng
+                                )
+                                .extract(lane)
+                                    < high_scalar
                             );
                         }
                     }
