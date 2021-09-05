@@ -18,7 +18,7 @@ include = ["src/", "LICENSE-*", "README.md", "CHANGELOG.md", "COPYRIGHT"]
 
 [features]
 # Meta-features:
-default = ["std", "std_rng"]
+default = ["std", "std_rng", "small_rng"]
 nightly = [] # enables performance optimizations requiring nightly rust
 serde1 = ["serde", "rand_core/serde1"]
 

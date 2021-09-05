@@ -6,15 +6,15 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![feature(custom_inner_attributes)]
-#![feature(test)]
+#![feature(custom_inner_attributes, test)]
+#![allow(unused_macros, dead_code, unused_imports)]
 
 // Rustfmt splits macro invocations to shorten lines; in this case longer-lines are more readable
 #![rustfmt::skip]
 
 extern crate test;
 
-const RAND_BENCH_N: u64 = 100_000;
+const RAND_BENCH_N: u64 = 20_000;
 
 use rand::distributions::{Alphanumeric, Open01, OpenClosed01, Standard, Uniform};
 use rand::distributions::uniform::{UniformInt, UniformSampler};
@@ -28,11 +28,13 @@ use rand::prelude::*;
 // At this time, distributions are optimised for 64-bit platforms.
 use rand_pcg::Pcg64Mcg;
 
+type BenchRng = Pcg64Mcg;
+
 macro_rules! distr_int {
     ($fnn:ident, $ty:ty, $distr:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
-            let mut rng = Pcg64Mcg::from_entropy();
+            let mut rng = BenchRng::from_entropy();
             let distr = $distr;
 
             b.iter(|| {
@@ -48,11 +50,11 @@ macro_rules! distr_int {
     };
 }
 
-macro_rules! distr_nz_int {
+/*macro_rules! distr_nz_int {
     ($fnn:ident, $tynz:ty, $ty:ty, $distr:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
-            let mut rng = Pcg64Mcg::from_entropy();
+            let mut rng = BenchRng::from_entropy();
             let distr = $distr;
 
             b.iter(|| {
@@ -72,7 +74,7 @@ macro_rules! distr_float {
     ($fnn:ident, $ty:ty, $distr:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
-            let mut rng = Pcg64Mcg::from_entropy();
+            let mut rng = BenchRng::from_entropy();
             let distr = $distr;
 
             b.iter(|| {
@@ -92,7 +94,7 @@ macro_rules! distr_duration {
     ($fnn:ident, $distr:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
-            let mut rng = Pcg64Mcg::from_entropy();
+            let mut rng = BenchRng::from_entropy();
             let distr = $distr;
 
             b.iter(|| {
@@ -108,13 +110,13 @@ macro_rules! distr_duration {
             b.bytes = size_of::<Duration>() as u64 * RAND_BENCH_N;
         }
     };
-}
+}*/
 
 macro_rules! distr {
     ($fnn:ident, $ty:ty, $distr:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
-            let mut rng = Pcg64Mcg::from_entropy();
+            let mut rng = BenchRng::from_entropy();
             let distr = $distr;
 
             b.iter(|| {
@@ -130,19 +132,58 @@ macro_rules! distr {
     };
 }
 
-// uniform
-distr_int!(distr_uniform_i8, i8, Uniform::new(20i8, 100));
-distr_int!(distr_uniform_i16, i16, Uniform::new(-500i16, 2000));
-distr_int!(distr_uniform_i32, i32, Uniform::new(-200_000_000i32, 800_000_000));
-distr_int!(distr_uniform_i64, i64, Uniform::new(3i64, 123_456_789_123));
-distr_int!(distr_uniform_i128, i128, Uniform::new(-123_456_789_123i128, 123_456_789_123_456_789));
-distr_int!(distr_uniform_usize16, usize, Uniform::new(0usize, 0xb9d7));
-distr_int!(distr_uniform_usize32, usize, Uniform::new(0usize, 0x548c0f43));
-#[cfg(target_pointer_width = "64")]
-distr_int!(distr_uniform_usize64, usize, Uniform::new(0usize, 0x3a42714f2bf927a8));
-distr_int!(distr_uniform_isize, isize, Uniform::new(-1060478432isize, 1858574057));
+macro_rules! distr_int_canon {
+    ($fnn:ident, $ty:ty, $low:expr, $high:expr) => {
+        #[bench]
+        fn $fnn(b: &mut Bencher) {
+            let mut rng = BenchRng::from_entropy();
 
-distr_float!(distr_uniform_f32, f32, Uniform::new(2.26f32, 2.319));
+            b.iter(|| {
+                let mut accum = 0 as $ty;
+                for _ in 0..RAND_BENCH_N {
+                    let x: $ty = UniformInt::<$ty>::
+                    sample_constant_inclusive_canon($low, $high - 1, &mut rng);
+                    accum = accum.wrapping_add(x);
+                }
+                accum
+            });
+            b.bytes = size_of::<$ty>() as u64 * RAND_BENCH_N;
+        }
+    };
+}
+
+// uniform
+distr_int!(oneill_distr_uniform_high_reject_i8, i8, Uniform::new(i8::MIN, i8::MAX));
+distr_int!(oneill_distr_uniform_high_reject_i16, i16, Uniform::new(i16::MIN, i16::MAX));
+distr_int!(oneill_distr_uniform_high_reject_i32, i32, Uniform::new(i32::MIN, 1));
+distr_int!(oneill_distr_uniform_high_reject_i64, i64, Uniform::new(i64::MIN, 1));
+
+distr_int!(oneill_distr_uniform_low_reject_i8, i8, Uniform::new(i8::MIN, i8::MAX - 1));
+distr_int!(oneill_distr_uniform_low_reject_i16, i16, Uniform::new(i16::MIN, i16::MAX - 1));
+distr_int!(oneill_distr_uniform_low_reject_i32, i32, Uniform::new(i32::MIN, i32::MAX - 1));
+distr_int!(oneill_distr_uniform_low_reject_i64, i64, Uniform::new(i64::MIN, i64::MAX - 1));
+
+/*distr_int!(distr_uniform_new_i128, i128, Uniform::new(-123_456_789_123i128, 123_456_789_123_456_789));
+distr_int!(distr_uniform_new_usize16, usize, Uniform::new(0usize, 0xb9d7));
+distr_int!(distr_uniform_new_usize32, usize, Uniform::new(0usize, 0x548c0f43));
+#[cfg(target_pointer_width = "64")]
+distr_int!(distr_uniform_new_usize64, usize, Uniform::new(0usize, 0x3a42714f2bf927a8));
+distr_int!(distr_uniform_new_isize, isize, Uniform::new(-1060478432isize, 1858574057));*/
+
+// uniform
+distr_int_canon!(canon_distr_uniform_high_reject_i8, i8, i8::MIN, i8::MAX);
+distr_int_canon!(canon_distr_uniform_high_reject_i16, i16, i16::MIN, i16::MAX);
+distr_int_canon!(canon_distr_uniform_high_reject_i32, i32, i32::MIN, 1);
+distr_int_canon!(canon_distr_uniform_high_reject_i64, i64, i64::MIN, 1);
+
+distr_int_canon!(canon_distr_uniform_low_reject_i8, i8, i8::MIN, i8::MAX - 1);
+distr_int_canon!(canon_distr_uniform_low_reject_i16, i16, i16::MIN, i16::MAX - 1);
+distr_int_canon!(canon_distr_uniform_low_reject_i32, i32, i32::MIN, i32::MAX - 1);
+distr_int_canon!(canon_distr_uniform_low_reject_i64, i64, i64::MIN, i64::MAX - 1);
+
+
+
+/*distr_float!(distr_uniform_f32, f32, Uniform::new(2.26f32, 2.319));
 distr_float!(distr_uniform_f64, f64, Uniform::new(2.26f64, 2.319));
 
 const LARGE_SEC: u64 = u64::max_value() / 1000;
@@ -161,10 +202,10 @@ distr_duration!(distr_uniform_duration_variety,
 );
 distr_duration!(distr_uniform_duration_edge,
     Uniform::new_inclusive(Duration::new(LARGE_SEC, 999_999_999), Duration::new(LARGE_SEC + 1, 1))
-);
+);*/
 
 // standard
-distr_int!(distr_standard_i8, i8, Standard);
+/*distr_int!(distr_standard_i8, i8, Standard);
 distr_int!(distr_standard_i16, i16, Standard);
 distr_int!(distr_standard_i32, i32, Standard);
 distr_int!(distr_standard_i64, i64, Standard);
@@ -184,14 +225,14 @@ distr_float!(distr_standard_f64, f64, Standard);
 distr_float!(distr_open01_f32, f32, Open01);
 distr_float!(distr_open01_f64, f64, Open01);
 distr_float!(distr_openclosed01_f32, f32, OpenClosed01);
-distr_float!(distr_openclosed01_f64, f64, OpenClosed01);
+distr_float!(distr_openclosed01_f64, f64, OpenClosed01);*/
 
 // construct and sample from a range
 macro_rules! gen_range_int {
     ($fnn:ident, $ty:ident, $low:expr, $high:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
-            let mut rng = Pcg64Mcg::from_entropy();
+            let mut rng = BenchRng::from_entropy();
 
             b.iter(|| {
                 let mut high = $high;
@@ -211,32 +252,33 @@ macro_rules! gen_range_int {
 // Algorithms such as Fisher–Yates shuffle often require uniform values from an
 // incrementing range 0..n. We use -1..n here to prevent wrapping in the test 
 // from generating a 0-sized range.
-gen_range_int!(gen_range_i8_low, i8, -1i8, 0);
-gen_range_int!(gen_range_i16_low, i16, -1i16, 0);
-gen_range_int!(gen_range_i32_low, i32, -1i32, 0);
-gen_range_int!(gen_range_i64_low, i64, -1i64, 0);
-gen_range_int!(gen_range_i128_low, i128, -1i128, 0);
+gen_range_int!(oneill_gen_range_i8_low, i8, -1i8, 0);
+gen_range_int!(oneill_gen_range_i16_low, i16, -1i16, 0);
+gen_range_int!(oneill_gen_range_i32_low, i32, -1i32, 0);
+gen_range_int!(oneill_gen_range_i64_low, i64, -1i64, 0);
+// gen_range_int!(oneill_gen_range_i128_low, i128, -1i128, 0);
 
 // These were the initially tested ranges. They are likely to see fewer
 // rejections than the low tests. 2^(N - 1) + 1
-gen_range_int!(gen_range_i8_high, i8, i8::min_value(), 1);
-gen_range_int!(gen_range_i16_high, i16, i16::min_value(), 1);
-gen_range_int!(gen_range_i32_high, i32, i32::min_value(), 1);
-gen_range_int!(gen_range_i64_high, i64, i64::min_value(), 1);
-gen_range_int!(gen_range_i128_high, i128, i128::min_value(), 1);
+gen_range_int!(oneill_gen_range_i8_high, i8, i8::min_value(), 1);
+gen_range_int!(oneill_gen_range_i16_high, i16, i16::min_value(), 1);
+gen_range_int!(oneill_gen_range_i32_high, i32, i32::min_value(), 1);
+gen_range_int!(oneill_gen_range_i64_high, i64, i64::min_value(), 1);
+// gen_range_int!(gen_range_oneill_i128_high, i128, i128::min_value(), 1);
 
 // construct and sample from a range
-macro_rules! gen_range_int_old {
+macro_rules! gen_range_int_bitmask {
     ($fnn:ident, $ty:ident, $low:expr, $high:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
-            let mut rng = Pcg64Mcg::from_entropy();
+            let mut rng = BenchRng::from_entropy();
 
             b.iter(|| {
                 let mut high = $high;
                 let mut accum: $ty = 0;
                 for _ in 0..RAND_BENCH_N {
-                    accum = accum.wrapping_add(UniformInt::<$ty>::sample_single_inclusive_old($low, high - 1, &mut rng));
+                    accum = accum.wrapping_add(UniformInt::<$ty>::
+                        sample_single_inclusive_bitmask($low, high - 1, &mut rng));
                     // force recalculation of range each time
                     high = high.wrapping_add(1) & std::$ty::MAX;
                 }
@@ -250,26 +292,64 @@ macro_rules! gen_range_int_old {
 // Algorithms such as Fisher–Yates shuffle often require uniform values from an
 // incrementing range 0..n. We use -1..n here to prevent wrapping in the test
 // from generating a 0-sized range.
-gen_range_int_old!(gen_range_old_i8_low, i8, -1i8, 0);
-gen_range_int_old!(gen_range_old_i16_low, i16, -1i16, 0);
-gen_range_int_old!(gen_range_old_i32_low, i32, -1i32, 0);
-gen_range_int_old!(gen_range_old_i64_low, i64, -1i64, 0);
-gen_range_int_old!(gen_range_old_i128_low, i128, -1i128, 0);
+gen_range_int_bitmask!(bitmask_gen_range_i8_low, i8, -1i8, 0);
+gen_range_int_bitmask!(bitmask_gen_range_i16_low, i16, -1i16, 0);
+gen_range_int_bitmask!(bitmask_gen_range_i32_low, i32, -1i32, 0);
+gen_range_int_bitmask!(bitmask_gen_range_i64_low, i64, -1i64, 0);
+// gen_range_int_bitmask!(bitmask_gen_range_i128_low, i128, -1i128, 0);
 
 // These were the initially tested ranges. They are likely to see fewer
 // rejections than the low tests. 2^(N - 1) + 1
-gen_range_int_old!(gen_range_old_i8_high, i8, i8::min_value(), 1);
-gen_range_int_old!(gen_range_old_i16_high, i16, i16::min_value(), 1);
-gen_range_int_old!(gen_range_old_i32_high, i32, i32::min_value(), 1);
-gen_range_int_old!(gen_range_old_i64_high, i64, i64::min_value(), 1);
-gen_range_int_old!(gen_range_old_i128_high, i128, i128::min_value(), 1);
+gen_range_int_bitmask!(bitmask_gen_range_i8_high, i8, i8::min_value(), 1);
+gen_range_int_bitmask!(bitmask_gen_range_i16_high, i16, i16::min_value(), 1);
+gen_range_int_bitmask!(bitmask_gen_range_i32_high, i32, i32::min_value(), 1);
+gen_range_int_bitmask!(bitmask_gen_range_i64_high, i64, i64::min_value(), 1);
+// gen_range_int_bitmask!(bitmask_gen_range_i128_high, i128, i128::min_value(), 1);
 
-// construct and sample from a floating-point range
+macro_rules! gen_range_int_canon {
+    ($fnn:ident, $ty:ident, $low:expr, $high:expr) => {
+        #[bench]
+        fn $fnn(b: &mut Bencher) {
+            let mut rng = BenchRng::from_entropy();
+
+            b.iter(|| {
+                let mut high = $high;
+                let mut accum: $ty = 0;
+                for _ in 0..RAND_BENCH_N {
+                    accum = accum.wrapping_add(UniformInt::<$ty>::sample_single_inclusive_canon($low, high - 1, &mut rng));
+                    // force recalculation of range each time
+                    high = high.wrapping_add(1) & std::$ty::MAX;
+                }
+                accum
+            });
+            b.bytes = size_of::<$ty>() as u64 * RAND_BENCH_N;
+        }
+    };
+}
+
+// Algorithms such as Fisher–Yates shuffle often require uniform values from an
+// incrementing range 0..n. We use -1..n here to prevent wrapping in the test
+// from generating a 0-sized range.
+gen_range_int_canon!(canon_gen_range_i8_low, i8, -1i8, 0);
+gen_range_int_canon!(canon_gen_range_i16_low, i16, -1i16, 0);
+gen_range_int_canon!(canon_gen_range_i32_low, i32, -1i32, 0);
+gen_range_int_canon!(canon_gen_range_i64_low, i64, -1i64, 0);
+// gen_range_int_canon!(canon_gen_range_i128_low, i128, -1i128, 0);
+
+// These were the initially tested ranges. They are likely to see fewer
+// rejections than the low tests. 2^(N - 1) + 1
+gen_range_int_canon!(canon_gen_range_i8_high, i8, i8::min_value(), 1);
+gen_range_int_canon!(canon_gen_range_i16_high, i16, i16::min_value(), 1);
+gen_range_int_canon!(canon_gen_range_i32_high, i32, i32::min_value(), 1);
+gen_range_int_canon!(canon_gen_range_i64_high, i64, i64::min_value(), 1);
+// gen_range_int_canon!(canon_gen_range_i128_high, i128, i128::min_value(), 1);
+
+/*// construct and sample from a floating-point range
 macro_rules! gen_range_float {
     ($fnn:ident, $ty:ident, $low:expr, $high:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
-            let mut rng = Pcg64Mcg::from_entropy();
+            let mut rng = BenchRng::from_entropy();
 
             b.iter(|| {
                 let mut high = $high;
@@ -289,7 +369,7 @@ macro_rules! gen_range_float {
 }
 
 gen_range_float!(gen_range_f32, f32, -20000.0f32, 100000.0);
-gen_range_float!(gen_range_f64, f64, 123.456f64, 7890.12);
+gen_range_float!(gen_range_f64, f64, 123.456f64, 7890.12);*/
 
 
 // In src/distributions/uniform.rs, we say:
@@ -306,7 +386,7 @@ macro_rules! uniform_sample {
     ($fnn:ident, $type:ident, $low:expr, $high:expr, $count:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
-            let mut rng = Pcg64Mcg::from_entropy();
+            let mut rng = BenchRng::from_entropy();
             let low = black_box($low);
             let high = black_box($high);
             b.iter(|| {
@@ -325,7 +405,7 @@ macro_rules! uniform_inclusive {
     ($fnn:ident, $type:ident, $low:expr, $high:expr, $count:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
-            let mut rng = Pcg64Mcg::from_entropy();
+            let mut rng = BenchRng::from_entropy();
             let low = black_box($low);
             let high = black_box($high);
             b.iter(|| {
@@ -345,7 +425,7 @@ macro_rules! uniform_single {
     ($fnn:ident, $type:ident, $low:expr, $high:expr, $count:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
-            let mut rng = Pcg64Mcg::from_entropy();
+            let mut rng = BenchRng::from_entropy();
             let low = black_box($low);
             let high = black_box($high);
             b.iter(|| {
@@ -371,7 +451,7 @@ macro_rules! uniform_single {
 // (32769) will only reject 32769 / 4294967296 samples.
 const HALF_16_BIT_UNSIGNED: u16 = 1 << 15;
 
-uniform_sample!(uniform_u16x1_allm1_new, u16, 0, u16::max_value(), 1);
+/*uniform_sample!(uniform_u16x1_allm1_new, u16, 0, u16::max_value(), 1);
 uniform_sample!(uniform_u16x1_halfp1_new, u16, 0, HALF_16_BIT_UNSIGNED + 1, 1);
 uniform_sample!(uniform_u16x1_half_new, u16, 0, HALF_16_BIT_UNSIGNED, 1);
 uniform_sample!(uniform_u16x1_halfm1_new, u16, 0, HALF_16_BIT_UNSIGNED - 1, 1);
@@ -476,4 +556,4 @@ uniform_single!(uniform_u128x10_allm1_single, u128, 0, u128::max_value(), 10);
 uniform_single!(uniform_u128x10_halfp1_single, u128, 0, HALF_128_BIT_UNSIGNED + 1, 10);
 uniform_single!(uniform_u128x10_half_single, u128, 0, HALF_128_BIT_UNSIGNED, 10);
 uniform_single!(uniform_u128x10_halfm1_single, u128, 0, HALF_128_BIT_UNSIGNED - 1, 10);
-uniform_single!(uniform_u128x10_6_single, u128, 0, 6u128, 10);
+uniform_single!(uniform_u128x10_6_single, u128, 0, 6u128, 10);*/

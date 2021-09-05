@@ -435,7 +435,80 @@ macro_rules! uniform_int_impl {
         impl UniformInt<$ty> {
             ///
             #[inline]
-            pub fn sample_single_inclusive_old<R: Rng + ?Sized, B1, B2>(
+            pub fn sample_single_inclusive_canon<R: Rng + ?Sized, B1, B2>(
+                low_b: B1, high_b: B2, rng: &mut R,
+            ) -> $ty
+            where
+                B1: SampleBorrow<$ty> + Sized,
+                B2: SampleBorrow<$ty> + Sized,
+            {
+                let low = *low_b.borrow();
+                let high = *high_b.borrow();
+                assert!(
+                    low <= high,
+                    "UniformSampler::sample_single_inclusive: low > high"
+                );
+                let range = high.wrapping_sub(low).wrapping_add(1) as $unsigned as $u_large;
+                // If the above resulted in wrap-around to 0, the range is $ty::MIN..=$ty::MAX,
+                // and any integer will do.
+                if range == 0 {
+                    return rng.gen();
+                }
+
+                // generate a sample using a sensible integer type
+                let (mut result, lo_order) = rng.gen::<$u_large>().wmul(range);
+
+                // if the sample is biased...
+                if lo_order > range.wrapping_neg() {
+                    // ...generate a new sample with 64 more bits, enough that bias is undetectable
+                    let (new_hi_order, _) = rng.gen::<u64>().wmul(range as u64);
+                    // and adjust if needed
+                    result += lo_order.checked_add(new_hi_order as $u_large).is_none() as $u_large;
+                }
+
+                low.wrapping_add(result as $ty)
+            }
+
+            ///
+            #[inline]
+            pub fn sample_constant_inclusive_canon<R: Rng + ?Sized, B1, B2>(
+                low_b: B1, high_b: B2, rng: &mut R,
+            ) -> $ty
+            where
+                B1: SampleBorrow<$ty> + Sized,
+                B2: SampleBorrow<$ty> + Sized,
+            {
+                let low = *low_b.borrow();
+                let high = *high_b.borrow();
+                assert!(
+                    low <= high,
+                    "UniformSampler::sample_single_inclusive: low > high"
+                );
+                let range = high.wrapping_sub(low).wrapping_add(1) as $unsigned as $u_large;
+                // If the above resulted in wrap-around to 0, the range is $ty::MIN..=$ty::MAX,
+                // and any integer will do.
+                if range == 0 {
+                    return rng.gen();
+                }
+
+                // generate a sample using a sensible integer type
+                let (mut result, lo_order) = rng.gen::<$u_large>().wmul(range);
+
+                // if the sample is biased... (since range won't be changing we can further
+                // improve this check with a modulo)
+                if lo_order < range.wrapping_neg() % range {
+                    // ...generate a new sample with 64 more bits, enough that bias is undetectable
+                    let (new_hi_order, _) = rng.gen::<u64>().wmul(range as u64);
+                    // and adjust if needed
+                    result += lo_order.checked_add(new_hi_order as $u_large).is_none() as $u_large;
+                }
+
+                low.wrapping_add(result as $ty)
+            }
+
+            ///
+            #[inline]
+            pub fn sample_single_inclusive_bitmask<R: Rng + ?Sized, B1, B2>(
                 low_b: B1, high_b: B2, rng: &mut R,
             ) -> $ty
             where
@@ -455,26 +528,29 @@ macro_rules! uniform_int_impl {
                     return rng.gen();
                 }
 
-                // let zone = if ::core::$unsigned::MAX <= ::core::u16::MAX as $unsigned {
-                // Using a modulus is faster than the approximation for
-                // i8 and i16. I suppose we trade the cost of one
-                // modulus for near-perfect branch prediction.
-                // let unsigned_max: $u_large = ::core::$u_large::MAX;
-                // let ints_to_reject = (unsigned_max - range + 1) % range;
-                // unsigned_max - ints_to_reject
-                // } else {
-                // conservative but fast approximation. `- 1` is necessary to allow the
-                // same comparison without bias.
-                // (range << range.leading_zeros()).wrapping_sub(1)
-                // };
-                //
-                // loop {
-                // let v: $u_large = rng.gen();
-                // let (hi, lo) = v.wmul(range);
-                // if lo <= zone {
-                // return low.wrapping_add(hi as $ty);
-                // }
-                // }
+                // the old impl use a mix of methods for different integer sizes, we only use
+                // the lz method here for a better comparison.
+
+                /*let zone = if ::core::$unsigned::MAX <= ::core::u16::MAX as $unsigned {
+                    // Using a modulus is faster than the approximation for
+                    // i8 and i16. I suppose we trade the cost of one
+                    // modulus for near-perfect branch prediction.
+                    let unsigned_max: $u_large = ::core::$u_large::MAX;
+                    let ints_to_reject = (unsigned_max - range + 1) % range;
+                    unsigned_max - ints_to_reject
+                } else {
+                    // conservative but fast approximation. `- 1` is necessary to allow the
+                    // same comparison without bias.
+                    (range << range.leading_zeros()).wrapping_sub(1)
+                };
+
+                loop {
+                    let v: $u_large = rng.gen();
+                    let (hi, lo) = v.wmul(range);
+                    if lo <= zone {
+                        return low.wrapping_add(hi as $ty);
+                    }
+                }*/
 
                 let mut mask = $u_large::max_value();
                 range -= 1;
