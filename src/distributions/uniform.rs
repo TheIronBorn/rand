@@ -427,7 +427,7 @@ pub struct UniformInt<X> {
 }
 
 macro_rules! uniform_int_impl {
-    ($ty:ty, $unsigned:ident, $u_large:ident) => {
+    ($ty:ty, $unsigned:ident, $u_large:ident, $u_extra_large:ident) => {
         impl SampleUniform for $ty {
             type Sampler = UniformInt<$ty>;
         }
@@ -461,7 +461,7 @@ macro_rules! uniform_int_impl {
                 // if the sample is biased...
                 if lo_order > range.wrapping_neg() {
                     // ...generate a new sample with 64 more bits, enough that bias is undetectable
-                    let (new_hi_order, _) = rng.gen::<u64>().wmul(range as u64);
+                    let (new_hi_order, _) = (rng.gen::<u64>() as $u_extra_large).wmul(range as $u_extra_large);
                     // and adjust if needed
                     result += lo_order.checked_add(new_hi_order as $u_large).is_none() as $u_large;
                 }
@@ -498,7 +498,7 @@ macro_rules! uniform_int_impl {
                 // improve this check with a modulo)
                 if lo_order < range.wrapping_neg() % range {
                     // ...generate a new sample with 64 more bits, enough that bias is undetectable
-                    let (new_hi_order, _) = rng.gen::<u64>().wmul(range as u64);
+                    let (new_hi_order, _) = (rng.gen::<u64>() as $u_extra_large).wmul(range as $u_extra_large);
                     // and adjust if needed
                     result += lo_order.checked_add(new_hi_order as $u_large).is_none() as $u_large;
                 }
@@ -689,20 +689,20 @@ macro_rules! uniform_int_impl {
     };
 }
 
-uniform_int_impl! { i8, u8, u32 }
-uniform_int_impl! { i16, u16, u32 }
-uniform_int_impl! { i32, u32, u32 }
-uniform_int_impl! { i64, u64, u64 }
+uniform_int_impl! { i8, u8, u32, u64 }
+uniform_int_impl! { i16, u16, u32, u64 }
+uniform_int_impl! { i32, u32, u32, u64 }
+uniform_int_impl! { i64, u64, u64, u64 }
 #[cfg(not(target_os = "emscripten"))]
-uniform_int_impl! { i128, u128, u128 }
-uniform_int_impl! { isize, usize, usize }
-uniform_int_impl! { u8, u8, u32 }
-uniform_int_impl! { u16, u16, u32 }
-uniform_int_impl! { u32, u32, u32 }
-uniform_int_impl! { u64, u64, u64 }
-uniform_int_impl! { usize, usize, usize }
+uniform_int_impl! { i128, u128, u128, u128 }
+uniform_int_impl! { isize, usize, usize, u64 }
+uniform_int_impl! { u8, u8, u32, u64 }
+uniform_int_impl! { u16, u16, u32, u64 }
+uniform_int_impl! { u32, u32, u32, u64 }
+uniform_int_impl! { u64, u64, u64, u64 }
+uniform_int_impl! { usize, usize, usize, u64 }
 #[cfg(not(target_os = "emscripten"))]
-uniform_int_impl! { u128, u128, u128 }
+uniform_int_impl! { u128, u128, u128, u128 }
 
 #[cfg(feature = "simd_support")]
 macro_rules! uniform_simd_int_impl {

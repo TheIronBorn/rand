@@ -157,11 +157,13 @@ distr_int!(oneill_distr_uniform_high_reject_i8, i8, Uniform::new(i8::MIN, i8::MA
 distr_int!(oneill_distr_uniform_high_reject_i16, i16, Uniform::new(i16::MIN, i16::MAX));
 distr_int!(oneill_distr_uniform_high_reject_i32, i32, Uniform::new(i32::MIN, 1));
 distr_int!(oneill_distr_uniform_high_reject_i64, i64, Uniform::new(i64::MIN, 1));
+distr_int!(oneill_distr_uniform_high_reject_i128, i128, Uniform::new(i128::MIN, 1));
 
 distr_int!(oneill_distr_uniform_low_reject_i8, i8, Uniform::new(i8::MIN, i8::MAX - 1));
 distr_int!(oneill_distr_uniform_low_reject_i16, i16, Uniform::new(i16::MIN, i16::MAX - 1));
 distr_int!(oneill_distr_uniform_low_reject_i32, i32, Uniform::new(i32::MIN, i32::MAX - 1));
 distr_int!(oneill_distr_uniform_low_reject_i64, i64, Uniform::new(i64::MIN, i64::MAX - 1));
+distr_int!(oneill_distr_uniform_low_reject_i128, i128, Uniform::new(i128::MIN, i128::MAX - 1));
 
 /*distr_int!(distr_uniform_new_i128, i128, Uniform::new(-123_456_789_123i128, 123_456_789_123_456_789));
 distr_int!(distr_uniform_new_usize16, usize, Uniform::new(0usize, 0xb9d7));
@@ -175,11 +177,13 @@ distr_int_canon!(canon_distr_uniform_high_reject_i8, i8, i8::MIN, i8::MAX);
 distr_int_canon!(canon_distr_uniform_high_reject_i16, i16, i16::MIN, i16::MAX);
 distr_int_canon!(canon_distr_uniform_high_reject_i32, i32, i32::MIN, 1);
 distr_int_canon!(canon_distr_uniform_high_reject_i64, i64, i64::MIN, 1);
+distr_int_canon!(canon_distr_uniform_high_reject_i128, i128, i128::MIN, 1);
 
 distr_int_canon!(canon_distr_uniform_low_reject_i8, i8, i8::MIN, i8::MAX - 1);
 distr_int_canon!(canon_distr_uniform_low_reject_i16, i16, i16::MIN, i16::MAX - 1);
 distr_int_canon!(canon_distr_uniform_low_reject_i32, i32, i32::MIN, i32::MAX - 1);
 distr_int_canon!(canon_distr_uniform_low_reject_i64, i64, i64::MIN, i64::MAX - 1);
+distr_int_canon!(canon_distr_uniform_low_reject_i128, i128, i128::MIN, i128::MAX - 1);
 
 
 
@@ -256,7 +260,7 @@ gen_range_int!(oneill_gen_range_i8_low, i8, -1i8, 0);
 gen_range_int!(oneill_gen_range_i16_low, i16, -1i16, 0);
 gen_range_int!(oneill_gen_range_i32_low, i32, -1i32, 0);
 gen_range_int!(oneill_gen_range_i64_low, i64, -1i64, 0);
-// gen_range_int!(oneill_gen_range_i128_low, i128, -1i128, 0);
+gen_range_int!(oneill_gen_range_i128_low, i128, -1i128, 0);
 
 // These were the initially tested ranges. They are likely to see fewer
 // rejections than the low tests. 2^(N - 1) + 1
@@ -264,7 +268,7 @@ gen_range_int!(oneill_gen_range_i8_high, i8, i8::min_value(), 1);
 gen_range_int!(oneill_gen_range_i16_high, i16, i16::min_value(), 1);
 gen_range_int!(oneill_gen_range_i32_high, i32, i32::min_value(), 1);
 gen_range_int!(oneill_gen_range_i64_high, i64, i64::min_value(), 1);
-// gen_range_int!(gen_range_oneill_i128_high, i128, i128::min_value(), 1);
+gen_range_int!(oneill_gen_range_i128_high, i128, i128::min_value(), 1);
 
 // construct and sample from a range
 macro_rules! gen_range_int_bitmask {
@@ -296,7 +300,7 @@ gen_range_int_bitmask!(bitmask_gen_range_i8_low, i8, -1i8, 0);
 gen_range_int_bitmask!(bitmask_gen_range_i16_low, i16, -1i16, 0);
 gen_range_int_bitmask!(bitmask_gen_range_i32_low, i32, -1i32, 0);
 gen_range_int_bitmask!(bitmask_gen_range_i64_low, i64, -1i64, 0);
-// gen_range_int_bitmask!(bitmask_gen_range_i128_low, i128, -1i128, 0);
+gen_range_int_bitmask!(bitmask_gen_range_i128_low, i128, -1i128, 0);
 
 // These were the initially tested ranges. They are likely to see fewer
 // rejections than the low tests. 2^(N - 1) + 1
@@ -304,7 +308,7 @@ gen_range_int_bitmask!(bitmask_gen_range_i8_high, i8, i8::min_value(), 1);
 gen_range_int_bitmask!(bitmask_gen_range_i16_high, i16, i16::min_value(), 1);
 gen_range_int_bitmask!(bitmask_gen_range_i32_high, i32, i32::min_value(), 1);
 gen_range_int_bitmask!(bitmask_gen_range_i64_high, i64, i64::min_value(), 1);
-// gen_range_int_bitmask!(bitmask_gen_range_i128_high, i128, i128::min_value(), 1);
+gen_range_int_bitmask!(bitmask_gen_range_i128_high, i128, i128::min_value(), 1);
 
 macro_rules! gen_range_int_canon {
     ($fnn:ident, $ty:ident, $low:expr, $high:expr) => {
@@ -334,7 +338,7 @@ gen_range_int_canon!(canon_gen_range_i8_low, i8, -1i8, 0);
 gen_range_int_canon!(canon_gen_range_i16_low, i16, -1i16, 0);
 gen_range_int_canon!(canon_gen_range_i32_low, i32, -1i32, 0);
 gen_range_int_canon!(canon_gen_range_i64_low, i64, -1i64, 0);
-// gen_range_int_canon!(canon_gen_range_i128_low, i128, -1i128, 0);
+gen_range_int_canon!(canon_gen_range_i128_low, i128, -1i128, 0);
 
 // These were the initially tested ranges. They are likely to see fewer
 // rejections than the low tests. 2^(N - 1) + 1
@@ -342,7 +346,7 @@ gen_range_int_canon!(canon_gen_range_i8_high, i8, i8::min_value(), 1);
 gen_range_int_canon!(canon_gen_range_i16_high, i16, i16::min_value(), 1);
 gen_range_int_canon!(canon_gen_range_i32_high, i32, i32::min_value(), 1);
 gen_range_int_canon!(canon_gen_range_i64_high, i64, i64::min_value(), 1);
-// gen_range_int_canon!(canon_gen_range_i128_high, i128, i128::min_value(), 1);
+gen_range_int_canon!(canon_gen_range_i128_high, i128, i128::min_value(), 1);
 
 /*// construct and sample from a floating-point range
 macro_rules! gen_range_float {
