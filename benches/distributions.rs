@@ -397,7 +397,7 @@ macro_rules! gen_range_int {
                 let mut high = $high;
                 let mut accum: $ty = 0;
                 for _ in 0..RAND_BENCH_N {
-                    accum = accum.wrapping_add(rng.gen_range(high..$low));
+                    accum = accum.wrapping_add(rng.gen_range($low..high));
                     // force recalculation of range each time
                     high = high.wrapping_add(1) & std::$ty::MAX;
                 }
@@ -682,7 +682,7 @@ macro_rules! gen_range_float {
                 let mut low = $low;
                 let mut accum: $ty = 0.0;
                 for _ in 0..RAND_BENCH_N {
-                    accum += rng.gen_range(high_reject..low);
+                    accum += rng.gen_range(low..high);
                     // force recalculation of range each time
                     low += 0.9;
                     high += 1.1;
