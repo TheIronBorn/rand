@@ -104,8 +104,8 @@ pub mod mock; // Public so we don't export `StepRng` directly, making it a bit
               // more clear it is intended for testing.
 
 #[cfg(feature = "small_rng")] mod small;
-#[cfg(all(feature = "small_rng", not(target_pointer_width = "64")))]
-mod xoshiro128plusplus;
+// #[cfg(all(feature = "small_rng", not(target_pointer_width = "64")))]
+pub mod xoshiro128plusplus;
 #[cfg(all(feature = "small_rng", target_pointer_width = "64"))]
 mod xoshiro256plusplus;
 

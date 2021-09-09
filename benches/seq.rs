@@ -19,16 +19,55 @@ use std::mem::size_of;
 
 // We force use of 32-bit RNG since seq code is optimised for use with 32-bit
 // generators on all platforms.
-use rand_pcg::Pcg32 as SmallRng;
+// use rand_pcg::Pcg32 as SmallRng;
+use rand::rngs::xoshiro128plusplus::Xoshiro128PlusPlus as SmallRng;
 
 const RAND_BENCH_N: u64 = 1000;
 
 #[bench]
-fn seq_shuffle_100(b: &mut Bencher) {
+fn oneill_seq_shuffle_100(b: &mut Bencher) {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
     let x: &mut [usize] = &mut [1; 100];
     b.iter(|| {
         x.shuffle(&mut rng);
+        x[0]
+    })
+}
+
+fn canon_shuffle<T, R>(x: &mut [T], rng: &mut R)
+where R: Rng + ?Sized {
+    for i in (1..x.len()).rev() {
+        // invariant: elements with index > i have been locked in place.
+        x.swap(i, rand::distributions::uniform::UniformInt::<u32>::
+            sample_single_inclusive_canon(0, i as u32, rng) as usize);
+    }
+}
+
+fn bitmask_shuffle<T, R>(x: &mut [T], rng: &mut R)
+where R: Rng + ?Sized {
+    for i in (1..x.len()).rev() {
+        // invariant: elements with index > i have been locked in place.
+        x.swap(i, rand::distributions::uniform::UniformInt::<u32>::
+            sample_single_inclusive_bitmask(0, i as u32, rng) as usize);
+    }
+}
+
+#[bench]
+fn canon_seq_shuffle_100(b: &mut Bencher) {
+    let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
+    let x: &mut [usize] = &mut [1; 100];
+    b.iter(|| {
+        canon_shuffle(x, &mut rng);
+        x[0]
+    })
+}
+
+#[bench]
+fn bitmask_seq_shuffle_100(b: &mut Bencher) {
+    let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
+    let x: &mut [usize] = &mut [1; 100];
+    b.iter(|| {
+        bitmask_shuffle(x, &mut rng);
         x[0]
     })
 }

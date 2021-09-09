@@ -18,7 +18,7 @@ include = ["src/", "LICENSE-*", "README.md", "CHANGELOG.md", "COPYRIGHT"]
 
 [features]
 # Meta-features:
-default = ["std", "std_rng", "small_rng"]
+default = ["std", "std_rng", "small_rng", "simd_support"]
 nightly = [] # enables performance optimizations requiring nightly rust
 serde1 = ["serde", "rand_core/serde1"]
 
@@ -66,7 +66,9 @@ criterion-cycles-per-byte = { version = "*", optional = true }
 [dependencies.packed_simd]
 # NOTE: so far no version works reliably due to dependence on unstable features
 package = "packed_simd_2"
-version = "0.3.5"
+# version = "0.3.5"
+git = "https://github.com/JohnTitor/packed_simd"
+branch = "rename-const-generics-feature-gate"
 optional = true
 features = ["into_bits"]
 
