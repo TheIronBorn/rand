@@ -99,6 +99,8 @@ macro_rules! wmul_impl_large {
 
                 #[inline(always)]
                 fn wmul(self, b: $ty) -> Self::Output {
+                    // LLVM Machine Code Analyzer suggests better throughput than scalar
+                    // see: https://godbolt.org/z/s3qqjzeeK
                     // needs wrapping multiplication
                     const LOWER_MASK: $scalar = !0 >> $half;
                     let mut low = (self & LOWER_MASK) * (b & LOWER_MASK);
