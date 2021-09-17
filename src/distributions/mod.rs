@@ -99,7 +99,7 @@ mod float;
 mod integer;
 mod other;
 mod slice;
-mod utils;
+pub mod utils;
 #[cfg(feature = "alloc")] mod weighted_index;
 
 #[doc(hidden)]

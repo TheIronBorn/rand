@@ -100,7 +100,7 @@ macro_rules! wmul_impl_large {
                 #[inline(always)]
                 fn wmul(self, b: $ty) -> Self::Output {
                     // needs wrapping multiplication
-                    /*const LOWER_MASK: $scalar = !0 >> $half;
+                    const LOWER_MASK: $scalar = !0 >> $half;
                     let mut low = (self & LOWER_MASK) * (b & LOWER_MASK);
                     let mut t = low >> $half;
                     low &= LOWER_MASK;
@@ -114,18 +114,7 @@ macro_rules! wmul_impl_large {
                     high += t >> $half;
                     high += (self >> $half) * (b >> $half);
 
-                    (high, low)*/
-
-                    let mut hi = <$ty>::default();
-                    let mut lo = <$ty>::default();
-
-                    for i in 0..<$ty>::lanes() {
-                        let (shi, slo) = self.extract(i).wmul(b.extract(i));
-                        hi = hi.replace(i, shi);
-                        lo = lo.replace(i, slo);
-                    }
-
-                    (hi, lo)
+                    (high, low)
                 }
             }
         )+
@@ -218,6 +207,13 @@ mod simd_wmul {
     wmul_impl_large! { (u32x16,) u32, 16 }
     wmul_impl_large! { (u64x2, u64x4, u64x8,) u64, 32 }
     wmul_impl_large! { (u128x2, u128x4,) u128, 64 }
+
+    #[cfg(target_pointer_width = "64")]
+    wmul_impl_large! { (usizex2, usizex4, usizex8,) usize, 32 }
+    #[cfg(target_pointer_width = "32")]
+    wmul_impl_large! { (usizex2, usizex4, usizex8,) usize, 16 }
+    #[cfg(target_pointer_width = "16")]
+    wmul_impl_large! { (usizex2, usizex4, usizex8,) usize, 8 }
 }
 
 pub(crate) trait OverflowingAdd<T> {
@@ -273,6 +269,124 @@ impl_overflowing_add!(
     (u128x2, i128x2, m128x2),
     (u128x4, i128x4, m128x4)
 );
+
+
+pub(crate) trait SimdCombine<T> {
+    fn simd_combine(&self) -> T;
+}
+
+macro_rules! impl_combine_2 {
+    ($(($wide:ident, $short:ident)),+) => {$(
+        impl SimdCombine<$wide> for [$short] {
+            #[inline]
+            fn simd_combine(&self) -> $wide {
+                shuffle!(self[0], self[1], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+            }
+        }
+    )+};
+}
+
+impl_combine_2!{
+    (u32x16, u32x8),
+    (u16x16, u16x8),
+    (u8x16, u8x8)
+}
+
+macro_rules! impl_combine_4 {
+    ($(($wide:ident, $mid:ident, $short:ident)),+) => {$(
+        impl SimdCombine<$wide> for [$short] {
+            #[inline]
+            #[allow(unreachable_code)]
+            fn simd_combine(&self) -> $wide {
+                let a: $mid = self.chunks_exact(2).nth(0).unwrap().simd_combine();
+                let b: $mid = self.chunks_exact(2).nth(1).unwrap().simd_combine();
+                shuffle!(a, b, [
+                    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+                    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+                ])
+            }
+        }
+    )+};
+}
+
+impl_combine_4!{
+    (u16x32, u16x16, u16x8),
+    (u8x32, u8x16, u8x8)
+}
+
+impl SimdCombine<u8x64> for [u8x8; 8] {
+    #[inline]
+    fn simd_combine(&self) -> u8x64 {
+        let a: u8x32 = self.chunks_exact(4).nth(0).unwrap().simd_combine();
+        let b: u8x32 = self.chunks_exact(4).nth(1).unwrap().simd_combine();
+        shuffle!(a, b, [
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+            16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+            32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+            48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63
+        ])
+    }
+}
+
+
+pub(crate) trait SimdSplit<T> {
+    fn simd_split(&self) -> T;
+}
+
+macro_rules! impl_split_2 {
+    ($(($wide:ident, $short:ident)),+) => {$(
+        impl SimdSplit<[$short; 2]> for $wide {
+            #[inline]
+            fn simd_split(&self) -> [$short; 2] {
+                let a = shuffle!(self, [0, 1, 2, 3, 4, 5, 6, 7]);
+                let b = shuffle!(self, [8, 9, 10, 11, 12, 13, 14, 15]);
+                [a, b]
+            }
+        }
+    )+};
+}
+
+impl_split_2!{
+    (u32x16, u32x8),
+    (u16x16, u16x8),
+    (u8x16, u8x8)
+}
+
+macro_rules! impl_split_4 {
+    ($(($wide:ident, $mid:ident, $short:ident)),+) => {$(
+        impl SimdSplit<[$short; 4]> for $wide {
+            #[inline]
+            fn simd_split(&self) -> [$short; 4] {
+                let a = shuffle!(self, [0, 1, 2, 3, 4, 5, 6, 7]);
+                let b = shuffle!(self, [8, 9, 10, 11, 12, 13, 14, 15]);
+                let c = shuffle!(self, [16, 17, 18, 19, 20, 21, 22, 23]);
+                let d = shuffle!(self, [24, 25, 26, 27, 28, 29, 30, 31]);
+                [a, b, c, d]
+            }
+        }
+    )+};
+}
+
+impl_split_4!{
+    (u16x32, u16x16, u16x8),
+    (u8x32, u8x16, u8x8)
+}
+
+impl SimdSplit<[u8x8; 8]> for u8x64 {
+    #[inline]
+    fn simd_split(&self) -> [u8x8; 8] {
+        let x0 = shuffle!(self, [0, 1, 2, 3, 4, 5, 6, 7]);
+        let x1 = shuffle!(self, [8, 9, 10, 11, 12, 13, 14, 15]);
+        let x2 = shuffle!(self, [16, 17, 18, 19, 20, 21, 22, 23]);
+        let x3 = shuffle!(self, [24, 25, 26, 27, 28, 29, 30, 31]);
+        let x4 = shuffle!(self, [32, 33, 34, 35, 36, 37, 38, 39]);
+        let x5 = shuffle!(self, [40, 41, 42, 43, 44, 45, 46, 47]);
+        let x6 = shuffle!(self, [48, 49, 50, 51, 52, 53, 54, 55]);
+        let x7 = shuffle!(self, [56, 57, 58, 59, 60, 61, 62, 63]);
+        [x0, x1, x2, x3, x4, x5, x6, x7]
+    }
+}
+
 
 /// Helper trait when dealing with scalar and SIMD floating point types.
 pub(crate) trait FloatSIMDUtils {

@@ -2,7 +2,7 @@
 # code is hand-formatted, frequently with more readable results.
 
 # Comments:
-normalize_comments = true
+# normalize_comments = true
 wrap_comments = false
 comment_width = 90      # small excess is okay but prefer 80
 
