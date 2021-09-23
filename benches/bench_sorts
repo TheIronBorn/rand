@@ -1,0 +1,250 @@
+grep range.*i8.*low benches/unif_bench_logs
+test bitmask_gen_range_i8_low_reject                       ... bench:     106,189 ns/iter (+/- 12,082) = 188 MB/s
+test oneill_gen_range_i8x16_low_reject                     ... bench:   1,560,150 ns/iter (+/- 173,919) = 205 MB/s
+test oneill_gen_range_i8x32_low_reject                     ... bench:   2,948,642 ns/iter (+/- 266,382) = 217 MB/s
+test canon_branchless_gen_range_i8x16_low_reject           ... bench:     739,970 ns/iter (+/- 100,655) = 432 MB/s
+test canon_branchless_gen_range_i8x32_low_reject           ... bench:   1,471,670 ns/iter (+/- 194,558) = 434 MB/s
+test canon_branchy_no_mod_gen_range_i8_low_reject          ... bench:      44,408 ns/iter (+/- 4,768) = 450 MB/s
+test canon_branchy_no_mod_gen_range_i8x32_low_reject       ... bench:   1,308,550 ns/iter (+/- 213,245) = 489 MB/s
+test oneill_gen_range_i8_low_reject                        ... bench:      40,420 ns/iter (+/- 5,264) = 494 MB/s
+test canon_branchy_no_mod_gen_range_i8x16_low_reject       ... bench:     623,880 ns/iter (+/- 86,856) = 512 MB/s
+test bitmask_gen_range_i8x16_low_reject                    ... bench:     453,555 ns/iter (+/- 69,563) = 705 MB/s
+test bitmask_gen_range_i8x32_low_reject                    ... bench:     669,230 ns/iter (+/- 61,218) = 956 MB/s
+
+grep dist.*i8.*low benches/unif_bench_logs
+test canon_branchless_distr_uniform_i8x16_low_reject       ... bench:     706,100 ns/iter (+/- 89,923) = 453 MB/s
+test canon_branchless_distr_uniform_i8x32_low_reject       ... bench:   1,342,300 ns/iter (+/- 170,264) = 476 MB/s
+test oneill_distr_uniform_i8_low_reject                    ... bench:      35,317 ns/iter (+/- 4,113) = 566 MB/s
+test canon_distr_uniform_i8_low_reject                     ... bench:      33,794 ns/iter (+/- 4,295) = 591 MB/s
+test canon_branchy_no_mod_distr_uniform_i8x32_low_reject   ... bench:     480,950 ns/iter (+/- 67,479) = 1330 MB/s
+test canon_branchy_no_mod_distr_uniform_i8x16_low_reject   ... bench:     183,900 ns/iter (+/- 29,904) = 1740 MB/s
+test canon_branchy_mod_distr_uniform_i8x32_low_reject      ... bench:     358,705 ns/iter (+/- 48,301) = 1784 MB/s
+test oneill_distr_uniform_i8x32_low_reject                 ... bench:     313,170 ns/iter (+/- 29,733) = 2043 MB/s
+test canon_branchy_mod_distr_uniform_i8x16_low_reject      ... bench:     134,419 ns/iter (+/- 16,067) = 2380 MB/s
+test oneill_distr_uniform_i8x16_low_reject                 ... bench:     111,113 ns/iter (+/- 14,531) = 2879 MB/s
+
+grep range.*i8.*high benches/unif_bench_logs
+test oneill_gen_range_i8x16_high_reject                    ... bench:   1,994,930 ns/iter (+/- 229,111) = 160 MB/s
+test bitmask_gen_range_i8_high_reject                      ... bench:     119,442 ns/iter (+/- 15,434) = 167 MB/s
+test oneill_gen_range_i8x32_high_reject                    ... bench:   3,580,260 ns/iter (+/- 383,371) = 178 MB/s
+test canon_branchy_no_mod_gen_range_i8_high_reject         ... bench:      47,555 ns/iter (+/- 6,269) = 420 MB/s
+test canon_branchy_no_mod_gen_range_i8x32_high_reject      ... bench:   1,400,530 ns/iter (+/- 142,150) = 456 MB/s
+test canon_branchless_gen_range_i8x32_high_reject          ... bench:   1,395,450 ns/iter (+/- 149,807) = 458 MB/s
+test canon_branchy_no_mod_gen_range_i8x16_high_reject      ... bench:     691,560 ns/iter (+/- 269,396) = 462 MB/s
+test oneill_gen_range_i8_high_reject                       ... bench:      41,694 ns/iter (+/- 7,101) = 479 MB/s
+test canon_branchless_gen_range_i8x16_high_reject          ... bench:     665,987 ns/iter (+/- 80,426) = 480 MB/s
+test bitmask_gen_range_i8x16_high_reject                   ... bench:     529,250 ns/iter (+/- 53,186) = 604 MB/s
+test bitmask_gen_range_i8x32_high_reject                   ... bench:     816,620 ns/iter (+/- 87,655) = 783 MB/s
+
+grep dist.*i8.*high benches/unif_bench_logs
+test oneill_distr_uniform_i8x16_high_reject                ... bench:     851,180 ns/iter (+/- 72,412) = 375 MB/s
+test canon_branchless_distr_uniform_i8x16_high_reject      ... bench:     715,660 ns/iter (+/- 102,935) = 447 MB/s
+test oneill_distr_uniform_i8x32_high_reject                ... bench:   1,377,940 ns/iter (+/- 175,755) = 464 MB/s
+test canon_branchless_distr_uniform_i8x32_high_reject      ... bench:   1,366,126 ns/iter (+/- 111,903) = 468 MB/s
+test canon_branchy_mod_distr_uniform_i8x32_high_reject     ... bench:   1,361,280 ns/iter (+/- 157,821) = 470 MB/s
+test canon_branchy_no_mod_distr_uniform_i8x32_high_reject  ... bench:   1,353,000 ns/iter (+/- 156,276) = 473 MB/s
+test canon_branchy_no_mod_distr_uniform_i8x16_high_reject  ... bench:     674,635 ns/iter (+/- 82,119) = 474 MB/s
+test canon_branchy_mod_distr_uniform_i8x16_high_reject     ... bench:     669,060 ns/iter (+/- 89,834) = 478 MB/s
+test canon_distr_uniform_i8_high_reject                    ... bench:      36,086 ns/iter (+/- 4,116) = 554 MB/s
+test oneill_distr_uniform_i8_high_reject                   ... bench:      34,767 ns/iter (+/- 4,056) = 575 MB/s
+
+grep range.*i16.*low benches/unif_bench_logs
+test bitmask_gen_range_i16_low_reject                      ... bench:     121,607 ns/iter (+/- 13,773) = 328 MB/s
+test oneill_gen_range_i16x16_low_reject                    ... bench:   1,655,825 ns/iter (+/- 181,991) = 386 MB/s
+test oneill_gen_range_i16x8_low_reject                     ... bench:     792,850 ns/iter (+/- 94,641) = 403 MB/s
+test canon_branchless_gen_range_i16x8_low_reject           ... bench:     419,860 ns/iter (+/- 48,859) = 762 MB/s
+test canon_branchless_gen_range_i16x16_low_reject          ... bench:     798,190 ns/iter (+/- 99,616) = 801 MB/s
+test bitmask_gen_range_i16x8_low_reject                    ... bench:     382,080 ns/iter (+/- 51,267) = 837 MB/s
+test canon_branchy_no_mod_gen_range_i16_low_reject         ... bench:      44,291 ns/iter (+/- 6,505) = 903 MB/s
+test canon_branchy_no_mod_gen_range_i16x8_low_reject       ... bench:     330,372 ns/iter (+/- 40,686) = 968 MB/s
+test bitmask_gen_range_i16x16_low_reject                   ... bench:     657,660 ns/iter (+/- 82,588) = 973 MB/s
+test oneill_gen_range_i16_low_reject                       ... bench:      41,049 ns/iter (+/- 4,566) = 974 MB/s
+test canon_branchy_no_mod_gen_range_i16x16_low_reject      ... bench:     639,575 ns/iter (+/- 72,945) = 1000 MB/s
+
+grep dist.*i16.*low benches/unif_bench_logs
+test canon_branchless_distr_uniform_i16x16_low_reject      ... bench:     760,410 ns/iter (+/- 101,171) = 841 MB/s
+test canon_branchless_distr_uniform_i16x8_low_reject       ... bench:     353,415 ns/iter (+/- 48,167) = 905 MB/s
+test canon_distr_uniform_i16_low_reject                    ... bench:      37,130 ns/iter (+/- 5,026) = 1077 MB/s
+test oneill_distr_uniform_i16_low_reject                   ... bench:      35,227 ns/iter (+/- 4,059) = 1135 MB/s
+test oneill_distr_uniform_i16x16_low_reject                ... bench:     188,410 ns/iter (+/- 31,344) = 3396 MB/s
+test oneill_distr_uniform_i16x8_low_reject                 ... bench:      79,120 ns/iter (+/- 24,131) = 4044 MB/s
+test canon_branchy_no_mod_distr_uniform_i16x8_low_reject   ... bench:      76,440 ns/iter (+/- 9,934) = 4186 MB/s
+test canon_branchy_no_mod_distr_uniform_i16x16_low_reject  ... bench:     147,844 ns/iter (+/- 19,970) = 4328 MB/s
+test canon_branchy_mod_distr_uniform_i16x8_low_reject      ... bench:      68,905 ns/iter (+/- 9,321) = 4644 MB/s
+test canon_branchy_mod_distr_uniform_i16x16_low_reject     ... bench:     135,232 ns/iter (+/- 15,037) = 4732 MB/s
+
+grep range.*i16.*high benches/unif_bench_logs
+test bitmask_gen_range_i16_high_reject                     ... bench:     150,803 ns/iter (+/- 17,078) = 265 MB/s
+test oneill_gen_range_i16x8_high_reject                    ... bench:   1,101,820 ns/iter (+/- 144,132) = 290 MB/s
+test oneill_gen_range_i16x16_high_reject                   ... bench:   2,153,180 ns/iter (+/- 272,251) = 297 MB/s
+test bitmask_gen_range_i16x8_high_reject                   ... bench:     449,125 ns/iter (+/- 54,768) = 712 MB/s
+test bitmask_gen_range_i16x16_high_reject                  ... bench:     846,660 ns/iter (+/- 117,513) = 755 MB/s
+test oneill_gen_range_i16_high_reject                      ... bench:      49,148 ns/iter (+/- 5,768) = 813 MB/s
+test canon_branchy_no_mod_gen_range_i16x8_high_reject      ... bench:     381,762 ns/iter (+/- 60,245) = 838 MB/s
+test canon_branchy_no_mod_gen_range_i16_high_reject        ... bench:      47,548 ns/iter (+/- 5,896) = 841 MB/s
+test canon_branchless_gen_range_i16x8_high_reject          ... bench:     370,063 ns/iter (+/- 40,294) = 864 MB/s
+test canon_branchless_gen_range_i16x16_high_reject         ... bench:     705,900 ns/iter (+/- 98,318) = 906 MB/s
+test canon_branchy_no_mod_gen_range_i16x16_high_reject     ... bench:     665,530 ns/iter (+/- 97,014) = 961 MB/s
+
+grep dist.*i16.*high benches/unif_bench_logs
+test oneill_distr_uniform_i16x8_high_reject                ... bench:     552,320 ns/iter (+/- 77,037) = 579 MB/s
+test oneill_distr_uniform_i16x16_high_reject               ... bench:   1,076,880 ns/iter (+/- 143,248) = 594 MB/s
+test canon_branchy_no_mod_distr_uniform_i16x8_high_reject  ... bench:     367,512 ns/iter (+/- 48,892) = 870 MB/s
+test canon_branchy_mod_distr_uniform_i16x8_high_reject     ... bench:     365,540 ns/iter (+/- 54,187) = 875 MB/s
+test canon_branchless_distr_uniform_i16x8_high_reject      ... bench:     363,250 ns/iter (+/- 40,649) = 880 MB/s
+test canon_branchy_mod_distr_uniform_i16x16_high_reject    ... bench:     704,980 ns/iter (+/- 111,109) = 907 MB/s
+test canon_branchy_no_mod_distr_uniform_i16x16_high_reject ... bench:     698,130 ns/iter (+/- 81,904) = 916 MB/s
+test canon_branchless_distr_uniform_i16x16_high_reject     ... bench:     686,470 ns/iter (+/- 91,779) = 932 MB/s
+test canon_distr_uniform_i16_high_reject                   ... bench:      35,651 ns/iter (+/- 2,510) = 1121 MB/s
+test oneill_distr_uniform_i16_high_reject                  ... bench:      34,769 ns/iter (+/- 2,922) = 1150 MB/s
+
+grep range.*i32.*low benches/unif_bench_logs
+test bitmask_gen_range_i32_low_reject                      ... bench:     127,782 ns/iter (+/- 18,087) = 626 MB/s
+test oneill_gen_range_i32x4_low_reject                     ... bench:     460,340 ns/iter (+/- 55,661) = 695 MB/s
+test oneill_gen_range_i32x8_low_reject                     ... bench:     768,480 ns/iter (+/- 75,267) = 832 MB/s
+test bitmask_gen_range_i32x4_low_reject                    ... bench:     363,655 ns/iter (+/- 30,765) = 879 MB/s
+test bitmask_gen_range_i32x8_low_reject                    ... bench:     599,010 ns/iter (+/- 79,357) = 1068 MB/s
+test canon_branchless_gen_range_i32x8_low_reject           ... bench:     577,760 ns/iter (+/- 81,233) = 1107 MB/s
+test canon_branchless_gen_range_i32x4_low_reject           ... bench:     257,390 ns/iter (+/- 34,929) = 1243 MB/s
+test canon_branchy_no_mod_gen_range_i32_low_reject         ... bench:      44,555 ns/iter (+/- 5,791) = 1795 MB/s
+test oneill_gen_range_i32_low_reject                       ... bench:      38,492 ns/iter (+/- 6,058) = 2078 MB/s
+test canon_branchy_no_mod_gen_range_i32x4_low_reject       ... bench:     142,934 ns/iter (+/- 18,311) = 2238 MB/s
+test canon_branchy_no_mod_gen_range_i32x8_low_reject       ... bench:     239,545 ns/iter (+/- 32,156) = 2671 MB/s
+
+grep dist.*i32.*low benches/unif_bench_logs
+test canon_branchless_distr_uniform_i32x8_low_reject       ... bench:     495,090 ns/iter (+/- 58,629) = 1292 MB/s
+test canon_branchless_distr_uniform_i32x4_low_reject       ... bench:     246,272 ns/iter (+/- 32,759) = 1299 MB/s
+test canon_distr_uniform_i32_low_reject                    ... bench:      37,129 ns/iter (+/- 4,290) = 2154 MB/s
+test oneill_distr_uniform_i32_low_reject                   ... bench:      35,948 ns/iter (+/- 5,404) = 2225 MB/s
+test canon_branchy_mod_distr_uniform_i32x8_low_reject      ... bench:     168,804 ns/iter (+/- 24,268) = 3791 MB/s
+test canon_branchy_no_mod_distr_uniform_i32x4_low_reject   ... bench:      83,820 ns/iter (+/- 6,331) = 3817 MB/s
+test canon_branchy_mod_distr_uniform_i32x4_low_reject      ... bench:      83,541 ns/iter (+/- 9,943) = 3830 MB/s
+test oneill_distr_uniform_i32x8_low_reject                 ... bench:     156,913 ns/iter (+/- 20,142) = 4078 MB/s
+test canon_branchy_no_mod_distr_uniform_i32x8_low_reject   ... bench:     156,423 ns/iter (+/- 19,137) = 4091 MB/s
+test oneill_distr_uniform_i32x4_low_reject                 ... bench:      77,865 ns/iter (+/- 13,602) = 4109 MB/s
+
+grep range.*i32.*high benches/unif_bench_logs
+test oneill_gen_range_i32x4_high_reject                    ... bench:     965,367 ns/iter (+/- 107,221) = 331 MB/s
+test oneill_gen_range_i32x8_high_reject                    ... bench:   1,817,600 ns/iter (+/- 222,856) = 352 MB/s
+test oneill_gen_range_i32_high_reject                      ... bench:     217,592 ns/iter (+/- 28,370) = 367 MB/s
+test bitmask_gen_range_i32_high_reject                     ... bench:     198,870 ns/iter (+/- 25,339) = 402 MB/s
+test canon_branchy_no_mod_gen_range_i32_high_reject        ... bench:     131,906 ns/iter (+/- 14,505) = 606 MB/s
+test bitmask_gen_range_i32x4_high_reject                   ... bench:     457,020 ns/iter (+/- 42,574) = 700 MB/s
+test bitmask_gen_range_i32x8_high_reject                   ... bench:     870,850 ns/iter (+/- 93,665) = 734 MB/s
+test canon_branchy_no_mod_gen_range_i32x4_high_reject      ... bench:     237,903 ns/iter (+/- 46,137) = 1345 MB/s
+test canon_branchless_gen_range_i32x8_high_reject          ... bench:     474,450 ns/iter (+/- 38,946) = 1348 MB/s
+test canon_branchless_gen_range_i32x4_high_reject          ... bench:     230,870 ns/iter (+/- 32,056) = 1386 MB/s
+test canon_branchy_no_mod_gen_range_i32x8_high_reject      ... bench:     431,080 ns/iter (+/- 51,098) = 1484 MB/s
+
+grep dist.*i32.*high benches/unif_bench_logs
+test oneill_distr_uniform_i32_high_reject                  ... bench:     200,100 ns/iter (+/- 24,564) = 399 MB/s
+test oneill_distr_uniform_i32x4_high_reject                ... bench:     582,245 ns/iter (+/- 55,107) = 549 MB/s
+test oneill_distr_uniform_i32x8_high_reject                ... bench:   1,047,420 ns/iter (+/- 129,490) = 611 MB/s
+test canon_distr_uniform_i32_high_reject                   ... bench:     107,442 ns/iter (+/- 7,060) = 744 MB/s
+test canon_branchless_distr_uniform_i32x8_high_reject      ... bench:     468,560 ns/iter (+/- 63,354) = 1365 MB/s
+test canon_branchy_mod_distr_uniform_i32x4_high_reject     ... bench:     234,356 ns/iter (+/- 29,569) = 1365 MB/s
+test canon_branchy_mod_distr_uniform_i32x8_high_reject     ... bench:     468,570 ns/iter (+/- 62,947) = 1365 MB/s
+test canon_branchy_no_mod_distr_uniform_i32x8_high_reject  ... bench:     466,930 ns/iter (+/- 63,087) = 1370 MB/s
+test canon_branchy_no_mod_distr_uniform_i32x4_high_reject  ... bench:     224,735 ns/iter (+/- 28,973) = 1423 MB/s
+test canon_branchless_distr_uniform_i32x4_high_reject      ... bench:     210,531 ns/iter (+/- 30,923) = 1519 MB/s
+
+grep range.*i64.*low benches/unif_bench_logs
+test oneill_gen_range_i64x2_low_reject                     ... bench:     507,000 ns/iter (+/- 151,820) = 631 MB/s
+test oneill_gen_range_i64x4_low_reject                     ... bench:   1,001,430 ns/iter (+/- 119,873) = 639 MB/s
+test bitmask_gen_range_i64x2_low_reject                    ... bench:     395,430 ns/iter (+/- 48,496) = 809 MB/s
+test bitmask_gen_range_i64x4_low_reject                    ... bench:     628,560 ns/iter (+/- 79,621) = 1018 MB/s
+test bitmask_gen_range_i64_low_reject                      ... bench:     120,100 ns/iter (+/- 9,800) = 1332 MB/s
+test canon_branchless_gen_range_i64x2_low_reject           ... bench:     224,032 ns/iter (+/- 25,504) = 1428 MB/s
+test canon_branchless_gen_range_i64x4_low_reject           ... bench:     351,617 ns/iter (+/- 46,321) = 1820 MB/s
+test canon_branchy_no_mod_gen_range_i64x2_low_reject       ... bench:     146,566 ns/iter (+/- 19,426) = 2183 MB/s
+test canon_branchy_no_mod_gen_range_i64x4_low_reject       ... bench:     204,458 ns/iter (+/- 26,798) = 3130 MB/s
+test canon_branchy_no_mod_gen_range_i64_low_reject         ... bench:      38,526 ns/iter (+/- 4,578) = 4153 MB/s
+test oneill_gen_range_i64_low_reject                       ... bench:      37,241 ns/iter (+/- 4,607) = 4296 MB/s
+
+grep dist.*i64.*low benches/unif_bench_logs
+test canon_branchless_distr_uniform_i64x4_low_reject       ... bench:     317,706 ns/iter (+/- 39,364) = 2014 MB/s
+test canon_branchless_distr_uniform_i64x2_low_reject       ... bench:     157,588 ns/iter (+/- 21,583) = 2030 MB/s
+test oneill_distr_uniform_i64x2_low_reject                 ... bench:     130,595 ns/iter (+/- 16,750) = 2450 MB/s
+test oneill_distr_uniform_i64x4_low_reject                 ... bench:     169,083 ns/iter (+/- 19,981) = 3785 MB/s
+test canon_branchy_no_mod_distr_uniform_i64x2_low_reject   ... bench:      83,113 ns/iter (+/- 11,544) = 3850 MB/s
+test canon_branchy_no_mod_distr_uniform_i64x4_low_reject   ... bench:     159,598 ns/iter (+/- 24,716) = 4010 MB/s
+test canon_branchy_mod_distr_uniform_i64x4_low_reject      ... bench:     155,881 ns/iter (+/- 22,152) = 4105 MB/s
+test canon_branchy_mod_distr_uniform_i64x2_low_reject      ... bench:      75,960 ns/iter (+/- 9,425) = 4212 MB/s
+test canon_distr_uniform_i64_low_reject                    ... bench:      34,833 ns/iter (+/- 3,736) = 4593 MB/s
+test oneill_distr_uniform_i64_low_reject                   ... bench:      34,420 ns/iter (+/- 2,337) = 4648 MB/s
+
+grep range.*i64.*high benches/unif_bench_logs
+test oneill_gen_range_i64x2_high_reject                    ... bench:   1,028,785 ns/iter (+/- 70,078) = 311 MB/s
+test oneill_gen_range_i64x4_high_reject                    ... bench:   1,974,025 ns/iter (+/- 223,902) = 324 MB/s
+test bitmask_gen_range_i64x2_high_reject                   ... bench:     520,605 ns/iter (+/- 74,201) = 614 MB/s
+test oneill_gen_range_i64_high_reject                      ... bench:     217,030 ns/iter (+/- 27,355) = 737 MB/s
+test bitmask_gen_range_i64x4_high_reject                   ... bench:     811,460 ns/iter (+/- 111,610) = 788 MB/s
+test bitmask_gen_range_i64_high_reject                     ... bench:     202,624 ns/iter (+/- 25,127) = 789 MB/s
+test canon_branchy_no_mod_gen_range_i64x2_high_reject      ... bench:     264,210 ns/iter (+/- 30,501) = 1211 MB/s
+test canon_branchy_no_mod_gen_range_i64_high_reject        ... bench:     127,624 ns/iter (+/- 15,319) = 1253 MB/s
+test canon_branchless_gen_range_i64x2_high_reject          ... bench:     206,744 ns/iter (+/- 23,696) = 1547 MB/s
+test canon_branchless_gen_range_i64x4_high_reject          ... bench:     363,573 ns/iter (+/- 45,288) = 1760 MB/s
+test canon_branchy_no_mod_gen_range_i64x4_high_reject      ... bench:     346,560 ns/iter (+/- 136,996) = 1846 MB/s
+
+grep dist.*i64.*high benches/unif_bench_logs
+test oneill_distr_uniform_i64x2_high_reject                ... bench:     720,860 ns/iter (+/- 90,249) = 443 MB/s
+test oneill_distr_uniform_i64x4_high_reject                ... bench:     892,370 ns/iter (+/- 132,827) = 717 MB/s
+test oneill_distr_uniform_i64_high_reject                  ... bench:     200,093 ns/iter (+/- 24,386) = 799 MB/s
+test canon_distr_uniform_i64_high_reject                   ... bench:     110,667 ns/iter (+/- 14,732) = 1445 MB/s
+test canon_branchy_mod_distr_uniform_i64x2_high_reject     ... bench:     199,202 ns/iter (+/- 24,324) = 1606 MB/s
+test canon_branchy_no_mod_distr_uniform_i64x2_high_reject  ... bench:     177,215 ns/iter (+/- 17,886) = 1805 MB/s
+test canon_branchy_mod_distr_uniform_i64x4_high_reject     ... bench:     303,860 ns/iter (+/- 40,923) = 2106 MB/s
+test canon_branchless_distr_uniform_i64x2_high_reject      ... bench:     146,966 ns/iter (+/- 19,451) = 2177 MB/s
+test canon_branchy_no_mod_distr_uniform_i64x4_high_reject  ... bench:     287,326 ns/iter (+/- 32,533) = 2227 MB/s
+test canon_branchless_distr_uniform_i64x4_high_reject      ... bench:     283,303 ns/iter (+/- 37,941) = 2259 MB/s
+
+grep range.*i128.*low benches/unif_bench_logs
+test oneill_gen_range_i128x4_low_reject                    ... bench:   4,739,950 ns/iter (+/- 481,437) = 270 MB/s
+test oneill_gen_range_i128x2_low_reject                    ... bench:   2,318,940 ns/iter (+/- 246,310) = 275 MB/s
+test bitmask_gen_range_i128x4_low_reject                   ... bench:   1,999,645 ns/iter (+/- 208,782) = 640 MB/s
+test bitmask_gen_range_i128x2_low_reject                   ... bench:     719,758 ns/iter (+/- 81,052) = 889 MB/s
+test canon_branchless_gen_range_i128x4_low_reject          ... bench:   1,190,910 ns/iter (+/- 142,244) = 1074 MB/s
+test canon_branchy_no_mod_gen_range_i128x4_low_reject      ... bench:   1,142,350 ns/iter (+/- 140,823) = 1120 MB/s
+test canon_branchless_gen_range_i128x2_low_reject          ... bench:     524,540 ns/iter (+/- 86,070) = 1220 MB/s
+test oneill_gen_range_i128_low_reject                      ... bench:     246,482 ns/iter (+/- 30,544) = 1298 MB/s
+test canon_branchy_no_mod_gen_range_i128_low_reject        ... bench:     234,190 ns/iter (+/- 27,794) = 1366 MB/s
+test bitmask_gen_range_i128_low_reject                     ... bench:     218,260 ns/iter (+/- 34,199) = 1466 MB/s
+test canon_branchy_no_mod_gen_range_i128x2_low_reject      ... bench:     406,010 ns/iter (+/- 39,735) = 1576 MB/s
+
+grep dist.*i128.*low benches/unif_bench_logs
+test oneill_distr_uniform_i128x4_low_reject                ... bench:     951,490 ns/iter (+/- 121,880) = 1345 MB/s
+test oneill_distr_uniform_i128_low_reject                  ... bench:     193,888 ns/iter (+/- 15,360) = 1650 MB/s
+test canon_branchless_distr_uniform_i128x4_low_reject      ... bench:     710,940 ns/iter (+/- 95,271) = 1800 MB/s
+test canon_branchy_no_mod_distr_uniform_i128x4_low_reject  ... bench:     678,530 ns/iter (+/- 95,764) = 1886 MB/s
+test canon_branchy_mod_distr_uniform_i128x4_low_reject     ... bench:     673,050 ns/iter (+/- 334,938) = 1901 MB/s
+test canon_branchless_distr_uniform_i128x2_low_reject      ... bench:     282,690 ns/iter (+/- 36,283) = 2263 MB/s
+test canon_branchy_no_mod_distr_uniform_i128x2_low_reject  ... bench:     195,172 ns/iter (+/- 24,262) = 3279 MB/s
+test oneill_distr_uniform_i128x2_low_reject                ... bench:     187,116 ns/iter (+/- 24,804) = 3420 MB/s
+test canon_branchy_mod_distr_uniform_i128x2_low_reject     ... bench:     183,475 ns/iter (+/- 22,963) = 3488 MB/s
+test canon_distr_uniform_i128_low_reject                   ... bench:      81,759 ns/iter (+/- 40,061) = 3913 MB/s
+
+grep range.*i128.*high benches/unif_bench_logs
+test oneill_gen_range_i128x2_high_reject                   ... bench:   2,011,137 ns/iter (+/- 203,434) = 318 MB/s
+test oneill_gen_range_i128x4_high_reject                   ... bench:   3,979,790 ns/iter (+/- 465,773) = 321 MB/s
+test bitmask_gen_range_i128x4_high_reject                  ... bench:   2,287,810 ns/iter (+/- 262,494) = 559 MB/s
+test oneill_gen_range_i128_high_reject                     ... bench:     501,190 ns/iter (+/- 69,820) = 638 MB/s
+test bitmask_gen_range_i128x2_high_reject                  ... bench:     838,800 ns/iter (+/- 113,023) = 762 MB/s
+test canon_branchy_no_mod_gen_range_i128_high_reject       ... bench:     360,232 ns/iter (+/- 40,276) = 888 MB/s
+test canon_branchy_no_mod_gen_range_i128x4_high_reject     ... bench:   1,323,270 ns/iter (+/- 183,703) = 967 MB/s
+test bitmask_gen_range_i128_high_reject                    ... bench:     325,764 ns/iter (+/- 33,592) = 982 MB/s
+test canon_branchless_gen_range_i128x4_high_reject         ... bench:   1,127,660 ns/iter (+/- 155,802) = 1135 MB/s
+test canon_branchy_no_mod_gen_range_i128x2_high_reject     ... bench:     540,412 ns/iter (+/- 63,909) = 1184 MB/s
+test canon_branchless_gen_range_i128x2_high_reject         ... bench:     493,592 ns/iter (+/- 59,715) = 1296 MB/s
+
+grep dist.*i128.*high benches/unif_bench_logs
+test oneill_distr_uniform_i128x4_high_reject               ... bench:   3,028,720 ns/iter (+/- 335,583) = 422 MB/s
+test oneill_distr_uniform_i128x2_high_reject               ... bench:   1,078,020 ns/iter (+/- 137,620) = 593 MB/s
+test oneill_distr_uniform_i128_high_reject                 ... bench:     448,310 ns/iter (+/- 49,675) = 713 MB/s
+test canon_branchy_no_mod_distr_uniform_i128x4_high_reject ... bench:   1,051,250 ns/iter (+/- 135,216) = 1217 MB/s
+test canon_branchy_mod_distr_uniform_i128x4_high_reject    ... bench:     986,400 ns/iter (+/- 123,187) = 1297 MB/s
+test canon_branchless_distr_uniform_i128x4_high_reject     ... bench:     844,140 ns/iter (+/- 107,640) = 1516 MB/s
+test canon_branchy_mod_distr_uniform_i128x2_high_reject    ... bench:     371,482 ns/iter (+/- 43,124) = 1722 MB/s
+test canon_branchless_distr_uniform_i128x2_high_reject     ... bench:     353,100 ns/iter (+/- 44,716) = 1812 MB/s
+test canon_branchy_no_mod_distr_uniform_i128x2_high_reject ... bench:     340,525 ns/iter (+/- 47,935) = 1879 MB/s
+test canon_distr_uniform_i128_high_reject                  ... bench:     150,790 ns/iter (+/- 17,779) = 2122 MB/s
+

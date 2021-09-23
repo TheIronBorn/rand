@@ -227,6 +227,7 @@ macro_rules! impl_overflowing_add {
     ($(($ty:ty, $signed_ty:ty, $mask:ty)),+) => {$(
         #[cfg(feature = "simd_support")]
         impl OverflowingAdd<$mask> for $ty {
+            #[inline]
             fn overflowing_add(&self, y: Self) -> (Self, $mask) {
                 let sum = *self + y;
 
@@ -298,7 +299,6 @@ macro_rules! impl_combine_4 {
     ($(($wide:ident, $mid:ident, $short:ident)),+) => {$(
         impl SimdCombine<$wide> for [$short] {
             #[inline]
-            #[allow(unreachable_code)]
             fn simd_combine(&self) -> $wide {
                 let a: $mid = self.chunks_exact(2).nth(0).unwrap().simd_combine();
                 let b: $mid = self.chunks_exact(2).nth(1).unwrap().simd_combine();

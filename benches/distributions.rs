@@ -156,19 +156,21 @@ macro_rules! distr_int_canon {
 }
 
 // uniform
-// we use 32-bit integers interally so rejection is most common near full-size
-distr_int!(oneill_distr_uniform_high_reject_i8, i8, Uniform::new(i8::MIN, 116));
-distr_int!(oneill_distr_uniform_high_reject_i16, i16, Uniform::new(i16::MIN, 32407));
+// we use 32-bit integers internally so rejection is most common near full-size
+// the exact values were determined with an exhaustive search
+distr_int!(oneill_distr_uniform_i8_high_reject, i8, Uniform::new(i8::MIN, 116));
+distr_int!(oneill_distr_uniform_i16_high_reject, i16, Uniform::new(i16::MIN, 32407));
 // here we can use just above half
-distr_int!(oneill_distr_uniform_high_reject_i32, i32, Uniform::new(i32::MIN, 1));
-distr_int!(oneill_distr_uniform_high_reject_i64, i64, Uniform::new(i64::MIN, 1));
-distr_int!(oneill_distr_uniform_high_reject_i128, i128, Uniform::new(i128::MIN, 1));
+distr_int!(oneill_distr_uniform_i32_high_reject, i32, Uniform::new(i32::MIN, 1));
+distr_int!(oneill_distr_uniform_i64_high_reject, i64, Uniform::new(i64::MIN, 1));
+distr_int!(oneill_distr_uniform_i128_high_reject, i128, Uniform::new(i128::MIN, 1));
 
-distr_int!(oneill_distr_uniform_low_reject_i8, i8, Uniform::new(-1, 0));
-distr_int!(oneill_distr_uniform_low_reject_i16, i16, Uniform::new(-1, 0));
-distr_int!(oneill_distr_uniform_low_reject_i32, i32, Uniform::new(-1, 0));
-distr_int!(oneill_distr_uniform_low_reject_i64, i64, Uniform::new(-1, 0));
-distr_int!(oneill_distr_uniform_low_reject_i128, i128, Uniform::new(-1, 0));
+// the lowest nonzero rejection chance which also forces a multiplication
+distr_int!(oneill_distr_uniform_i8_low_reject, i8, Uniform::new(-1, 2));
+distr_int!(oneill_distr_uniform_i16_low_reject, i16, Uniform::new(-1, 2));
+distr_int!(oneill_distr_uniform_i32_low_reject, i32, Uniform::new(-1, 2));
+distr_int!(oneill_distr_uniform_i64_low_reject, i64, Uniform::new(-1, 2));
+distr_int!(oneill_distr_uniform_i128_low_reject, i128, Uniform::new(-1, 2));
 
 /*distr_int!(distr_uniform_new_i128, i128, Uniform::new(-123_456_789_123i128, 123_456_789_123_456_789));
 distr_int!(distr_uniform_new_usize16, usize, Uniform::new(0usize, 0xb9d7));
@@ -178,17 +180,17 @@ distr_int!(distr_uniform_new_usize64, usize, Uniform::new(0usize, 0x3a42714f2bf9
 distr_int!(distr_uniform_new_isize, isize, Uniform::new(-1060478432isize, 1858574057));*/
 
 // uniform
-distr_int_canon!(canon_distr_uniform_high_reject_i8, i8, i8::MIN, 116);
-distr_int_canon!(canon_distr_uniform_high_reject_i16, i16, i16::MIN, 32407);
-distr_int_canon!(canon_distr_uniform_high_reject_i32, i32, i32::MIN, 1);
-distr_int_canon!(canon_distr_uniform_high_reject_i64, i64, i64::MIN, 1);
-distr_int_canon!(canon_distr_uniform_high_reject_i128, i128, i128::MIN, 1);
+distr_int_canon!(canon_distr_uniform_i8_high_reject, i8, i8::MIN, 116);
+distr_int_canon!(canon_distr_uniform_i16_high_reject, i16, i16::MIN, 32407);
+distr_int_canon!(canon_distr_uniform_i32_high_reject, i32, i32::MIN, 1);
+distr_int_canon!(canon_distr_uniform_i64_high_reject, i64, i64::MIN, 1);
+distr_int_canon!(canon_distr_uniform_i128_high_reject, i128, i128::MIN, 1);
 
-distr_int_canon!(canon_distr_uniform_low_reject_i8, i8, -1, 0);
-distr_int_canon!(canon_distr_uniform_low_reject_i16, i16, -1, 0);
-distr_int_canon!(canon_distr_uniform_low_reject_i32, i32, -1, 0);
-distr_int_canon!(canon_distr_uniform_low_reject_i64, i64, -1, 0);
-distr_int_canon!(canon_distr_uniform_low_reject_i128, i128, -1, 0);
+distr_int_canon!(canon_distr_uniform_i8_low_reject, i8, -1, 2);
+distr_int_canon!(canon_distr_uniform_i16_low_reject, i16, -1, 2);
+distr_int_canon!(canon_distr_uniform_i32_low_reject, i32, -1, 2);
+distr_int_canon!(canon_distr_uniform_i64_low_reject, i64, -1, 2);
+distr_int_canon!(canon_distr_uniform_i128_low_reject, i128, -1, 2);
 
 
 macro_rules! distr_int_simd {
@@ -271,101 +273,101 @@ macro_rules! distr_int_simd_canon_branchy_no_mod {
 
 // uniform
 // we use same-size lanes internally so we use just the regular size
-distr_int_simd!(oneill_distr_uniform_high_reject_i8x16, i8x16, i8::MIN, 1);
-distr_int_simd!(oneill_distr_uniform_high_reject_i8x32, i8x32, i8::MIN, 1);
-distr_int_simd!(oneill_distr_uniform_high_reject_i16x8, i16x8, i16::MIN, 1);
-distr_int_simd!(oneill_distr_uniform_high_reject_i16x16, i16x16, i16::MIN, 1);
-distr_int_simd!(oneill_distr_uniform_high_reject_i32x4, i32x4, i32::MIN, 1);
-distr_int_simd!(oneill_distr_uniform_high_reject_i32x8, i32x8, i32::MIN, 1);
-distr_int_simd!(oneill_distr_uniform_high_reject_i64x2, i64x2, i64::MIN, 1);
-distr_int_simd!(oneill_distr_uniform_high_reject_i64x4, i64x4, i64::MIN, 1);
-// distr_int_simd!(oneill_distr_uniform_high_reject_i64x8, i64x8, i64::MIN, 1);
-distr_int_simd!(oneill_distr_uniform_high_reject_i128x2, i128x2, i128::MIN, 1);
-distr_int_simd!(oneill_distr_uniform_high_reject_i128x4, i128x4, i128::MIN, 1);
+distr_int_simd!(oneill_distr_uniform_i8x16_high_reject, i8x16, i8::MIN, 1);
+distr_int_simd!(oneill_distr_uniform_i8x32_high_reject, i8x32, i8::MIN, 1);
+distr_int_simd!(oneill_distr_uniform_i16x8_high_reject, i16x8, i16::MIN, 1);
+distr_int_simd!(oneill_distr_uniform_i16x16_high_reject, i16x16, i16::MIN, 1);
+distr_int_simd!(oneill_distr_uniform_i32x4_high_reject, i32x4, i32::MIN, 1);
+distr_int_simd!(oneill_distr_uniform_i32x8_high_reject, i32x8, i32::MIN, 1);
+distr_int_simd!(oneill_distr_uniform_i64x2_high_reject, i64x2, i64::MIN, 1);
+distr_int_simd!(oneill_distr_uniform_i64x4_high_reject, i64x4, i64::MIN, 1);
+// distr_int_simd!(oneill_distr_uniform_i64x8_high_reject, i64x8, i64::MIN, 1);
+distr_int_simd!(oneill_distr_uniform_i128x2_high_reject, i128x2, i128::MIN, 1);
+distr_int_simd!(oneill_distr_uniform_i128x4_high_reject, i128x4, i128::MIN, 1);
 
-distr_int_simd!(oneill_distr_uniform_low_reject_i8x16, i8x16, -1, 0);
-distr_int_simd!(oneill_distr_uniform_low_reject_i8x32, i8x32, -1, 0);
-distr_int_simd!(oneill_distr_uniform_low_reject_i16x8, i16x8, -1, 0);
-distr_int_simd!(oneill_distr_uniform_low_reject_i16x16, i16x16, -1, 0);
-distr_int_simd!(oneill_distr_uniform_low_reject_i32x4, i32x4, -1, 0);
-distr_int_simd!(oneill_distr_uniform_low_reject_i32x8, i32x8, -1, 0);
-distr_int_simd!(oneill_distr_uniform_low_reject_i64x2, i64x2, -1, 0);
-distr_int_simd!(oneill_distr_uniform_low_reject_i64x4, i64x4, -1, 0);
-// distr_int_simd!(oneill_distr_uniform_low_reject_i64x8, i64x8, -1, 0);
-distr_int_simd!(oneill_distr_uniform_low_reject_i128x2, i128x2, -1, 0);
-distr_int_simd!(oneill_distr_uniform_low_reject_i128x4, i128x4, -1, 0);
+distr_int_simd!(oneill_distr_uniform_i8x16_low_reject, i8x16, -1, 2);
+distr_int_simd!(oneill_distr_uniform_i8x32_low_reject, i8x32, -1, 2);
+distr_int_simd!(oneill_distr_uniform_i16x8_low_reject, i16x8, -1, 2);
+distr_int_simd!(oneill_distr_uniform_i16x16_low_reject, i16x16, -1, 2);
+distr_int_simd!(oneill_distr_uniform_i32x4_low_reject, i32x4, -1, 2);
+distr_int_simd!(oneill_distr_uniform_i32x8_low_reject, i32x8, -1, 2);
+distr_int_simd!(oneill_distr_uniform_i64x2_low_reject, i64x2, -1, 2);
+distr_int_simd!(oneill_distr_uniform_i64x4_low_reject, i64x4, -1, 2);
+// distr_int_simd!(oneill_distr_uniform_i64x8_low_reject, i64x8, -1,2);
+distr_int_simd!(oneill_distr_uniform_i128x2_low_reject, i128x2, -1, 2);
+distr_int_simd!(oneill_distr_uniform_i128x4_low_reject, i128x4, -1, 2);
 
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_high_reject_i8x16, i8x16, i8::MIN, 1);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_high_reject_i8x32, i8x32, i8::MIN, 1);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_high_reject_i16x8, i16x8, i16::MIN, 1);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_high_reject_i16x16, i16x16, i16::MIN, 1);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_high_reject_i32x4, i32x4, i32::MIN, 1);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_high_reject_i32x8, i32x8, i32::MIN, 1);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_high_reject_i64x2, i64x2, i64::MIN, 1);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_high_reject_i64x4, i64x4, i64::MIN, 1);
-// distr_int_simd_canon!(canon_branchy_mod_distr_uniform_high_reject_i64x8, i64x8, i64::MIN, 1);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_high_reject_i128x2, i128x2, i128::MIN, 1);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_high_reject_i128x4, i128x4, i128::MIN, 1);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i8x16_high_reject, i8x16, i8::MIN, 1);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i8x32_high_reject, i8x32, i8::MIN, 1);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i16x8_high_reject, i16x8, i16::MIN, 1);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i16x16_high_reject, i16x16, i16::MIN, 1);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i32x4_high_reject, i32x4, i32::MIN, 1);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i32x8_high_reject, i32x8, i32::MIN, 1);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i64x2_high_reject, i64x2, i64::MIN, 1);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i64x4_high_reject, i64x4, i64::MIN, 1);
+// distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i64x8_high_reject, i64x8, i64::MIN, 1);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i128x2_high_reject, i128x2, i128::MIN, 1);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i128x4_high_reject, i128x4, i128::MIN, 1);
 
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_low_reject_i8x16, i8x16, -1, 0);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_low_reject_i8x32, i8x32, -1, 0);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_low_reject_i16x8, i16x8, -1, 0);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_low_reject_i16x16, i16x16, -1, 0);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_low_reject_i32x4, i32x4, -1, 0);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_low_reject_i32x8, i32x8, -1, 0);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_low_reject_i64x2, i64x2, -1, 0);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_low_reject_i64x4, i64x4, -1, 0);
-// distr_int_simd_canon!(canon_branchy_mod_distr_uniform_low_reject_i64x8, i64x8, -1, 0);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_low_reject_i128x2, i128x2, -1, 0);
-distr_int_simd_canon!(canon_branchy_mod_distr_uniform_low_reject_i128x4, i128x4, -1, 0);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i8x16_low_reject, i8x16, -1, 2);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i8x32_low_reject, i8x32, -1, 2);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i16x8_low_reject, i16x8, -1, 2);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i16x16_low_reject, i16x16, -1, 2);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i32x4_low_reject, i32x4, -1, 2);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i32x8_low_reject, i32x8, -1, 2);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i64x2_low_reject, i64x2, -1, 2);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i64x4_low_reject, i64x4, -1, 2);
+// distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i64x8_low_reject, i64x8, -1,2);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i128x2_low_reject, i128x2, -1, 2);
+distr_int_simd_canon!(canon_branchy_mod_distr_uniform_i128x4_low_reject, i128x4, -1, 2);
 
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_high_reject_i8x16, i8x16, i8::MIN, 1);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_high_reject_i8x32, i8x32, i8::MIN, 1);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_high_reject_i16x8, i16x8, i16::MIN, 1);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_high_reject_i16x16, i16x16, i16::MIN, 1);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_high_reject_i32x4, i32x4, i32::MIN, 1);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_high_reject_i32x8, i32x8, i32::MIN, 1);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_high_reject_i64x2, i64x2, i64::MIN, 1);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_high_reject_i64x4, i64x4, i64::MIN, 1);
-// distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_high_reject_i64x8, i64x8, i64::MIN, 1);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_high_reject_i128x2, i128x2, i128::MIN, 1);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_high_reject_i128x4, i128x4, i128::MIN, 1);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i8x16_high_reject, i8x16, i8::MIN, 1);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i8x32_high_reject, i8x32, i8::MIN, 1);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i16x8_high_reject, i16x8, i16::MIN, 1);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i16x16_high_reject, i16x16, i16::MIN, 1);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i32x4_high_reject, i32x4, i32::MIN, 1);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i32x8_high_reject, i32x8, i32::MIN, 1);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i64x2_high_reject, i64x2, i64::MIN, 1);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i64x4_high_reject, i64x4, i64::MIN, 1);
+// distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i64x8_high_reject, i64x8, i64::MIN, 1);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i128x2_high_reject, i128x2, i128::MIN, 1);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i128x4_high_reject, i128x4, i128::MIN, 1);
 
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_low_reject_i8x16, i8x16, -1, 0);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_low_reject_i8x32, i8x32, -1, 0);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_low_reject_i16x8, i16x8, -1, 0);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_low_reject_i16x16, i16x16, -1, 0);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_low_reject_i32x4, i32x4, -1, 0);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_low_reject_i32x8, i32x8, -1, 0);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_low_reject_i64x2, i64x2, -1, 0);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_low_reject_i64x4, i64x4, -1, 0);
-// distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_low_reject_i64x8, i64x8, -1, 0);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_low_reject_i128x2, i128x2, -1, 0);
-distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_low_reject_i128x4, i128x4, -1, 0);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i8x16_low_reject, i8x16, -1, 2);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i8x32_low_reject, i8x32, -1, 2);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i16x8_low_reject, i16x8, -1, 2);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i16x16_low_reject, i16x16, -1, 2);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i32x4_low_reject, i32x4, -1, 2);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i32x8_low_reject, i32x8, -1, 2);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i64x2_low_reject, i64x2, -1, 2);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i64x4_low_reject, i64x4, -1, 2);
+// distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i64x8_low_reject, i64x8, -1,2);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i128x2_low_reject, i128x2, -1, 2);
+distr_int_simd_canon_branchless!(canon_branchless_distr_uniform_i128x4_low_reject, i128x4, -1, 2);
 
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_high_reject_i8x16, i8x16, i8::MIN, 1);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_high_reject_i8x32, i8x32, i8::MIN, 1);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_high_reject_i16x8, i16x8, i16::MIN, 1);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_high_reject_i16x16, i16x16, i16::MIN, 1);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_high_reject_i32x4, i32x4, i32::MIN, 1);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_high_reject_i32x8, i32x8, i32::MIN, 1);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_high_reject_i64x2, i64x2, i64::MIN, 1);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_high_reject_i64x4, i64x4, i64::MIN, 1);
-// distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_high_reject_i64x8, i64x8, i64::MIN, 1);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_high_reject_i128x2, i128x2, i128::MIN, 1);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_high_reject_i128x4, i128x4, i128::MIN, 1);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i8x16_high_reject, i8x16, i8::MIN, 1);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i8x32_high_reject, i8x32, i8::MIN, 1);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i16x8_high_reject, i16x8, i16::MIN, 1);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i16x16_high_reject, i16x16, i16::MIN, 1);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i32x4_high_reject, i32x4, i32::MIN, 1);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i32x8_high_reject, i32x8, i32::MIN, 1);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i64x2_high_reject, i64x2, i64::MIN, 1);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i64x4_high_reject, i64x4, i64::MIN, 1);
+// distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i64x8_high_reject, i64x8, i64::MIN, 1);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i128x2_high_reject, i128x2, i128::MIN, 1);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i128x4_high_reject, i128x4, i128::MIN, 1);
 
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_low_reject_i8x16, i8x16, -1, 0);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_low_reject_i8x32, i8x32, -1, 0);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_low_reject_i16x8, i16x8, -1, 0);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_low_reject_i16x16, i16x16, -1, 0);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_low_reject_i32x4, i32x4, -1, 0);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_low_reject_i32x8, i32x8, -1, 0);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_low_reject_i64x2, i64x2, -1, 0);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_low_reject_i64x4, i64x4, -1, 0);
-// distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_low_reject_i64x8, i64x8, -1, 0);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_low_reject_i128x2, i128x2, -1, 0);
-distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_low_reject_i128x4, i128x4, -1, 0);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i8x16_low_reject, i8x16, -1, 2);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i8x32_low_reject, i8x32, -1, 2);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i16x8_low_reject, i16x8, -1, 2);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i16x16_low_reject, i16x16, -1, 2);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i32x4_low_reject, i32x4, -1, 2);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i32x8_low_reject, i32x8, -1, 2);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i64x2_low_reject, i64x2, -1, 2);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i64x4_low_reject, i64x4, -1, 2);
+// distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i64x8_low_reject, i64x8, -1,2);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i128x2_low_reject, i128x2, -1, 2);
+distr_int_simd_canon_branchy_no_mod!(canon_branchy_no_mod_distr_uniform_i128x4_low_reject, i128x4, -1, 2);
 
 
 
@@ -415,7 +417,7 @@ distr_float!(distr_openclosed01_f64, f64, OpenClosed01);*/
 
 // construct and sample from a range
 macro_rules! gen_range_int {
-    ($fnn:ident, $ty:ident, $low:expr, $high:expr) => {
+    ($fnn:ident, $ty:ident, $method:ident, $low:expr, $high:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
             let mut rng = BenchRng::from_entropy();
@@ -424,7 +426,8 @@ macro_rules! gen_range_int {
                 let mut high = $high;
                 let mut accum: $ty = 0;
                 for _ in 0..RAND_BENCH_N {
-                    accum = accum.wrapping_add(rng.gen_range($low..high));
+                    // accum = accum.wrapping_add(rng.gen_range($low..high));
+                    accum = accum.wrapping_add(UniformInt::<$ty>::$method($low, high - 1, &mut rng));
                     // force recalculation of range each time
                     high = high.wrapping_add(1) & std::$ty::MAX;
                 }
@@ -436,7 +439,7 @@ macro_rules! gen_range_int {
 }
 
 macro_rules! gen_range_int_simd {
-    ($fnn:ident, $ty:ident, $scalar:ident, $low:expr, $high:expr) => {
+    ($fnn:ident, $ty:ident, $method:ident, $low:expr, $high:expr, $max:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
             let mut rng = BenchRng::from_entropy();
@@ -445,9 +448,11 @@ macro_rules! gen_range_int_simd {
                 let mut high = $high;
                 let mut accum: $ty = $ty::splat(0);
                 for _ in 0..RAND_BENCH_N {
-                    accum += rng.sample(Uniform::new($ty::splat($low), $ty::splat(high)));
+                    // accum += rng.sample(Uniform::new($ty::splat($low), $ty::splat(high)));
+                    accum += UniformInt::<$ty>::$method($ty::splat($low), $ty::splat(high - 1), &mut rng);
                     // force recalculation of range each time
-                    high = (high + 1) & std::$scalar::MAX;
+                    high += 1;
+                    if high > $max { high = $high; }
                 }
                 accum
             });
@@ -459,260 +464,147 @@ macro_rules! gen_range_int_simd {
 // Algorithms such as Fisher–Yates shuffle often require uniform values from an
 // incrementing range 0..n. We use -1..n here to prevent wrapping in the test 
 // from generating a 0-sized range.
-gen_range_int!(oneill_gen_range_i8_high_reject, i8, i8::MIN, 116);
-gen_range_int!(oneill_gen_range_i16_high_reject, i16, i16::MIN, 32407);
-gen_range_int!(oneill_gen_range_i32_high_reject, i32, i32::MIN, 1);
-gen_range_int!(oneill_gen_range_i64_high_reject, i64, i64::MIN, 1);
-gen_range_int!(oneill_gen_range_i128_high_reject, i128, i128::MIN, 1);
-
-gen_range_int_simd!(oneill_gen_range_i8x16_high_reject, i8x16, i8, i8::MIN, 1);
-gen_range_int_simd!(oneill_gen_range_i8x32_high_reject, i8x32, i8, i8::MIN, 1);
-gen_range_int_simd!(oneill_gen_range_i16x8_high_reject, i16x8, i16, i16::MIN, 1);
-gen_range_int_simd!(oneill_gen_range_i16x16_high_reject, i16x16, i16, i16::MIN, 1);
-gen_range_int_simd!(oneill_gen_range_i32x4_high_reject, i32x4, i32, i32::MIN, 1);
-gen_range_int_simd!(oneill_gen_range_i32x8_high_reject, i32x8, i32, i32::MIN, 1);
-gen_range_int_simd!(oneill_gen_range_i64x2_high_reject, i64x2, i64, i64::MIN, 1);
-gen_range_int_simd!(oneill_gen_range_i64x4_high_reject, i64x4, i64, i64::MIN, 1);
-// gen_range_int_simd!(oneill_gen_range_i64x8_high_reject, i64x8, i64, i64::MIN, 1);
-gen_range_int_simd!(oneill_gen_range_i128x2_high_reject, i128x2, i128, i128::MIN, 1);
-gen_range_int_simd!(oneill_gen_range_i128x4_high_reject, i128x4, i128, i128::MIN, 1);
+// no need for a max with scalar as the minimum internal integer size is 32 bits
+// so even 100,000 benchmark iterations won't affect things too much
+gen_range_int!(oneill_gen_range_i8_high_reject, i8, sample_single_inclusive, i8::MIN, 116);
+gen_range_int!(oneill_gen_range_i16_high_reject, i16, sample_single_inclusive, i16::MIN, 32407);
+gen_range_int!(oneill_gen_range_i32_high_reject, i32, sample_single_inclusive, i32::MIN, 1);
+gen_range_int!(oneill_gen_range_i64_high_reject, i64, sample_single_inclusive, i64::MIN, 1);
+gen_range_int!(oneill_gen_range_i128_high_reject, i128, sample_single_inclusive, i128::MIN, 1);
 
 // These were the initially tested ranges. They are likely to see fewer
 // rejections than the low tests. 2^(N - 1) + 1
-gen_range_int!(oneill_gen_range_i8_low_reject, i8, -1, 0);
-gen_range_int!(oneill_gen_range_i16_low_reject, i16, -1, 0);
-gen_range_int!(oneill_gen_range_i32_low_reject, i32, -1, 0);
-gen_range_int!(oneill_gen_range_i64_low_reject, i64, -1, 0);
-gen_range_int!(oneill_gen_range_i128_low_reject, i128, -1, 0);
+// again, no need for a max here
+gen_range_int!(oneill_gen_range_i8_low_reject, i8, sample_single_inclusive, -1, 0);
+gen_range_int!(oneill_gen_range_i16_low_reject, i16, sample_single_inclusive, -1, 0);
+gen_range_int!(oneill_gen_range_i32_low_reject, i32, sample_single_inclusive, -1, 0);
+gen_range_int!(oneill_gen_range_i64_low_reject, i64, sample_single_inclusive, -1, 0);
+gen_range_int!(oneill_gen_range_i128_low_reject, i128, sample_single_inclusive, -1, 0);
 
-gen_range_int_simd!(oneill_gen_range_i8x16_low_reject, i8x16, i8, -1, 0);
-gen_range_int_simd!(oneill_gen_range_i8x32_low_reject, i8x32, i8, -1, 0);
-gen_range_int_simd!(oneill_gen_range_i16x8_low_reject, i16x8, i16, -1, 0);
-gen_range_int_simd!(oneill_gen_range_i16x16_low_reject, i16x16, i16, -1, 0);
-gen_range_int_simd!(oneill_gen_range_i32x4_low_reject, i32x4, i32, -1, 0);
-gen_range_int_simd!(oneill_gen_range_i32x8_low_reject, i32x8, i32, -1, 0);
-gen_range_int_simd!(oneill_gen_range_i64x2_low_reject, i64x2, i64, -1, 0);
-gen_range_int_simd!(oneill_gen_range_i64x4_low_reject, i64x4, i64, -1, 0);
-// gen_range_int_simd!(oneill_gen_range_i64x8_low_reject, i64x8, i64, -1, 0);
-gen_range_int_simd!(oneill_gen_range_i128x2_low_reject, i128x2, i128, -1, 0);
-gen_range_int_simd!(oneill_gen_range_i128x4_low_reject, i128x4, i128, -1, 0);
+// We restrict the range to cycle through to the third quarter of the integer to ensure
+// rejection chance is larger than 25%, i.e. 129..193 for 8-bits
+gen_range_int_simd!(oneill_gen_range_i8x16_high_reject, i8x16, sample_single_inclusive, i8::MIN, 1, i8::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i8x32_high_reject, i8x32, sample_single_inclusive, i8::MIN, 1, i8::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i16x8_high_reject, i16x8, sample_single_inclusive, i16::MIN, 1, i16::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i16x16_high_reject, i16x16, sample_single_inclusive, i16::MIN, 1, i16::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i32x4_high_reject, i32x4, sample_single_inclusive, i32::MIN, 1, i32::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i32x8_high_reject, i32x8, sample_single_inclusive, i32::MIN, 1, i32::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i64x2_high_reject, i64x2, sample_single_inclusive, i64::MIN, 1, i64::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i64x4_high_reject, i64x4, sample_single_inclusive, i64::MIN, 1, i64::MAX / 2);
+// gen_range_int_simd!(oneill_gen_range_i64x8_high_reject, i64x8, sample_single_inclusive, i64::MIN, 1, i64::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i128x2_high_reject, i128x2, sample_single_inclusive, i128::MIN, 1, i128::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i128x4_high_reject, i128x4, sample_single_inclusive, i128::MIN, 1, i128::MAX / 2);
 
-// construct and sample from a range
-macro_rules! gen_range_int_bitmask {
-    ($fnn:ident, $ty:ident, $low:expr, $high:expr) => {
-        #[bench]
-        fn $fnn(b: &mut Bencher) {
-            let mut rng = BenchRng::from_entropy();
+// We restrict the range to cycle through to the first quarter of the integer to ensure
+// rejection chance stays low, i.e. 1..64 for 8-bits
+gen_range_int_simd!(oneill_gen_range_i8x16_low_reject, i8x16, sample_single_inclusive, -1, 0, i8::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i8x32_low_reject, i8x32, sample_single_inclusive, -1, 0, i8::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i16x8_low_reject, i16x8, sample_single_inclusive, -1, 0, i16::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i16x16_low_reject, i16x16, sample_single_inclusive, -1, 0, i16::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i32x4_low_reject, i32x4, sample_single_inclusive, -1, 0, i32::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i32x8_low_reject, i32x8, sample_single_inclusive, -1, 0, i32::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i64x2_low_reject, i64x2, sample_single_inclusive, -1, 0, i64::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i64x4_low_reject, i64x4, sample_single_inclusive, -1, 0, i64::MAX / 2);
+// gen_range_int_simd!(oneill_gen_range_i64x8_low_reject, i64x8, sample_single_inclusive, -1, 0, i64::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i128x2_low_reject, i128x2, sample_single_inclusive, -1, 0, i128::MAX / 2);
+gen_range_int_simd!(oneill_gen_range_i128x4_low_reject, i128x4, sample_single_inclusive, -1, 0, i128::MAX / 2);
 
-            b.iter(|| {
-                let mut high = $high;
-                let mut accum: $ty = 0;
-                for _ in 0..RAND_BENCH_N {
-                    accum = accum.wrapping_add(UniformInt::<$ty>::
-                        sample_single_inclusive_bitmask($low, high - 1, &mut rng));
-                    // force recalculation of range each time
-                    high = high.wrapping_add(1) & std::$ty::MAX;
-                }
-                accum
-            });
-            b.bytes = size_of::<$ty>() as u64 * RAND_BENCH_N;
-        }
-    };
-}
+// bitmask method
+gen_range_int!(bitmask_gen_range_i8_high_reject, i8, sample_single_inclusive_bitmask, i8::MIN, 1);
+gen_range_int!(bitmask_gen_range_i16_high_reject, i16, sample_single_inclusive_bitmask, i16::MIN, 1);
+gen_range_int!(bitmask_gen_range_i32_high_reject, i32, sample_single_inclusive_bitmask, i32::MIN, 1);
+gen_range_int!(bitmask_gen_range_i64_high_reject, i64, sample_single_inclusive_bitmask, i64::MIN, 1);
+gen_range_int!(bitmask_gen_range_i128_high_reject, i128, sample_single_inclusive_bitmask, i128::MIN, 1);
 
-// Algorithms such as Fisher–Yates shuffle often require uniform values from an
-// incrementing range 0..n. We use -1..n here to prevent wrapping in the test
-// from generating a 0-sized range.
-// with the bitmask method, it doesn't matter what size integer is uzed internally
-gen_range_int_bitmask!(bitmask_gen_range_i8_high_reject, i8, i8::MIN, 1);
-gen_range_int_bitmask!(bitmask_gen_range_i16_high_reject, i16, i16::MIN, 1);
-gen_range_int_bitmask!(bitmask_gen_range_i32_high_reject, i32, i32::MIN, 1);
-gen_range_int_bitmask!(bitmask_gen_range_i64_high_reject, i64, i64::MIN, 1);
-gen_range_int_bitmask!(bitmask_gen_range_i128_high_reject, i128, i128::MIN, 1);
+gen_range_int!(bitmask_gen_range_i8_low_reject, i8, sample_single_inclusive_bitmask, -1, 0);
+gen_range_int!(bitmask_gen_range_i16_low_reject, i16, sample_single_inclusive_bitmask, -1, 0);
+gen_range_int!(bitmask_gen_range_i32_low_reject, i32, sample_single_inclusive_bitmask, -1, 0);
+gen_range_int!(bitmask_gen_range_i64_low_reject, i64, sample_single_inclusive_bitmask, -1, 0);
+gen_range_int!(bitmask_gen_range_i128_low_reject, i128, sample_single_inclusive_bitmask, -1, 0);
 
-// These were the initially tested ranges. They are likely to see fewer
-// rejections than the low tests. 2^(N - 1) + 1
-gen_range_int_bitmask!(bitmask_gen_range_i8_low_reject, i8, -1, 0);
-gen_range_int_bitmask!(bitmask_gen_range_i16_low_reject, i16, -1, 0);
-gen_range_int_bitmask!(bitmask_gen_range_i32_low_reject, i32, -1, 0);
-gen_range_int_bitmask!(bitmask_gen_range_i64_low_reject, i64, -1, 0);
-gen_range_int_bitmask!(bitmask_gen_range_i128_low_reject, i128, -1, 0);
+gen_range_int!(canon_branchy_no_mod_gen_range_i8_high_reject, i8, sample_single_inclusive_canon, i8::MIN, 116);
+gen_range_int!(canon_branchy_no_mod_gen_range_i16_high_reject, i16, sample_single_inclusive_canon, i16::MIN, 32407);
+gen_range_int!(canon_branchy_no_mod_gen_range_i32_high_reject, i32, sample_single_inclusive_canon, i32::MIN, 1);
+gen_range_int!(canon_branchy_no_mod_gen_range_i64_high_reject, i64, sample_single_inclusive_canon, i64::MIN, 1);
+gen_range_int!(canon_branchy_no_mod_gen_range_i128_high_reject, i128, sample_single_inclusive_canon, i128::MIN, 1);
 
-macro_rules! gen_range_int_canon {
-    ($fnn:ident, $ty:ident, $low:expr, $high:expr) => {
-        #[bench]
-        fn $fnn(b: &mut Bencher) {
-            let mut rng = BenchRng::from_entropy();
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i8x16_high_reject, i8x16, sample_single_inclusive_canon, i8::MIN, 1, i8::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i8x32_high_reject, i8x32, sample_single_inclusive_canon, i8::MIN, 1, i8::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i16x8_high_reject, i16x8, sample_single_inclusive_canon, i16::MIN, 1, i16::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i16x16_high_reject, i16x16, sample_single_inclusive_canon, i16::MIN, 1, i16::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i32x4_high_reject, i32x4, sample_single_inclusive_canon, i32::MIN, 1, i32::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i32x8_high_reject, i32x8, sample_single_inclusive_canon, i32::MIN, 1, i32::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i64x2_high_reject, i64x2, sample_single_inclusive_canon, i64::MIN, 1, i64::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i128x2_high_reject, i128x2, sample_single_inclusive_canon, i128::MIN, 1, i128::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i64x4_high_reject, i64x4, sample_single_inclusive_canon, i64::MIN, 1, i64::MAX / 2);
+// gen_range_int_simd!(canon_branchy_no_mod_gen_range_i64x8_high_reject, i64x8, sample_single_inclusive_canon, i64::MIN, 1, i64::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i128x4_high_reject, i128x4, sample_single_inclusive_canon, i128::MIN, 1, i128::MAX / 2);
 
-            b.iter(|| {
-                let mut high = $high;
-                let mut accum: $ty = 0;
-                for _ in 0..RAND_BENCH_N {
-                    accum = accum.wrapping_add(UniformInt::<$ty>::sample_single_inclusive_canon($low, high - 1, &mut rng));
-                    // force recalculation of range each time
-                    high = high.wrapping_add(1) & std::$ty::MAX;
-                }
-                accum
-            });
-            b.bytes = size_of::<$ty>() as u64 * RAND_BENCH_N;
-        }
-    };
-}
+gen_range_int_simd!(canon_branchless_gen_range_i8x16_high_reject, i8x16, sample_inclusive_canon, i8::MIN, 1, i8::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i8x32_high_reject, i8x32, sample_inclusive_canon, i8::MIN, 1, i8::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i16x8_high_reject, i16x8, sample_inclusive_canon, i16::MIN, 1, i16::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i16x16_high_reject, i16x16, sample_inclusive_canon, i16::MIN, 1, i16::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i32x4_high_reject, i32x4, sample_inclusive_canon, i32::MIN, 1, i32::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i32x8_high_reject, i32x8, sample_inclusive_canon, i32::MIN, 1, i32::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i64x2_high_reject, i64x2, sample_inclusive_canon, i64::MIN, 1, i64::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i128x2_high_reject, i128x2, sample_inclusive_canon, i128::MIN, 1, i128::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i64x4_high_reject, i64x4, sample_inclusive_canon, i64::MIN, 1, i64::MAX / 2);
+// gen_range_int_simd!(canon_branchless_gen_range_i64x8_high_reject, i64x8, sample_inclusive_canon, i64::MIN, 1, i64::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i128x4_high_reject, i128x4, sample_inclusive_canon, i128::MIN, 1, i128::MAX / 2);
 
-macro_rules! gen_range_int_simd_canon {
-    ($fnn:ident, $ty:ident, $scalar:ident, $low:expr, $high:expr) => {
-        #[bench]
-        fn $fnn(b: &mut Bencher) {
-            let mut rng = BenchRng::from_entropy();
+gen_range_int!(canon_branchy_no_mod_gen_range_i8_low_reject, i8, sample_single_inclusive_canon, -1, 0);
+gen_range_int!(canon_branchy_no_mod_gen_range_i16_low_reject, i16, sample_single_inclusive_canon, -1, 0);
+gen_range_int!(canon_branchy_no_mod_gen_range_i32_low_reject, i32, sample_single_inclusive_canon, -1, 0);
+gen_range_int!(canon_branchy_no_mod_gen_range_i64_low_reject, i64, sample_single_inclusive_canon, -1, 0);
+gen_range_int!(canon_branchy_no_mod_gen_range_i128_low_reject, i128, sample_single_inclusive_canon, -1, 0);
 
-            b.iter(|| {
-                let mut high = $high;
-                let mut accum: $ty = <$ty>::default();
-                for _ in 0..RAND_BENCH_N {
-                    accum += UniformInt::<$ty>::sample_single_inclusive_canon
-                    (<$ty>::splat($low), <$ty>::splat(high - 1), &mut rng);
-                    // force recalculation of range each time
-                    high = (high + 1) & std::$scalar::MAX;
-                }
-                accum
-            });
-            b.bytes = size_of::<$ty>() as u64 * RAND_BENCH_N;
-        }
-    };
-}
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i8x16_low_reject, i8x16, sample_single_inclusive_canon, -1, 0, i8::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i8x32_low_reject, i8x32, sample_single_inclusive_canon, -1, 0, i8::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i16x8_low_reject, i16x8, sample_single_inclusive_canon, -1, 0, i16::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i16x16_low_reject, i16x16, sample_single_inclusive_canon, -1, 0, i16::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i32x4_low_reject, i32x4, sample_single_inclusive_canon, -1, 0, i32::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i32x8_low_reject, i32x8, sample_single_inclusive_canon, -1, 0, i32::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i64x2_low_reject, i64x2, sample_single_inclusive_canon, -1, 0, i64::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i128x2_low_reject, i128x2, sample_single_inclusive_canon, -1, 0, i128::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i64x4_low_reject, i64x4, sample_single_inclusive_canon, -1, 0, i64::MAX / 2);
+// gen_range_int_simd!(canon_branchy_no_mod_gen_range_i64x8_low_reject, i64x8, sample_single_inclusive_canon, -1, 0, i64::MAX / 2);
+gen_range_int_simd!(canon_branchy_no_mod_gen_range_i128x4_low_reject, i128x4, sample_single_inclusive_canon, -1, 0, i128::MAX / 2);
 
-macro_rules! gen_range_int_simd_canon_branchless {
-    ($fnn:ident, $ty:ident, $scalar:ident, $low:expr, $high:expr) => {
-        #[bench]
-        fn $fnn(b: &mut Bencher) {
-            let mut rng = BenchRng::from_entropy();
+gen_range_int_simd!(canon_branchless_gen_range_i8x16_low_reject, i8x16, sample_inclusive_canon, -1, 0, i8::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i8x32_low_reject, i8x32, sample_inclusive_canon, -1, 0, i8::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i16x8_low_reject, i16x8, sample_inclusive_canon, -1, 0, i16::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i16x16_low_reject, i16x16, sample_inclusive_canon, -1, 0, i16::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i32x4_low_reject, i32x4, sample_inclusive_canon, -1, 0, i32::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i32x8_low_reject, i32x8, sample_inclusive_canon, -1, 0, i32::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i64x2_low_reject, i64x2, sample_inclusive_canon, -1, 0, i64::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i128x2_low_reject, i128x2, sample_inclusive_canon, -1, 0, i128::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i64x4_low_reject, i64x4, sample_inclusive_canon, -1, 0, i64::MAX / 2);
+// gen_range_int_simd!(canon_branchless_gen_range_i64x8_low_reject, i64x8, sample_inclusive_canon, -1, 0, i64::MAX / 2);
+gen_range_int_simd!(canon_branchless_gen_range_i128x4_low_reject, i128x4, sample_inclusive_canon, -1, 0, i128::MAX / 2);
 
-            b.iter(|| {
-                let mut high = $high;
-                let mut accum: $ty = <$ty>::default();
-                for _ in 0..RAND_BENCH_N {
-                    accum += UniformInt::<$ty>::sample_inclusive_canon
-                    (<$ty>::splat($low), <$ty>::splat(high - 1), &mut rng);
-                    // force recalculation of range each time
-                    high = (high + 1) & std::$scalar::MAX;
-                }
-                accum
-            });
-            b.bytes = size_of::<$ty>() as u64 * RAND_BENCH_N;
-        }
-    };
-}
+gen_range_int_simd!(bitmask_gen_range_i8x16_high_reject, i8x16, sample_single_inclusive_bitmask, i8::MIN, 1, i8::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i8x32_high_reject, i8x32, sample_single_inclusive_bitmask, i8::MIN, 1, i8::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i16x8_high_reject, i16x8, sample_single_inclusive_bitmask, i16::MIN, 1, i16::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i16x16_high_reject, i16x16, sample_single_inclusive_bitmask, i16::MIN, 1, i16::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i32x4_high_reject, i32x4, sample_single_inclusive_bitmask, i32::MIN, 1, i32::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i32x8_high_reject, i32x8, sample_single_inclusive_bitmask, i32::MIN, 1, i32::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i64x2_high_reject, i64x2, sample_single_inclusive_bitmask, i64::MIN, 1, i64::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i128x2_high_reject, i128x2, sample_single_inclusive_bitmask, i128::MIN, 1, i128::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i64x4_high_reject, i64x4, sample_single_inclusive_bitmask, i64::MIN, 1, i64::MAX / 2);
+// gen_range_int_simd!(bitmask_gen_range_i64x8_high_reject, i64x8, sample_single_inclusive_bitmask, i64::MIN, 1, i64::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i128x4_high_reject, i128x4, sample_single_inclusive_bitmask, i128::MIN, 1, i128::MAX / 2);
 
-// Algorithms such as Fisher–Yates shuffle often require uniform values from an
-// incrementing range 0..n. We use -1..n here to prevent wrapping in the test
-// from generating a 0-sized range.
-gen_range_int_canon!(canon_branchy_no_mod_gen_range_i8_high_reject, i8, i8::MIN, 116);
-gen_range_int_canon!(canon_branchy_no_mod_gen_range_i16_high_reject, i16, i16::MIN, 32407);
-gen_range_int_canon!(canon_branchy_no_mod_gen_range_i32_high_reject, i32, i32::MIN, 1);
-gen_range_int_canon!(canon_branchy_no_mod_gen_range_i64_high_reject, i64, i64::MIN, 1);
-gen_range_int_canon!(canon_branchy_no_mod_gen_range_i128_high_reject, i128, i128::MIN, 1);
-
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i8x16_high_reject, i8x16, i8, i8::MIN, 1);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i8x32_high_reject, i8x32, i8, i8::MIN, 1);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i16x8_high_reject, i16x8, i16, i16::MIN, 1);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i16x16_high_reject, i16x16, i16, i16::MIN, 1);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i32x4_high_reject, i32x4, i32, i32::MIN, 1);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i32x8_high_reject, i32x8, i32, i32::MIN, 1);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i64x2_high_reject, i64x2, i64, i64::MIN, 1);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i128x2_high_reject, i128x2, i128, i128::MIN, 1);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i64x4_high_reject, i64x4, i64, i64::MIN, 1);
-// gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i64x8_high_reject, i64x8, i64, i64::MIN, 1);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i128x4_high_reject, i128x4, i128, i128::MIN, 1);
-
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i8x16_high_reject, i8x16, i8, i8::MIN, 1);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i8x32_high_reject, i8x32, i8, i8::MIN, 1);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i16x8_high_reject, i16x8, i16, i16::MIN, 1);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i16x16_high_reject, i16x16, i16, i16::MIN, 1);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i32x4_high_reject, i32x4, i32, i32::MIN, 1);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i32x8_high_reject, i32x8, i32, i32::MIN, 1);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i64x2_high_reject, i64x2, i64, i64::MIN, 1);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i128x2_high_reject, i128x2, i128, i128::MIN, 1);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i64x4_high_reject, i64x4, i64, i64::MIN, 1);
-// gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i64x8_high_reject, i64x8, i64, i64::MIN, 1);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i128x4_high_reject, i128x4, i128, i128::MIN, 1);
-
-// These were the initially tested ranges. They are likely to see fewer
-// rejections than the low tests. 2^(N - 1) + 1
-gen_range_int_canon!(canon_branchy_no_mod_gen_range_i8_low_reject, i8, -1, 0);
-gen_range_int_canon!(canon_branchy_no_mod_gen_range_i16_low_reject, i16, -1, 0);
-gen_range_int_canon!(canon_branchy_no_mod_gen_range_i32_low_reject, i32, -1, 0);
-gen_range_int_canon!(canon_branchy_no_mod_gen_range_i64_low_reject, i64, -1, 0);
-gen_range_int_canon!(canon_branchy_no_mod_gen_range_i128_low_reject, i128, -1, 0);
-
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i8x16_low_reject, i8x16, i8, -1, 0);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i8x32_low_reject, i8x32, i8, -1, 0);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i16x8_low_reject, i16x8, i16, -1, 0);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i16x16_low_reject, i16x16, i16, -1, 0);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i32x4_low_reject, i32x4, i32, -1, 0);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i32x8_low_reject, i32x8, i32, -1, 0);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i64x2_low_reject, i64x2, i64, -1, 0);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i128x2_low_reject, i128x2, i128, -1, 0);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i64x4_low_reject, i64x4, i64, -1, 0);
-// gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i64x8_low_reject, i64x8, i64, -1, 0);
-gen_range_int_simd_canon!(canon_branchy_no_mod_gen_range_i128x4_low_reject, i128x4, i128, -1, 0);
-
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i8x16_low_reject, i8x16, i8, -1, 0);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i8x32_low_reject, i8x32, i8, -1, 0);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i16x8_low_reject, i16x8, i16, -1, 0);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i16x16_low_reject, i16x16, i16, -1, 0);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i32x4_low_reject, i32x4, i32, -1, 0);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i32x8_low_reject, i32x8, i32, -1, 0);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i64x2_low_reject, i64x2, i64, -1, 0);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i128x2_low_reject, i128x2, i128, -1, 0);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i64x4_low_reject, i64x4, i64, -1, 0);
-// gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i64x8_low_reject, i64x8, i64, -1, 0);
-gen_range_int_simd_canon_branchless!(canon_branchless_gen_range_i128x4_low_reject, i128x4, i128, -1, 0);
-
-macro_rules! gen_range_int_simd_bitmask {
-    ($fnn:ident, $ty:ident, $scalar:ident, $low:expr, $high:expr) => {
-        #[bench]
-        fn $fnn(b: &mut Bencher) {
-            let mut rng = BenchRng::from_entropy();
-
-            b.iter(|| {
-                let mut high = $high;
-                let mut accum: $ty = Default::default();
-                for _ in 0..RAND_BENCH_N {
-                    accum += UniformInt::<$ty>::
-                        sample_single_inclusive_bitmask($ty::splat($low), $ty::splat(high - 1), &mut rng);
-                    // force recalculation of range each time
-                    high = (high + 1) & std::$scalar::MAX;
-                }
-                accum
-            });
-            b.bytes = size_of::<$ty>() as u64 * RAND_BENCH_N;
-        }
-    };
-}
-
-gen_range_int_simd_bitmask!(bitmask_gen_range_i8x16_high_reject, i8x16, i8, i8::MIN, 1);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i8x32_high_reject, i8x32, i8, i8::MIN, 1);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i16x8_high_reject, i16x8, i16, i16::MIN, 1);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i16x16_high_reject, i16x16, i16, i16::MIN, 1);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i32x4_high_reject, i32x4, i32, i32::MIN, 1);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i32x8_high_reject, i32x8, i32, i32::MIN, 1);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i64x2_high_reject, i64x2, i64, i64::MIN, 1);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i128x2_high_reject, i128x2, i128, i128::MIN, 1);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i64x4_high_reject, i64x4, i64, i64::MIN, 1);
-// gen_range_int_simd_bitmask!(bitmask_gen_range_i64x8_high_reject, i64x8, i64, i64::MIN, 1);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i128x4_high_reject, i128x4, i128, i128::MIN, 1);
-
-gen_range_int_simd_bitmask!(bitmask_gen_range_i8x16_low_reject, i8x16, i8, -1, 0);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i8x32_low_reject, i8x32, i8, -1, 0);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i16x8_low_reject, i16x8, i16, -1, 0);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i16x16_low_reject, i16x16, i16, -1, 0);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i32x4_low_reject, i32x4, i32, -1, 0);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i32x8_low_reject, i32x8, i32, -1, 0);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i64x2_low_reject, i64x2, i64, -1, 0);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i128x2_low_reject, i128x2, i128, -1, 0);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i64x4_low_reject, i64x4, i64, -1, 0);
-// gen_range_int_simd_bitmask!(bitmask_gen_range_i64x8_low_reject, i64x8, i64, -1, 0);
-gen_range_int_simd_bitmask!(bitmask_gen_range_i128x4_low_reject, i128x4, i128, -1, 0);
+gen_range_int_simd!(bitmask_gen_range_i8x16_low_reject, i8x16, sample_single_inclusive_bitmask, -1, 0, i8::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i8x32_low_reject, i8x32, sample_single_inclusive_bitmask, -1, 0, i8::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i16x8_low_reject, i16x8, sample_single_inclusive_bitmask, -1, 0, i16::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i16x16_low_reject, i16x16, sample_single_inclusive_bitmask, -1, 0, i16::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i32x4_low_reject, i32x4, sample_single_inclusive_bitmask, -1, 0, i32::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i32x8_low_reject, i32x8, sample_single_inclusive_bitmask, -1, 0, i32::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i64x2_low_reject, i64x2, sample_single_inclusive_bitmask, -1, 0, i64::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i128x2_low_reject, i128x2, sample_single_inclusive_bitmask, -1, 0, i128::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i64x4_low_reject, i64x4, sample_single_inclusive_bitmask, -1, 0, i64::MAX / 2);
+// gen_range_int_simd!(bitmask_gen_range_i64x8_low_reject, i64x8, sample_single_inclusive_bitmask, -1, 0, i64::MAX / 2);
+gen_range_int_simd!(bitmask_gen_range_i128x4_low_reject, i128x4, sample_single_inclusive_bitmask, -1, 0, i128::MAX / 2);
 
 /*// construct and sample from a floating-point range
 macro_rules! gen_range_float {
@@ -752,7 +644,7 @@ gen_range_float!(gen_range_f64, f64, 123.456f64, 7890.12);*/
 
 /// Sample random values from a pre-existing distribution.  This uses the
 /// half open `new` to be equivalent to the behavior of `uniform_single`.
-macro_rules! uniform_sample {
+/*macro_rules! uniform_sample {
     ($fnn:ident, $type:ident, $low:expr, $high:expr, $count:expr) => {
         #[bench]
         fn $fnn(b: &mut Bencher) {
@@ -805,7 +697,7 @@ macro_rules! uniform_single {
             });
         }
     };
-}
+}*/
 
 
 // Benchmark:
@@ -820,110 +712,3 @@ macro_rules! uniform_single {
 // With the use of u32 as the minimum generated width, the worst-case u16 range 
 // (32769) will only reject 32769 / 4294967296 samples.
 const HALF_16_BIT_UNSIGNED: u16 = 1 << 15;
-
-/*uniform_sample!(uniform_u16x1_allm1_new, u16, 0, u16::MAX, 1);
-uniform_sample!(uniform_u16x1_halfp1_new, u16, 0, HALF_16_BIT_UNSIGNED + 1, 1);
-uniform_sample!(uniform_u16x1_half_new, u16, 0, HALF_16_BIT_UNSIGNED, 1);
-uniform_sample!(uniform_u16x1_halfm1_new, u16, 0, HALF_16_BIT_UNSIGNED - 1, 1);
-uniform_sample!(uniform_u16x1_6_new, u16, 0, 6u16, 1);
-
-uniform_single!(uniform_u16x1_allm1_single, u16, 0, u16::MAX, 1);
-uniform_single!(uniform_u16x1_halfp1_single, u16, 0, HALF_16_BIT_UNSIGNED + 1, 1);
-uniform_single!(uniform_u16x1_half_single, u16, 0, HALF_16_BIT_UNSIGNED, 1);
-uniform_single!(uniform_u16x1_halfm1_single, u16, 0, HALF_16_BIT_UNSIGNED - 1, 1);
-uniform_single!(uniform_u16x1_6_single, u16, 0, 6u16, 1);
-
-uniform_inclusive!(uniform_u16x10_all_new_inclusive, u16, 0, u16::MAX, 10);
-uniform_sample!(uniform_u16x10_allm1_new, u16, 0, u16::MAX, 10);
-uniform_sample!(uniform_u16x10_halfp1_new, u16, 0, HALF_16_BIT_UNSIGNED + 1, 10);
-uniform_sample!(uniform_u16x10_half_new, u16, 0, HALF_16_BIT_UNSIGNED, 10);
-uniform_sample!(uniform_u16x10_halfm1_new, u16, 0, HALF_16_BIT_UNSIGNED - 1, 10);
-uniform_sample!(uniform_u16x10_6_new, u16, 0, 6u16, 10);
-
-uniform_single!(uniform_u16x10_allm1_single, u16, 0, u16::MAX, 10);
-uniform_single!(uniform_u16x10_halfp1_single, u16, 0, HALF_16_BIT_UNSIGNED + 1, 10);
-uniform_single!(uniform_u16x10_half_single, u16, 0, HALF_16_BIT_UNSIGNED, 10);
-uniform_single!(uniform_u16x10_halfm1_single, u16, 0, HALF_16_BIT_UNSIGNED - 1, 10);
-uniform_single!(uniform_u16x10_6_single, u16, 0, 6u16, 10);
-
-
-const HALF_32_BIT_UNSIGNED: u32 = 1 << 31;
-
-uniform_sample!(uniform_u32x1_allm1_new, u32, 0, u32::MAX, 1);
-uniform_sample!(uniform_u32x1_halfp1_new, u32, 0, HALF_32_BIT_UNSIGNED + 1, 1);
-uniform_sample!(uniform_u32x1_half_new, u32, 0, HALF_32_BIT_UNSIGNED, 1);
-uniform_sample!(uniform_u32x1_halfm1_new, u32, 0, HALF_32_BIT_UNSIGNED - 1, 1);
-uniform_sample!(uniform_u32x1_6_new, u32, 0, 6u32, 1);
-
-uniform_single!(uniform_u32x1_allm1_single, u32, 0, u32::MAX, 1);
-uniform_single!(uniform_u32x1_halfp1_single, u32, 0, HALF_32_BIT_UNSIGNED + 1, 1);
-uniform_single!(uniform_u32x1_half_single, u32, 0, HALF_32_BIT_UNSIGNED, 1);
-uniform_single!(uniform_u32x1_halfm1_single, u32, 0, HALF_32_BIT_UNSIGNED - 1, 1);
-uniform_single!(uniform_u32x1_6_single, u32, 0, 6u32, 1);
-
-uniform_inclusive!(uniform_u32x10_all_new_inclusive, u32, 0, u32::MAX, 10);
-uniform_sample!(uniform_u32x10_allm1_new, u32, 0, u32::MAX, 10);
-uniform_sample!(uniform_u32x10_halfp1_new, u32, 0, HALF_32_BIT_UNSIGNED + 1, 10);
-uniform_sample!(uniform_u32x10_half_new, u32, 0, HALF_32_BIT_UNSIGNED, 10);
-uniform_sample!(uniform_u32x10_halfm1_new, u32, 0, HALF_32_BIT_UNSIGNED - 1, 10);
-uniform_sample!(uniform_u32x10_6_new, u32, 0, 6u32, 10);
-
-uniform_single!(uniform_u32x10_allm1_single, u32, 0, u32::MAX, 10);
-uniform_single!(uniform_u32x10_halfp1_single, u32, 0, HALF_32_BIT_UNSIGNED + 1, 10);
-uniform_single!(uniform_u32x10_half_single, u32, 0, HALF_32_BIT_UNSIGNED, 10);
-uniform_single!(uniform_u32x10_halfm1_single, u32, 0, HALF_32_BIT_UNSIGNED - 1, 10);
-uniform_single!(uniform_u32x10_6_single, u32, 0, 6u32, 10);
-
-const HALF_64_BIT_UNSIGNED: u64 = 1 << 63;
-
-uniform_sample!(uniform_u64x1_allm1_new, u64, 0, u64::MAX, 1);
-uniform_sample!(uniform_u64x1_halfp1_new, u64, 0, HALF_64_BIT_UNSIGNED + 1, 1);
-uniform_sample!(uniform_u64x1_half_new, u64, 0, HALF_64_BIT_UNSIGNED, 1);
-uniform_sample!(uniform_u64x1_halfm1_new, u64, 0, HALF_64_BIT_UNSIGNED - 1, 1);
-uniform_sample!(uniform_u64x1_6_new, u64, 0, 6u64, 1);
-
-uniform_single!(uniform_u64x1_allm1_single, u64, 0, u64::MAX, 1);
-uniform_single!(uniform_u64x1_halfp1_single, u64, 0, HALF_64_BIT_UNSIGNED + 1, 1);
-uniform_single!(uniform_u64x1_half_single, u64, 0, HALF_64_BIT_UNSIGNED, 1);
-uniform_single!(uniform_u64x1_halfm1_single, u64, 0, HALF_64_BIT_UNSIGNED - 1, 1);
-uniform_single!(uniform_u64x1_6_single, u64, 0, 6u64, 1);
-
-uniform_inclusive!(uniform_u64x10_all_new_inclusive, u64, 0, u64::MAX, 10);
-uniform_sample!(uniform_u64x10_allm1_new, u64, 0, u64::MAX, 10);
-uniform_sample!(uniform_u64x10_halfp1_new, u64, 0, HALF_64_BIT_UNSIGNED + 1, 10);
-uniform_sample!(uniform_u64x10_half_new, u64, 0, HALF_64_BIT_UNSIGNED, 10);
-uniform_sample!(uniform_u64x10_halfm1_new, u64, 0, HALF_64_BIT_UNSIGNED - 1, 10);
-uniform_sample!(uniform_u64x10_6_new, u64, 0, 6u64, 10);
-
-uniform_single!(uniform_u64x10_allm1_single, u64, 0, u64::MAX, 10);
-uniform_single!(uniform_u64x10_halfp1_single, u64, 0, HALF_64_BIT_UNSIGNED + 1, 10);
-uniform_single!(uniform_u64x10_half_single, u64, 0, HALF_64_BIT_UNSIGNED, 10);
-uniform_single!(uniform_u64x10_halfm1_single, u64, 0, HALF_64_BIT_UNSIGNED - 1, 10);
-uniform_single!(uniform_u64x10_6_single, u64, 0, 6u64, 10);
-
-const HALF_128_BIT_UNSIGNED: u128 = 1 << 127;
-
-uniform_sample!(uniform_u128x1_allm1_new, u128, 0, u128::MAX, 1);
-uniform_sample!(uniform_u128x1_halfp1_new, u128, 0, HALF_128_BIT_UNSIGNED + 1, 1);
-uniform_sample!(uniform_u128x1_half_new, u128, 0, HALF_128_BIT_UNSIGNED, 1);
-uniform_sample!(uniform_u128x1_halfm1_new, u128, 0, HALF_128_BIT_UNSIGNED - 1, 1);
-uniform_sample!(uniform_u128x1_6_new, u128, 0, 6u128, 1);
-
-uniform_single!(uniform_u128x1_allm1_single, u128, 0, u128::MAX, 1);
-uniform_single!(uniform_u128x1_halfp1_single, u128, 0, HALF_128_BIT_UNSIGNED + 1, 1);
-uniform_single!(uniform_u128x1_half_single, u128, 0, HALF_128_BIT_UNSIGNED, 1);
-uniform_single!(uniform_u128x1_halfm1_single, u128, 0, HALF_128_BIT_UNSIGNED - 1, 1);
-uniform_single!(uniform_u128x1_6_single, u128, 0, 6u128, 1);
-
-uniform_inclusive!(uniform_u128x10_all_new_inclusive, u128, 0, u128::MAX, 10);
-uniform_sample!(uniform_u128x10_allm1_new, u128, 0, u128::MAX, 10);
-uniform_sample!(uniform_u128x10_halfp1_new, u128, 0, HALF_128_BIT_UNSIGNED + 1, 10);
-uniform_sample!(uniform_u128x10_half_new, u128, 0, HALF_128_BIT_UNSIGNED, 10);
-uniform_sample!(uniform_u128x10_halfm1_new, u128, 0, HALF_128_BIT_UNSIGNED - 1, 10);
-uniform_sample!(uniform_u128x10_6_new, u128, 0, 6u128, 10);
-
-uniform_single!(uniform_u128x10_allm1_single, u128, 0, u128::MAX, 10);
-uniform_single!(uniform_u128x10_halfp1_single, u128, 0, HALF_128_BIT_UNSIGNED + 1, 10);
-uniform_single!(uniform_u128x10_half_single, u128, 0, HALF_128_BIT_UNSIGNED, 10);
-uniform_single!(uniform_u128x10_halfm1_single, u128, 0, HALF_128_BIT_UNSIGNED - 1, 10);
-uniform_single!(uniform_u128x10_6_single, u128, 0, 6u128, 10);*/
