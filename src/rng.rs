@@ -158,6 +158,7 @@ pub trait Rng: RngCore {
     ///
     /// [`Uniform`]: distr::uniform::Uniform
     #[track_caller]
+    #[inline]
     fn random_range<T, R>(&mut self, range: R) -> T
     where
         T: SampleUniform,
@@ -244,6 +245,7 @@ pub trait Rng: RngCore {
     /// // distribution can be inferred.
     /// let y = rng.sample::<u16, _>(Uniform::new(10, 15).unwrap());
     /// ```
+    #[inline]
     fn sample<T, D: Distribution<T>>(&mut self, distr: D) -> T {
         distr.sample(self)
     }
@@ -281,6 +283,7 @@ pub trait Rng: RngCore {
     ///     println!("Not a 6; rolling again!");
     /// }
     /// ```
+    #[inline]
     fn sample_iter<T, D>(self, distr: D) -> distr::DistIter<D, Self, T>
     where
         D: Distribution<T>,
@@ -309,6 +312,7 @@ pub trait Rng: RngCore {
     ///
     /// [`fill_bytes`]: RngCore::fill_bytes
     #[track_caller]
+    #[inline]
     fn fill<T: Fill + ?Sized>(&mut self, dest: &mut T) {
         dest.fill(self)
     }
